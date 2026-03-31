@@ -8,6 +8,7 @@ urlpatterns = [
     path('articles/', views.article_moderation_list, name='article_list'),
     path('articles/<int:moderation_id>/', views.article_moderation_detail, name='article_detail'),
     path('comments/', views.comment_moderation_list, name='comment_list'),
+    path('comments/moderation/<int:moderation_id>/delete/', views.comment_moderation_delete, name='comment_moderation_delete'),
     path('comments/<int:comment_id>/edit/', views.comment_edit, name='comment_edit'),
     path('comments/criteria/create/', views.comment_criteria_create, name='comment_criteria_create'),
     path('comments/criteria/<int:criteria_id>/edit/', views.comment_criteria_edit, name='comment_criteria_edit'),

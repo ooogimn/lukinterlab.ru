@@ -9,6 +9,7 @@ from .registration_guards import (
     validate_customer_full_name_for_account,
     reject_honeypot,
 )
+from .comment_spam import validate_comment_plaintext, validate_comment_display_name
 
 
 class OtzivForm(forms.ModelForm):
@@ -22,6 +23,12 @@ class OtzivForm(forms.ModelForm):
             'body': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Ваш отзыв'}),
         }
 
+    def clean_body(self):
+        raw = self.cleaned_data.get('body')
+        if not (raw or '').strip():
+            return raw
+        return validate_comment_plaintext(raw, 'Текст отзыва')
+
 
 class OtzivCommentForm(forms.ModelForm):
     class Meta:
@@ -34,10 +41,16 @@ class OtzivCommentForm(forms.ModelForm):
             'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Ваш комментарий'}),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
         self.parent_comment = kwargs.pop('parent_comment', None)
+        self.user = user
         super().__init__(*args, **kwargs)
-        
+        if user and getattr(user, 'is_authenticated', False):
+            display = user.get_full_name().strip() or user.username
+            self.initial.setdefault('author_name', display)
+            if getattr(user, 'email', None):
+                self.initial.setdefault('author_email', user.email)
+
         if self.parent_comment:
             # Если это ответ на комментарий, изменяем placeholder
             self.fields['content'].widget.attrs['placeholder'] = f'Ответ на комментарий от {self.parent_comment.author_name}...'
@@ -48,6 +61,18 @@ class OtzivCommentForm(forms.ModelForm):
             self.fields['author_name'].widget.attrs['readonly'] = True
             self.fields['author_email'].widget.attrs['readonly'] = True
             self.fields['author_company'].widget.attrs['readonly'] = True
+
+    def clean_author_name(self):
+        return validate_comment_display_name(self.cleaned_data.get('author_name'), 'Имя')
+
+    def clean_author_email(self):
+        email = self.cleaned_data.get('author_email')
+        if email:
+            validate_registration_email_domain(email)
+        return email
+
+    def clean_content(self):
+        return validate_comment_plaintext(self.cleaned_data.get('content'), 'Комментарий')
 
 
 class ContactForm(forms.Form):
@@ -638,6 +663,12 @@ class OrderCommentForm(forms.ModelForm):
         if commit:
             comment.save()
         return comment
+
+    def clean_content(self):
+        content = self.cleaned_data.get('content')
+        if getattr(self, 'is_admin', False):
+            return content
+        return validate_comment_plaintext(content, 'Комментарий')
 
 
 class LegalInfoForm(forms.ModelForm):

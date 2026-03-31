@@ -1,5 +1,7 @@
 from django.http import HttpResponseRedirect, Http404, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
+from urllib.parse import quote
 from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import Post, Category, Comment, PostLike
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -184,6 +186,18 @@ def post_detail(request, id, slug):
 
         if request.method == 'POST':
             try:
+                if not request.user.is_authenticated:
+                    login_url = reverse('home:customer_login')
+                    next_q = quote(request.get_full_path(), safe='/')
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        return JsonResponse({
+                            'success': False,
+                            'message': 'Войдите, чтобы оставить комментарий.',
+                            'login_required': True,
+                        }, status=403)
+                    messages.info(request, 'Войдите, чтобы оставить комментарий.')
+                    return HttpResponseRedirect(f'{login_url}?next={next_q}')
+
                 # A comment was posted
                 parent_comment_id = request.POST.get('parent_comment_id')
                 parent_comment = None
@@ -201,7 +215,11 @@ def post_detail(request, id, slug):
                             messages.error(request, 'Родительский комментарий не найден.')
                             parent_comment = None
                 
-                comment_form = CommentForm(data=request.POST, parent_comment=parent_comment)
+                comment_form = CommentForm(
+                    data=request.POST,
+                    parent_comment=parent_comment,
+                    user=request.user,
+                )
                 if comment_form.is_valid():
                     try:
                         logger.info(f"[COMMENT_SAVE] Начало сохранения комментария. Post ID: {post.id}, Parent: {parent_comment.id if parent_comment else None}")
@@ -229,11 +247,11 @@ def post_detail(request, id, slug):
                             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                                 return JsonResponse({
                                     'success': False,
-                                    'message': 'Ваш комментарий был отклонен модерацией за нарушение правил.',
+                                    'message': 'Сообщение не опубликовано.',
                                     'deleted': True
                                 }, status=400)
                             else:
-                                messages.warning(request, 'Ваш комментарий был отклонен модерацией за нарушение правил.')
+                                messages.warning(request, 'Сообщение не опубликовано.')
                                 return HttpResponseRedirect(post.get_absolute_url() + '#comments')
                         
                         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -294,16 +312,22 @@ def post_detail(request, id, slug):
                 else:
                     messages.error(request, f'Произошла ошибка при сохранении комментария: {str(e)}')
         else:
-            comment_form = CommentForm()
+            if request.user.is_authenticated:
+                comment_form = CommentForm(user=request.user)
+            else:
+                comment_form = None
 
         # Подсчитываем общее количество активных комментариев (включая ответы)
         comments_count = post.comments.filter(active=True).count()
         
         # Если форма была отправлена с ошибками (не AJAX), показываем её открытой
         show_form = False
-        if request.method == 'POST' and request.headers.get('X-Requested-With') != 'XMLHttpRequest':
-            # Для обычных POST запросов проверяем валидность формы
-            if hasattr(comment_form, 'errors') and comment_form.errors:
+        if (
+            request.method == 'POST'
+            and request.user.is_authenticated
+            and request.headers.get('X-Requested-With') != 'XMLHttpRequest'
+        ):
+            if comment_form is not None and hasattr(comment_form, 'errors') and comment_form.errors:
                 show_form = True
         
         # Получаем похожие статьи для внутренней перелинковки

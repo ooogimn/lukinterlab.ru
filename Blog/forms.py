@@ -2,6 +2,9 @@ from django import forms
 from .models import Comment, Post, Category
 from django.core.mail import send_mail
 from django.conf import settings
+
+from home.comment_spam import validate_comment_plaintext, validate_comment_display_name
+from home.registration_guards import validate_registration_email_domain
 from ckeditor_uploader.widgets import CKEditorUploadingWidget
 from taggit.forms import TagField
 
@@ -33,10 +36,16 @@ class CommentForm(forms.ModelForm):
             })
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
         self.parent_comment = kwargs.pop('parent_comment', None)
+        self.user = user
         super().__init__(*args, **kwargs)
-        
+        if user and getattr(user, 'is_authenticated', False):
+            display = user.get_full_name().strip() or user.username
+            self.initial.setdefault('author_comment', display)
+            if getattr(user, 'email', None):
+                self.initial.setdefault('email', user.email)
+
         if self.parent_comment:
             # Если это ответ на комментарий, изменяем placeholder
             self.fields['content'].widget.attrs['placeholder'] = f'Ответ на комментарий от {self.parent_comment.author_comment}...'
@@ -45,6 +54,18 @@ class CommentForm(forms.ModelForm):
             self.fields['email'].widget.attrs['value'] = self.parent_comment.email
             self.fields['author_comment'].widget.attrs['readonly'] = True
             self.fields['email'].widget.attrs['readonly'] = True
+
+    def clean_author_comment(self):
+        return validate_comment_display_name(self.cleaned_data.get('author_comment'), 'Имя')
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if email:
+            validate_registration_email_domain(email)
+        return email
+
+    def clean_content(self):
+        return validate_comment_plaintext(self.cleaned_data.get('content'), 'Комментарий')
 
 
 class SearchForm(forms.Form):

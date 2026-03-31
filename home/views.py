@@ -186,13 +186,17 @@ class OtzivDetailView(DetailView):
         ).prefetch_related('children').order_by('-created')
         
         context['comments'] = comments
-        context['comment_form'] = OtzivCommentForm()
+        if self.request.user.is_authenticated:
+            context['comment_form'] = OtzivCommentForm(user=self.request.user)
+        else:
+            context['comment_form'] = None
         context['title'] = f'Отзыв от {otziv.name}'
         return context
 
 
-class OtzivCreateView(CreateView):
+class OtzivCreateView(LoginRequiredMixin, CreateView):
     """создание отзывов на сайте """
+    login_url = '/customer/login/'
     model = Otziv
     template_name = 'otziv/otziv-create.html'
     form_class = OtzivForm  # Исправлено: было OtzivCreateForm
@@ -218,6 +222,7 @@ class OtzivCreateView(CreateView):
         return super().form_invalid(form)
 
 
+@login_required(login_url='/customer/login/')
 @require_POST
 def add_comment_to_otziv(request, otziv_id):
     """Добавление комментария к отзыву"""
@@ -230,7 +235,11 @@ def add_comment_to_otziv(request, otziv_id):
         if parent_comment_id:
             parent_comment = get_object_or_404(OtzivComment, id=parent_comment_id, active=True)
         
-        form = OtzivCommentForm(request.POST, parent_comment=parent_comment)
+        form = OtzivCommentForm(
+            request.POST,
+            parent_comment=parent_comment,
+            user=request.user,
+        )
         
         if form.is_valid():
             import logging
@@ -255,11 +264,11 @@ def add_comment_to_otziv(request, otziv_id):
                     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                         return JsonResponse({
                             'success': False,
-                            'message': 'Ваш комментарий был отклонен модерацией за нарушение правил.',
+                            'message': 'Сообщение не опубликовано.',
                             'deleted': True
                         }, status=400)
                     else:
-                        messages.warning(request, 'Ваш комментарий был отклонен модерацией за нарушение правил.')
+                        messages.warning(request, 'Сообщение не опубликовано.')
                         return redirect(otziv.get_absolute_url())
                 
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -1033,9 +1042,24 @@ def customer_register(request):
 
 def customer_login(request):
     """Вход в личный кабинет"""
+    from django.utils.http import url_has_allowed_host_and_scheme
+
+    def safe_next_url():
+        raw = (request.POST.get('next') or request.GET.get('next') or '').strip()
+        if raw and url_has_allowed_host_and_scheme(
+            raw,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
+            return raw
+        return None
+
+    next_url = safe_next_url()
     if request.user.is_authenticated:
+        if next_url:
+            return redirect(next_url)
         return redirect('home:customer_dashboard')
-    
+
     if request.method == 'POST':
         form = CustomerLoginForm(request, data=request.POST)
         if form.is_valid():
@@ -1045,13 +1069,17 @@ def customer_login(request):
             if user is not None:
                 login(request, user)
                 messages.success(request, f'Добро пожаловать, {user.get_full_name() or user.username}!')
+                next_url = safe_next_url()
+                if next_url:
+                    return redirect(next_url)
                 return redirect('home:customer_dashboard')
     else:
         form = CustomerLoginForm()
-    
+
     context = {
         'form': form,
-        'title': 'Вход в личный кабинет'
+        'title': 'Вход в личный кабинет',
+        'next': request.GET.get('next', ''),
     }
     return render(request, 'home/customer/login.html', context)
 

@@ -17,6 +17,7 @@ from .models import (
 )
 from .services import StatisticsService
 from .forms import CommentModerationCriteriaForm
+from django.db import transaction
 from django.db.models import Count
 from django.contrib.contenttypes.prefetch import GenericPrefetch
 
@@ -191,6 +192,53 @@ def comment_moderation_list(request):
         'criteria_list': criteria_list,
     }
     return render(request, 'moderation/comment_list.html', context)
+
+
+@login_required
+@user_passes_test(is_moderator)
+@require_http_methods(["POST"])
+def comment_moderation_delete(request, moderation_id):
+    """
+    Удалить запись CommentModeration и связанный комментарий (Blog / отзыв / заказ).
+    Для MPTT-дерева удаляется узел и потомки; ответы администратора под комментарием уходят вместе с ним.
+    """
+    try:
+        with transaction.atomic():
+            moderation = get_object_or_404(CommentModeration, pk=moderation_id)
+            content_type = moderation.content_type
+            object_id = moderation.object_id
+            comment_obj = moderation.comment
+            moderation.delete()
+            if comment_obj is not None:
+                comment_obj.delete()
+            elif content_type is not None and object_id:
+                # Если GFK в шаблоне/ORM не вернул объект — всё равно снести строку комментария в БД
+                # (со страницы статьи он пропадёт).
+                model = content_type.model_class()
+                if model is not None:
+                    try:
+                        orphan = model.objects.get(pk=object_id)
+                    except model.DoesNotExist:
+                        orphan = None
+                    if orphan is not None:
+                        orphan.delete()
+        return JsonResponse(
+            {
+                "success": True,
+                "message": "Комментарий и запись модерации удалены.",
+            }
+        )
+    except Exception as e:
+        logger.error(
+            "Ошибка удаления модерации комментария id=%s: %s",
+            moderation_id,
+            str(e),
+            exc_info=True,
+        )
+        return JsonResponse(
+            {"success": False, "error": str(e)},
+            status=500,
+        )
 
 
 @login_required

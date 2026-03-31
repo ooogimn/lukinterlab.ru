@@ -54,11 +54,8 @@ def _auto_moderate_comment_handler(sender, instance, created, **kwargs):
     Процесс:
     1. При сохранении нового комментария автоматически запускается проверка
     2. Проверка идет по активным критериям модерации
-    3. В зависимости от результатов применяется действие:
-       - approved - комментарий одобрен и остается активным
-       - deleted - комментарий удаляется
-       - corrected - текст комментария исправляется автоматически
-       - replied - добавляется автоматический ответ
+    3. В зависимости от результатов и настроек критерия (delete / correct / reply) применяется действие:
+       approved, deleted, hidden, corrected, replied — как задано в админке для активного критерия
     """
     # Пропускаем, если это обновление существующего комментария (не создание)
     if not created:
@@ -94,14 +91,13 @@ def _auto_moderate_comment_handler(sender, instance, created, **kwargs):
         
         if result.get('error'):
             logger.warning(f"[AUTO_MODERATE] Ошибка модерации комментария {instance.id}: {result.get('error')}")
-            # Создаем запись модерации без действия (для ручной проверки)
             try:
                 content_type = ContentType.objects.get_for_model(instance)
                 comment_type_str = f"{content_type.app_label}.{content_type.model}"
                 CommentModeration.objects.get_or_create(
                     content_type=content_type,
                     object_id=instance.id,
-                    defaults={'comment_type': comment_type_str}
+                    defaults={'comment_type': comment_type_str},
                 )
                 moderation = CommentModeration.objects.get(content_type=content_type, object_id=instance.id)
                 notification_service.notify_comment_pending(moderation)
@@ -110,21 +106,22 @@ def _auto_moderate_comment_handler(sender, instance, created, **kwargs):
                     sender.objects.filter(pk=instance.pk).update(active=False)
                     logger.info(f"[AUTO_MODERATE] Комментарий {instance.id} скрыт из-за ошибки модерации (active=False)")
             except Exception as e:
-                logger.error(f"[AUTO_MODERATE] Ошибка при создании записи модерации для комментария {instance.id}: {str(e)}", exc_info=True)
+                logger.error(
+                    f"[AUTO_MODERATE] Ошибка при создании записи модерации для комментария {instance.id}: {str(e)}",
+                    exc_info=True,
+                )
         else:
             action = result.get('action', 'approved')
             deleted = result.get('deleted', False)
-            
+
             logger.info(f"[AUTO_MODERATE] Результат модерации комментария {instance.id}: action={action}, deleted={deleted}")
-            
-            # Если комментарий был удален, не пытаемся работать с ним дальше
+
             if deleted:
                 logger.info(f"[AUTO_MODERATE] Комментарий {instance.id} был удален после модерации. Прекращаем обработку.")
                 return
-            
+
             logger.info(f"[AUTO_MODERATE] Комментарий {instance.id} промодерирован: действие = {action}")
-            
-            # Отправляем уведомление только если требуется внимание модератора
+
             if action in ['hidden', 'deleted', 'corrected', 'replied']:
                 moderation = result.get('moderation')
                 if moderation:
@@ -132,24 +129,32 @@ def _auto_moderate_comment_handler(sender, instance, created, **kwargs):
                         notification_service.notify_comment_pending(moderation)
                         logger.info(f"[AUTO_MODERATE] Уведомление отправлено для комментария {instance.id}")
                     except Exception as e:
-                        logger.error(f"[AUTO_MODERATE] Ошибка при отправке уведомления для комментария {instance.id}: {str(e)}", exc_info=True)
-                
+                        logger.error(
+                            f"[AUTO_MODERATE] Ошибка при отправке уведомления для комментария {instance.id}: {str(e)}",
+                            exc_info=True,
+                        )
+
     except Exception as e:
-        logger.error(f"[AUTO_MODERATE] КРИТИЧЕСКАЯ ОШИБКА при автоматической модерации комментария {instance.id}: {str(e)}", exc_info=True)
-        # В случае ошибки создаем запись модерации для ручной проверки
+        logger.error(
+            f"[AUTO_MODERATE] КРИТИЧЕСКАЯ ОШИБКА при автоматической модерации комментария {instance.id}: {str(e)}",
+            exc_info=True,
+        )
         try:
             content_type = ContentType.objects.get_for_model(instance)
             comment_type_str = f"{content_type.app_label}.{content_type.model}"
             CommentModeration.objects.get_or_create(
                 content_type=content_type,
                 object_id=instance.id,
-                defaults={'comment_type': comment_type_str}
+                defaults={'comment_type': comment_type_str},
             )
             logger.info(f"[AUTO_MODERATE] Создана запись модерации для ручной проверки после ошибки (комментарий {instance.id})")
             if hasattr(instance, 'active'):
                 sender.objects.filter(pk=instance.pk).update(active=False)
         except Exception as e2:
-            logger.error(f"[AUTO_MODERATE] Не удалось создать запись модерации после ошибки для комментария {instance.id}: {str(e2)}", exc_info=True)
+            logger.error(
+                f"[AUTO_MODERATE] Не удалось создать запись модерации после ошибки для комментария {instance.id}: {str(e2)}",
+                exc_info=True,
+            )
 
 
 # Подключаем сигналы для всех типов комментариев

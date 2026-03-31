@@ -658,46 +658,42 @@ class CommentModerationService:
         return results
     
     def _determine_action(self, check_results: Dict[str, Any], criteria: CommentModerationCriteria) -> str:
-        """Определение действия на основе результатов проверки"""
+        """Определение действия на основе результатов проверки и JSON «Действия» в критерии (delete/correct/reply)."""
         if check_results.get('passed', True):
             return 'approved'
-        
+
         actions_data = criteria.actions if isinstance(criteria.actions, dict) else {}
         violations = check_results.get('violations', [])
-        
-        logger.info(f"[DETERMINE_ACTION] Violations: {violations}, Actions: delete={actions_data.get('delete')}, correct={actions_data.get('correct')}, reply={actions_data.get('reply')}")
-        
-        # Приоритет действий:
-        # 1. Удаление — для forbidden_words и spam (по умолчанию удалять, если явно не отключено: "delete": false)
+
+        logger.info(
+            f"[DETERMINE_ACTION] Violations: {violations}, "
+            f"actions: delete={actions_data.get('delete')}, correct={actions_data.get('correct')}, reply={actions_data.get('reply')}"
+        )
+
         if 'forbidden_words' in violations or 'spam' in violations:
             if actions_data.get('delete', True):
-                logger.info(f"[DETERMINE_ACTION] Выбрано действие: deleted (forbidden_words/spam)")
+                logger.info("[DETERMINE_ACTION] Выбрано действие: deleted (forbidden_words/spam)")
                 return 'deleted'
-        
-        # 2. Исправление (если включено) - для forbidden_words, too_short, too_long
-        # Проверяем forbidden_words для исправления
+
         if 'forbidden_words' in violations:
             if actions_data.get('correct', False):
-                logger.info(f"[DETERMINE_ACTION] Выбрано действие: corrected (forbidden_words + correct=True)")
+                logger.info("[DETERMINE_ACTION] Выбрано действие: corrected (forbidden_words + correct=True)")
                 return 'corrected'
-        
-        # Проверяем too_short и too_long для исправления
+
         if 'too_short' in violations or 'too_long' in violations:
             if actions_data.get('correct', False):
-                logger.info(f"[DETERMINE_ACTION] Выбрано действие: corrected (too_short/too_long + correct=True)")
+                logger.info("[DETERMINE_ACTION] Выбрано действие: corrected (too_short/too_long + correct=True)")
                 return 'corrected'
-        
-        # 3. Ответ (если включено) - для всех нарушений, если не применены delete или correct
+
         if actions_data.get('reply', False):
-            logger.info(f"[DETERMINE_ACTION] Выбрано действие: replied (reply=True)")
+            logger.info("[DETERMINE_ACTION] Выбрано действие: replied (reply=True)")
             return 'replied'
 
-        # Нарушения есть, но действие не настроено — не показываем комментарий на сайте
         if violations:
-            logger.info(f"[DETERMINE_ACTION] Нарушения без подходящего действия — скрываем (active=False)")
+            logger.info("[DETERMINE_ACTION] Нарушения без подходящего действия в критерии — hidden (active=False)")
             return 'hidden'
-        
-        logger.info(f"[DETERMINE_ACTION] Выбрано действие: approved")
+
+        logger.info("[DETERMINE_ACTION] Выбрано действие: approved")
         return 'approved'
 
 
