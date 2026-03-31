@@ -5,8 +5,8 @@ app_name = 'moderation'
 
 urlpatterns = [
     path('', views.moderation_dashboard, name='dashboard'),
+    path('articles/delete-post/<int:post_id>/', views.article_post_delete, name='article_post_delete'),
     path('articles/', views.article_moderation_list, name='article_list'),
-    path('articles/<int:moderation_id>/', views.article_moderation_detail, name='article_detail'),
     path('comments/', views.comment_moderation_list, name='comment_list'),
     path('comments/moderation/<int:moderation_id>/delete/', views.comment_moderation_delete, name='comment_moderation_delete'),
     path('comments/<int:comment_id>/edit/', views.comment_edit, name='comment_edit'),
