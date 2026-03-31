@@ -102,6 +102,47 @@ document.getElementById('mobile-menu-button').addEventListener('click', function
 
         <!-- Edit Form -->
         <div class="bg-white rounded-2xl shadow-lg p-8">
+            <!-- Отдельная форма: нельзя вкладывать <form> в форму редактирования -->
+            <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-2 mb-8">
+                <h3 class="text-sm font-semibold text-gray-800">Публикация в соцсетях</h3>
+                <p class="text-xs text-gray-500">После сохранения статьи в статусе «Опубликовано» время ВК подставляется автоматически (если настроен токен).</p>
+                <div class="text-sm text-gray-700">
+                    <span class="font-medium text-gray-600">Telegram:</span>
+                    {% if post.telegram_posted_at %}
+                        {{ post.telegram_posted_at|date:"d.m.Y H:i" }}
+                    {% else %}
+                        <span class="text-gray-500">ещё не отправлялось</span>
+                    {% endif %}
+                </div>
+                <div class="text-sm text-gray-700">
+                    <span class="font-medium text-gray-600">ВКонтакте:</span>
+                    {% if post.vk_posted_at %}
+                        {{ post.vk_posted_at|date:"d.m.Y H:i" }}
+                        {% if post.vk_wall_url %}
+                            — <a href="{{ post.vk_wall_url }}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">открыть пост на стене</a>
+                        {% elif post.vk_wall_post_id %}
+                            <span class="text-gray-500">(id поста: {{ post.vk_wall_post_id }})</span>
+                        {% else %}
+                            <span class="text-gray-500">— ссылка появится после успешной публикации в ВК</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="text-gray-500">ещё не отправлялось</span>
+                    {% endif %}
+                </div>
+                {% if post.status == 'published' %}
+                <form method="post" class="mt-3 flex flex-wrap items-center gap-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="reset_and_repost_vk" value="1" />
+                    <button type="submit"
+                            class="inline-flex items-center rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-100"
+                            onclick="return confirm('Сбросить метку ВК и отправить анонс на стену ещё раз? Предыдущий пост в ленте ВК останется, появится новый.');">
+                        Сбросить метку и повторить публикацию в ВК
+                    </button>
+                </form>
+                <p class="text-xs text-gray-500">После нажатия метка очищается, затем снова вызывается автопостинг. Если всё прошло успешно — время и ссылка обновятся на новые.</p>
+                {% endif %}
+            </div>
+
             <form method="post" enctype="multipart/form-data" class="space-y-6">
                 {% csrf_token %}
                 

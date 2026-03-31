@@ -3,6 +3,13 @@
 <!-- CKEditor Contents CSS for proper content display -->
 <link rel="stylesheet" href="{% static 'ckeditor/ckeditor/contents.css' %}">
 
+{% if staff_article_preview %}
+<div class="sticky top-0 z-[100] flex flex-wrap items-center justify-between gap-2 border-b border-amber-200 bg-amber-100 px-4 py-2 text-sm text-amber-950 shadow-sm">
+    <span class="font-medium">Предпросмотр{% if post.status == "draft" %} · черновик{% endif %}</span>
+    <a href="{{ staff_preview_back_url }}" class="rounded-md bg-amber-200/80 px-3 py-1 font-semibold hover:bg-amber-300 transition-colors">← Назад к списку</a>
+</div>
+{% endif %}
+
 <!-- Blog Post Detail -->
 <article class="py-12 bg-white">
     <div class="max-w-4xl mx-auto px-4">
@@ -19,8 +26,8 @@
                     <li class="text-gray-900">{{ post.title|truncatechars:30 }}</li>
                 </ol>
                 
-                <!-- Admin buttons for superuser -->
-                {% if user.is_authenticated and user.is_superuser %}
+                <!-- Редактирование / удаление: staff и суперюзер -->
+                {% if user.is_authenticated and user.is_staff %}
                 <div class="flex items-center gap-2">
                     <a href="{% url 'Blog:post_edit' post.id post.slug %}" 
                        class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-semibold">
@@ -66,6 +73,17 @@
                     </div>
                     <span class="text-xs text-gray-400 sm:border-l sm:border-gray-200 sm:pl-3">Создано: {{ post.created|date:"d.m.Y" }}</span>
                 </div>
+                {% if post.vk_posted_at %}
+                <div class="flex items-center mr-6 flex-wrap gap-x-1">
+                    <span class="mr-1 rounded bg-[#0077FF] px-1.5 py-0.5 text-[10px] font-bold text-white leading-none" title="ВКонтакте">VK</span>
+                    <span class="font-medium text-gray-700">в сообществе:</span>
+                    {% if post.vk_wall_url %}
+                    <a href="{{ post.vk_wall_url }}" target="_blank" rel="noopener noreferrer" class="text-[#0077FF] hover:underline">открыть пост</a>
+                    {% else %}
+                    <span class="text-gray-500">опубликовано {{ post.vk_posted_at|date:"d.m.Y" }}</span>
+                    {% endif %}
+                </div>
+                {% endif %}
                 {% if post.views %}
                 <div class="flex items-center mr-6">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

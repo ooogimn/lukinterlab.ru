@@ -125,7 +125,6 @@ def article_moderation_list(request):
         'status_filter': status_param or '',
         'queue_only': queue_only,
         'archive': archive,
-        'default_work_mode': not queue_only and not archive and not status_param,
         'status_choices': ArticleModeration.STATUS_CHOICES,
     }
     return render(request, 'moderation/article_list.html', context)
@@ -133,54 +132,14 @@ def article_moderation_list(request):
 
 @login_required
 @user_passes_test(is_moderator)
-def article_moderation_detail(request, moderation_id):
-    """Детальная страница модерации статьи"""
-    moderation = get_object_or_404(ArticleModeration, id=moderation_id)
-    
-    if request.method == 'POST':
-        status = request.POST.get('status')
-        valid_statuses = {k for k, _ in ArticleModeration.STATUS_CHOICES}
-        if status not in valid_statuses:
-            messages.error(request, 'Некорректный статус модерации.')
-            return redirect('moderation:article_detail', moderation_id=moderation_id)
-        comment = request.POST.get('moderator_comment', '')
-        publish_after = request.POST.get('publish_after_approve') == '1'
-
-        with transaction.atomic():
-            moderation.status = status
-            moderation.moderator_comment = comment
-            moderation.moderator = request.user
-            moderation.moderated_at = timezone.now()
-            moderation.save()
-
-            post = moderation.post
-            if publish_after and status == 'approved' and post.status == 'draft':
-                post.status = 'published'
-                post.save(update_fields=['status'])
-
-        msg = 'Статус модерации обновлен.'
-        if publish_after and status == 'approved':
-            published_now = Post.objects.filter(pk=moderation.post_id, status='published').exists()
-            if published_now:
-                msg += ' Статья опубликована на сайте.'
-                messages.success(request, msg)
-            else:
-                messages.success(request, msg)
-                messages.warning(
-                    request,
-                    'Публикация не выполнена: автопроверка по критериям статей оставила пост в черновиках. '
-                    'Доработайте заголовок, текст или SEO по блоку проверки ниже и снова отметьте «Опубликовать».',
-                )
-        else:
-            messages.success(request, msg)
-        return redirect('moderation:article_list')
-    
-    context = {
-        'moderation': moderation,
-        'post': moderation.post,
-        'status_choices': ArticleModeration.STATUS_CHOICES,
-    }
-    return render(request, 'moderation/article_detail.html', context)
+@require_http_methods(["POST"])
+def article_post_delete(request, post_id):
+    """Удаление статьи и связанной карточки ArticleModeration (CASCADE)."""
+    post = get_object_or_404(Post, pk=post_id)
+    title = post.title
+    post.delete()
+    messages.success(request, f'Статья «{title}» удалена.')
+    return redirect('moderation:article_list')
 
 
 @login_required

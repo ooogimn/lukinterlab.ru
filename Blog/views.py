@@ -10,7 +10,7 @@ from taggit.models import Tag
 from urllib.parse import unquote
 from django.db.models import Q, Count, F
 from django.contrib import messages
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 import logging
@@ -144,6 +144,57 @@ def post_list(request, category_slug=None):
                    'structured_data': structured_data})
 
 
+def _blog_staff_user(user):
+    return user.is_authenticated and (user.is_staff or user.is_superuser)
+
+
+def _singl_page_context(request, post, comment_form, show_form, **extra):
+    """Общий контекст для шаблона страницы статьи (page_singl-1 / singl-1)."""
+    comments = post.comments.filter(active=True, parent=None).prefetch_related('children')
+    user_liked = False
+    if request.user.is_authenticated:
+        user_liked = PostLike.objects.filter(post=post, user=request.user).exists()
+    else:
+        ip_address = get_client_ip(request)
+        if ip_address:
+            user_liked = PostLike.objects.filter(post=post, ip_address=ip_address).exists()
+
+    comments_count = post.comments.filter(active=True).count()
+
+    from .utils import get_related_posts, generate_article_structured_data, generate_table_of_contents
+    from .utils import generate_faq_structured_data, generate_howto_structured_data
+
+    related_posts = get_related_posts(post, limit=5)
+    toc_html = None
+    post_content_with_toc = post.content
+    if post.content:
+        toc_html, post_content_with_toc = generate_table_of_contents(post.content, min_headings=3)
+
+    structured_data = generate_article_structured_data(post, request)
+    faq_data = generate_faq_structured_data(post)
+    howto_data = generate_howto_structured_data(post)
+    if faq_data:
+        structured_data['faq'] = json.dumps(faq_data, ensure_ascii=False)
+    if howto_data:
+        structured_data['howto'] = json.dumps(howto_data, ensure_ascii=False)
+
+    ctx = {
+        'post': post,
+        'zagolovok': post.title,
+        'comments': comments,
+        'comments_count': comments_count,
+        'comment_form': comment_form,
+        'user_liked': user_liked,
+        'show_comment_form': show_form,
+        'related_posts': related_posts,
+        'structured_data': structured_data,
+        'toc_html': toc_html,
+        'post_content_with_toc': post_content_with_toc,
+    }
+    ctx.update(extra)
+    return ctx
+
+
 def post_detail(request, id, slug):
     try:
         post = get_object_or_404(Post, id=id, slug=slug)
@@ -170,19 +221,6 @@ def post_detail(request, id, slug):
                     stats.save(update_fields=['total_views', 'priority'])
                 except Exception as e:
                     logger.warning(f"Ошибка обновления статистики категории: {str(e)}")
-        
-        # Получаем только корневые комментарии с их ответами
-        comments = post.comments.filter(active=True, parent=None).prefetch_related('children')
-        
-        # Проверяем, лайкнул ли текущий пользователь/IP эту статью
-        user_liked = False
-        if request.user.is_authenticated:
-            user_liked = PostLike.objects.filter(post=post, user=request.user).exists()
-        else:
-            # Для неавторизованных пользователей проверяем по IP
-            ip_address = get_client_ip(request)
-            if ip_address:
-                user_liked = PostLike.objects.filter(post=post, ip_address=ip_address).exists()
 
         if request.method == 'POST':
             try:
@@ -317,9 +355,6 @@ def post_detail(request, id, slug):
             else:
                 comment_form = None
 
-        # Подсчитываем общее количество активных комментариев (включая ответы)
-        comments_count = post.comments.filter(active=True).count()
-        
         # Если форма была отправлена с ошибками (не AJAX), показываем её открытой
         show_form = False
         if (
@@ -329,43 +364,12 @@ def post_detail(request, id, slug):
         ):
             if comment_form is not None and hasattr(comment_form, 'errors') and comment_form.errors:
                 show_form = True
-        
-        # Получаем похожие статьи для внутренней перелинковки
-        from .utils import get_related_posts, generate_article_structured_data, generate_table_of_contents
-        related_posts = get_related_posts(post, limit=5)
-        
-        # Генерируем таблицу содержания (TOC) если есть достаточно заголовков
-        toc_html = None
-        post_content_with_toc = post.content
-        if post.content:
-            toc_html, post_content_with_toc = generate_table_of_contents(post.content, min_headings=3)
-        
-        # Генерируем structured data
-        structured_data = generate_article_structured_data(post, request)
-        
-        # Генерируем FAQ structured data если есть FAQ
-        from .utils import generate_faq_structured_data, generate_howto_structured_data
-        faq_data = generate_faq_structured_data(post)
-        howto_data = generate_howto_structured_data(post)
-        
-        if faq_data:
-            structured_data['faq'] = json.dumps(faq_data, ensure_ascii=False)
-        if howto_data:
-            structured_data['howto'] = json.dumps(howto_data, ensure_ascii=False)
-        
-        return render(request,
-                      'blog/page_singl-1.html',
-                      {'post': post,
-                       'zagolovok': post.title,
-                       'comments': comments,
-                       'comments_count': comments_count,
-                       'comment_form': comment_form,
-                       'user_liked': user_liked,
-                       'show_comment_form': show_form,
-                       'related_posts': related_posts,
-                       'structured_data': structured_data,
-                       'toc_html': toc_html,
-                       'post_content_with_toc': post_content_with_toc})
+
+        return render(
+            request,
+            'blog/page_singl-1.html',
+            _singl_page_context(request, post, comment_form, show_form),
+        )
     except Http404:
         logger.error(f"Post not found: id={id}, slug={slug}")
         # Try to find the post by ID only
@@ -377,6 +381,31 @@ def post_detail(request, id, slug):
         except Post.DoesNotExist:
             pass
         raise Http404("Статья не найдена. Возможно, она была удалена или перемещена.")
+
+
+@login_required
+@user_passes_test(_blog_staff_user)
+@require_http_methods(['GET'])
+def post_staff_preview(request, id, slug):
+    """
+    Предпросмотр статьи для персонала (включая черновики): вёрстка как на сайте,
+    без накрутки счётчика просмотров. Параметр next — URL «Назад» (список модерации и т.п.).
+    """
+    post = get_object_or_404(Post, id=id, slug=slug)
+    back_url = request.GET.get('next') or reverse('moderation:article_list')
+    comment_form = CommentForm(user=request.user) if request.user.is_authenticated else None
+    return render(
+        request,
+        'blog/page_singl-1.html',
+        _singl_page_context(
+            request,
+            post,
+            comment_form,
+            False,
+            staff_article_preview=True,
+            staff_preview_back_url=back_url,
+        ),
+    )
 
 
 def post_list_by_tag(request, tag_slug=None):
@@ -521,17 +550,23 @@ def filter_posts_ajax(request):
     return JsonResponse({'success': False, 'error': 'Invalid request'})
 
 
-def is_superuser(user):
-    """Проверка, что пользователь суперюзер"""
-    return user.is_authenticated and user.is_superuser
-
-
 @login_required
-@user_passes_test(is_superuser)
+@user_passes_test(_blog_staff_user)
 def post_edit(request, id, slug):
-    """Страница редактирования статьи (только для суперюзера)"""
+    """Страница редактирования статьи (staff / суперюзер — как доступ к панели модерации)"""
     post = get_object_or_404(Post, id=id, slug=slug)
-    
+
+    if request.method == 'POST' and request.POST.get('reset_and_repost_vk'):
+        post.vk_posted_at = None
+        post.vk_wall_post_id = None
+        post.save(update_fields=['vk_posted_at', 'vk_wall_post_id'])
+        messages.success(
+            request,
+            'Метки публикации ВК сброшены и снова вызвана отправка на стену '
+            '(при статусе «Опубликовано» и настроенном токене). Проверьте блок «ВКонтакте» ниже.',
+        )
+        return redirect('Blog:post_edit', id=post.id, slug=post.slug)
+
     if request.method == 'POST':
         form = PostEditForm(request.POST, request.FILES, instance=post)
         if form.is_valid():
