@@ -167,4 +167,16 @@ def send_to_telegram(post):
         except Exception as e:
             logger.error(f"Ошибка отправки сообщения в Telegram: {str(e)}", exc_info=True)
             logger.error(f"Ошибка Telegram не опубликована: {post.title}")
-            return False 
+            return False
+
+
+def send_to_telegram_by_id(post_id: int):
+    """Точка входа для Django-Q — не блокировать Passenger длинными requests к Telegram API."""
+    from Blog.models import Post
+
+    try:
+        post = Post.objects.get(pk=post_id)
+    except Post.DoesNotExist:
+        logger.warning('Telegram: статья id=%s не найдена', post_id)
+        return False
+    return send_to_telegram(post)

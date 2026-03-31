@@ -10,7 +10,6 @@ import logging
 from django.db import transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from .telegram_utils import send_to_telegram
 from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
@@ -355,18 +354,24 @@ def publish_to_social(sender, instance, created, **kwargs):
     Обработчик сигналов для публикации сообщений в социальных сетях при их публикации
     """
     if instance.status == 'published':
-        if not instance.telegram_posted_at:
-            send_to_telegram(instance)
-        if not instance.vk_posted_at:
-            post_pk = instance.pk
+        # Telegram и VK только в фоне (django-q), иначе синхронные requests в этом же HTTP-запросе
+        # дают у Passenger «Incomplete response received from application».
+        need_tg = not instance.telegram_posted_at
+        need_vk = not instance.vk_posted_at
+        if not need_tg and not need_vk:
+            return
+        post_pk = instance.pk
 
-            def _enqueue_vk():
-                try:
-                    from django_q.tasks import async_task
+        def _enqueue_social():
+            try:
+                from django_q.tasks import async_task
 
+                if need_tg:
+                    async_task('Blog.telegram_utils.send_to_telegram_by_id', post_pk)
+                if need_vk:
                     async_task('Blog.vk_utils.send_to_vk_by_id', post_pk)
-                except Exception:
-                    logger.exception('VK: не удалось поставить задачу в очередь django-q')
+            except Exception:
+                logger.exception('Соцсети: не удалось поставить задачи в очередь django-q')
 
-            transaction.on_commit(_enqueue_vk)
+        transaction.on_commit(_enqueue_social)
 
