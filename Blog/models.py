@@ -5,10 +5,12 @@ from taggit.managers import TaggableManager
 from ckeditor.fields import RichTextField
 from ckeditor_uploader.fields import RichTextUploadingField
 from mptt.models import MPTTModel, TreeForeignKey
+import logging
+
+from django.db import transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .telegram_utils import send_to_telegram
-from .vk_utils import send_to_vk
 from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
@@ -16,6 +18,8 @@ from imagekit.models import ImageSpecField
 from imagekit.processors import ResizeToFill, ResizeToFit
 
 User = get_user_model()
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -85,6 +89,12 @@ class Post(models.Model):
                                 related_name='updater_posts', blank=True)
     telegram_posted_at = models.DateTimeField(verbose_name='Время публикации в Телеге', blank=True, null=True)
     vk_posted_at = models.DateTimeField(verbose_name='Время публикации в VK', blank=True, null=True)
+    vk_wall_post_id = models.PositiveIntegerField(
+        verbose_name='ID поста на стене VK',
+        blank=True,
+        null=True,
+        help_text='Из ответа wall.post (для прямой ссылки на пост в сообществе).',
+    )
     fixed = models.BooleanField(verbose_name='Выполнено', default=False)
     views = models.IntegerField(verbose_name='Просмотры', default=0)
     likes_count = models.IntegerField(verbose_name='Количество лайков', default=0)
@@ -144,6 +154,24 @@ class Post(models.Model):
     def has_image(self):
         """Проверка наличия файла изображения"""
         return bool(self.kartinka and hasattr(self.kartinka, 'url'))
+
+    def get_vk_wall_url(self):
+        """Прямая ссылка на пост на стене сообщества (если известен vk_wall_post_id)."""
+        if not self.vk_wall_post_id:
+            return None
+        try:
+            from django.conf import settings
+            gid = str(getattr(settings, 'VK_GROUP_ID', '') or '').strip().lstrip('-')
+            if not gid:
+                return None
+            return f'https://vk.com/wall-{gid}_{self.vk_wall_post_id}'
+        except Exception:
+            return None
+
+    @property
+    def vk_wall_url(self):
+        """Для шаблонов: {{ post.vk_wall_url }}."""
+        return self.get_vk_wall_url()
 
     def get_absolute_url(self):
         """Метод получения URL-адреса объекта"""
@@ -330,5 +358,15 @@ def publish_to_social(sender, instance, created, **kwargs):
         if not instance.telegram_posted_at:
             send_to_telegram(instance)
         if not instance.vk_posted_at:
-            send_to_vk(instance)
+            post_pk = instance.pk
+
+            def _enqueue_vk():
+                try:
+                    from django_q.tasks import async_task
+
+                    async_task('Blog.vk_utils.send_to_vk_by_id', post_pk)
+                except Exception:
+                    logger.exception('VK: не удалось поставить задачу в очередь django-q')
+
+            transaction.on_commit(_enqueue_vk)
 
