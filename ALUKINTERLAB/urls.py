@@ -39,8 +39,9 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 else:
-    # Для продакшена: раздача медиа-файлов через Django (временное решение)
-    # В идеале нужно настроить nginx/apache для раздачи медиа-файлов
+    # Продакшен: медиа и статика через Django, если веб-сервер не отдаёт /media/ и /static/
+    # (иначе админка/Jazzmin без CSS при DEBUG=False). Идеально — alias в Apache/Nginx.
     urlpatterns += [
         re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+        re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
     ]
