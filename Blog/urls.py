@@ -7,6 +7,7 @@ urlpatterns = [
     path('', post_list, name='post_list'),
     path('search/', post_search, name='post_search'),
     path('tag/<str:tag_slug>/', post_list_by_tag, name='post_list_by_tag'),
+    path('<int:id>/<slug:slug>/preview/', post_staff_preview, name='post_staff_preview'),
     path('<int:id>/<slug:slug>/edit/', post_edit, name='post_edit'),
     path('<int:id>/<slug:slug>/', post_detail, name='post_detail'),
     path('<slug:category_slug>/', post_list, name='post_list_by_category'),

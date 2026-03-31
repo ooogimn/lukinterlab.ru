@@ -2,17 +2,19 @@
 
 import django.db.models.deletion
 from django.db import migrations, models
-from django.contrib.contenttypes.models import ContentType
 
 
 def migrate_comment_data(apps, schema_editor):
     """Перенос данных из старого поля comment в GenericForeignKey"""
     CommentModeration = apps.get_model('Moderation', 'CommentModeration')
-    Comment = apps.get_model('Blog', 'Comment')
     ContentTypeModel = apps.get_model('contenttypes', 'ContentType')
-    
-    # Получаем ContentType для Comment
-    comment_ct = ContentTypeModel.objects.get(app_label='Blog', model='comment')
+
+    # На чистой БД строки в django_content_type для Blog.comment ещё может не быть
+    # (post_migrate создаёт их позже), поэтому get, а не get_or_create, падал с DoesNotExist.
+    comment_ct, _ = ContentTypeModel.objects.using(schema_editor.connection.alias).get_or_create(
+        app_label='Blog',
+        model='comment',
+    )
     
     # Переносим данные - в момент миграции старое поле comment еще существует
     # Используем прямое обращение через comment_id (ForeignKey поле)

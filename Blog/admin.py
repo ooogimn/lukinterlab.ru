@@ -110,7 +110,7 @@ class PostAdmin(admin.ModelAdmin):
     date_hierarchy = 'created'
     ordering = ['category', 'created']
     save_on_top = True
-    readonly_fields = ['post_photo', 'seo_score', 'published_at']
+    readonly_fields = ['post_photo', 'seo_score', 'published_at', 'vk_wall_post_id']
     list_editable = ['status', 'fixed']
     actions = ['publish_selected', 'unpublish_selected', 'mark_as_fixed', 'mark_as_unfixed']
     
@@ -139,7 +139,7 @@ class PostAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
         ('Социальные сети', {
-            'fields': ('telegram_posted_at', 'vk_posted_at', 'description'),
+            'fields': ('telegram_posted_at', 'vk_posted_at', 'vk_wall_post_id', 'description'),
             'classes': ('collapse',)
         }),
     )

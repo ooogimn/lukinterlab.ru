@@ -404,11 +404,12 @@ AI_MAX_TOKENS = 1000
 AI_TEMPERATURE = 0.7
 
 # Django-Q Configuration
-# ВНИМАНИЕ: Для SQLite в production рекомендуется использовать sync режим
-# или минимизировать количество воркеров для предотвращения блокировок
+# sync=True: async_task выполняется в том же процессе, что и HTTP-запрос → долгие задачи
+# рвут ответ Passenger («Incomplete response»). На проде держим sync=False, воркер — qcluster.
+# При необходимости синхронной отладки: DJANGO_Q_SYNC=True в .env
 Q_CLUSTER = {
     'name': 'LukInterLab',
-    'workers': 1,  # Один воркер для SQLite (предотвращает блокировки БД)
+    'workers': 1,  # Один воркер для SQLite (меньше конкуренции за db.sqlite3)
     'timeout': 300,
     'retry': 600,
     'queue_limit': 500,
@@ -417,7 +418,7 @@ Q_CLUSTER = {
     'cache': 'diskcache',
     'diskcache_dir': BASE_DIR / 'qcache',
     'save_limit': 250,
-    'sync': not DEBUG,  # Синхронный режим в production для SQLite (избегаем блокировок)
+    'sync': env_bool('DJANGO_Q_SYNC', False),
     'catch_up': True,
     'label': 'Django Q',
     'db_timeout': 30,  # Timeout для операций с БД

@@ -19,7 +19,12 @@ ENV/
 qcluster.log
 logs/
 db.sqlite3
+db.sqlite3.SERVER_BACKUP
 db.sqlite3-*
+# Восстановление БД / спасательные дампы (не в репозиторий)
+rescued_*.json
+*.broken
+*.REBORN_FINAL
 media/
 # Собранная статика (STATIC_ROOT); исходники — папка STATIC/
 static/
@@ -30,6 +35,9 @@ qcache/
 tmp/
 *.sqlite3-shm
 *.sqlite3-wal
+
+# Локальный rsync БД/media (хост/путь к серверу не в репозитории)
+sync_data.sh
 
 # Секреты и окружение (ключи держите в env или в приватном репо)
 .env
