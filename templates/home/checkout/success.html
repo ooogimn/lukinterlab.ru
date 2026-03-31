@@ -1,0 +1,232 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Заказ оформлен - {{ order.order_number }}{% endblock %}
+
+{% block meny %}
+{% include "meny/sidibar-1.html" %}
+{% endblock meny %}
+
+{% block straniza %}
+<!-- Success Section -->
+<section class="py-20 relative overflow-hidden section-background section-background-animate" 
+         style="{{ section_backgrounds.resume.background_style|default:'background: #f9fafb;' }}">
+    
+    <!-- Видео фон -->
+    {% if section_backgrounds.resume.type == 'video' and section_backgrounds.resume.video_url %}
+    <video class="section-video-background" autoplay muted loop playsinline>
+        <source src="{{ section_backgrounds.resume.video_url }}" type="video/mp4">
+    </video>
+    {% endif %}
+    
+    <!-- Наложение -->
+    {% if section_backgrounds.resume.has_overlay %}
+    <div class="section-overlay" style="{{ section_backgrounds.resume.overlay_style }}"></div>
+    {% endif %}
+    
+    <!-- Контент -->
+    <div class="section-content">
+        <div class="max-w-4xl mx-auto px-4">
+            <!-- Success Message -->
+            <div class="bg-white rounded-3xl p-12 shadow-lg text-center mb-8">
+                <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                
+                <h1 class="text-4xl md:text-5xl font-bold text-primary-500 mb-4">
+                    Заказ успешно оформлен!
+                </h1>
+                
+                <p class="text-xl text-green-500 mb-8">
+                    Спасибо за ваш заказ. Мы свяжемся с вами в ближайшее время.
+                </p>
+                
+                <div class="bg-gray-50 rounded-2xl p-6 mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Информация о заказе</h2>
+                    
+                    <div class="grid md:grid-cols-2 gap-6 text-left">
+                        <div>
+                            <p class="text-sm text-gray-600">Номер заказа</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ order.order_number }}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-sm text-gray-600">Дата оформления</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ order.created|date:"d.m.Y H:i" }}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-sm text-gray-600">Клиент</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ order.customer_name }}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-sm text-gray-600">Email</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ order.customer_email }}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-sm text-gray-600">Телефон</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ order.customer_phone }}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-sm text-gray-600">Общая стоимость</p>
+                            <p class="text-lg font-semibold text-primary-600">{{ order.total_price|floatformat:0 }} ₽</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Order Items -->
+                <div class="bg-gray-50 rounded-2xl p-6 mb-8">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">Заказанные услуги</h3>
+                    
+                    <div class="space-y-4">
+                        {% for item in order.orderitem_set.all %}
+                        <div class="flex items-center justify-between p-4 bg-white rounded-xl">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-gradient-to-r {% if item.service_type == 'service' %}from-blue-500 to-blue-600{% else %}from-orange-500 to-red-500{% endif %} rounded-lg flex items-center justify-center">
+                                    {% if item.service_type == 'service' %}
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                    </svg>
+                                    {% else %}
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">{{ item.title }}</h4>
+                                    <p class="text-sm text-gray-600">
+                                        {% if item.service_type == 'service' %}Основная услуга{% else %}Дополнительная услуга{% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-semibold text-gray-900">{{ item.price }}</div>
+                                <div class="text-sm text-gray-600">x{{ item.quantity }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Next Steps -->
+                <div class="bg-blue-50 rounded-2xl p-6 mb-8">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">Что дальше?</h3>
+                    
+                    <div class="grid md:grid-cols-3 gap-6 text-left">
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <span class="text-blue-600 font-bold">1</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-900 mb-2">Подтверждение</h4>
+                            <p class="text-sm text-gray-600">Мы свяжемся с вами в течение 24 часов для подтверждения заказа</p>
+                        </div>
+                        
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <span class="text-blue-600 font-bold">2</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-900 mb-2">Обсуждение</h4>
+                            <p class="text-sm text-gray-600">Обсудим детали проекта и уточним технические требования</p>
+                        </div>
+                        
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <span class="text-blue-600 font-bold">3</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-900 mb-2">Начало работы</h4>
+                            <p class="text-sm text-gray-600">Приступим к разработке вашего проекта</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment Section -->
+                {% if order.payment_status == 'pending' %}
+                <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-6 mb-8">
+                    <div class="flex items-start mb-4">
+                        <div class="p-3 bg-yellow-100 rounded-lg mr-4">
+                            <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-yellow-800 mb-2">Оплата заказа</h3>
+                            <p class="text-yellow-700 mb-4">
+                                Для начала работы над проектом необходимо произвести оплату заказа.
+                            </p>
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <a href="{% url 'home:order_pay' order.id %}" class="inline-flex items-center justify-center bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-lg font-semibold hover:from-green-700 hover:to-green-800 transition-all duration-300 shadow-lg hover:shadow-xl">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                    </svg>
+                                    Оплатить сейчас ({{ order.total_price|floatformat:0 }} ₽)
+                                </a>
+                                {% if order.customer %}
+                                <a href="{% url 'home:customer_dashboard' %}" class="inline-flex items-center justify-center bg-white text-yellow-700 px-6 py-3 rounded-lg font-semibold hover:bg-yellow-100 transition-colors border-2 border-yellow-300">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    Оплатить позже
+                                </a>
+                                {% endif %}
+                            </div>
+                            {% if order.customer %}
+                            <div class="mt-4 p-3 bg-white rounded-lg border border-yellow-200">
+                                <p class="text-sm text-yellow-800">
+                                    <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <strong>Не успеваете оплатить сейчас?</strong> Не волнуйтесь! Ваш заказ сохранён в личном кабинете. 
+                                    Вы можете оплатить его в любое удобное время, зайдя в раздел "Мои заказы". 
+                                    Заказ будет отображаться со статусом "Ожидает оплаты".
+                                </p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% elif order.payment_status == 'paid' %}
+                <div class="bg-green-50 border border-green-200 rounded-2xl p-6 mb-8">
+                    <h3 class="text-xl font-bold text-green-800 mb-4">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Заказ оплачен
+                    </h3>
+                    <p class="text-green-700">
+                        Спасибо! Оплата получена. Мы приступим к работе над вашим проектом.
+                    </p>
+                </div>
+                {% endif %}
+                
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    {% if order.customer %}
+                    <a href="{% url 'home:customer_dashboard' %}" class="inline-flex items-center justify-center bg-gradient-to-r from-primary-600 to-secondary-600 text-white px-8 py-3 rounded-full font-semibold hover:from-primary-700 hover:to-secondary-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                        </svg>
+                        Личный кабинет
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'home:home' %}" class="inline-flex items-center justify-center bg-gray-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-gray-700 transition-colors">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                        </svg>
+                        На главную
+                    </a>
+                    <a href="{% url 'home:home' %}#contact" class="inline-flex items-center justify-center bg-blue-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-blue-700 transition-colors">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                        Связаться с нами
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock straniza %} 

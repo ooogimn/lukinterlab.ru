@@ -1,0 +1,108 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Вход - Личный кабинет{% endblock %}
+
+{% block meny %}
+{% include "meny/sidibar-1.html" %}
+{% endblock meny %}
+
+{% block straniza %}
+<section class="py-20 relative overflow-hidden section-background section-background-animate" 
+         style="{{ section_backgrounds.resume.background_style|default:'background: #f9fafb;' }}">
+    
+    <!-- Видео фон -->
+    {% if section_backgrounds.resume.type == 'video' and section_backgrounds.resume.video_url %}
+    <video class="section-video-background" autoplay muted loop playsinline>
+        <source src="{{ section_backgrounds.resume.video_url }}" type="video/mp4">
+    </video>
+    {% endif %}
+    
+    <!-- Наложение -->
+    {% if section_backgrounds.resume.has_overlay %}
+    <div class="section-overlay" style="{{ section_backgrounds.resume.overlay_style }}"></div>
+    {% endif %}
+    
+    <!-- Контент -->
+    <div class="section-content">
+        <div class="max-w-md mx-auto px-4">
+            <!-- Breadcrumb -->
+            <nav class="mb-8">
+                <ol class="flex items-center space-x-2 text-sm text-gray-600">
+                    <li><a href="{% url 'home:home' %}" class="hover:text-primary-600">Главная</a></li>
+                    <li><span class="mx-2">/</span></li>
+                    <li class="text-primary-600">Вход</li>
+                </ol>
+            </nav>
+            
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Вход в личный кабинет</h1>
+                <p class="text-gray-600">Введите свои данные для входа</p>
+            </div>
+            
+            <!-- Login Form -->
+            <div class="bg-white rounded-2xl shadow-lg p-8">
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <div>
+                        <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Логин или Email
+                        </label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.username.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Пароль
+                        </label>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.password.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    {% if form.non_field_errors %}
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                            {% for error in form.non_field_errors %}
+                                <p class="text-red-600 text-sm">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Submit Button -->
+                    <button type="submit" class="w-full bg-gradient-to-r from-primary-600 to-secondary-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-primary-700 hover:to-secondary-700 transition-all duration-300 transform hover:scale-105">
+                        Войти
+                    </button>
+                </form>
+
+                {% include "home/customer/vkid_oauth_widget.html" %}
+                
+                <!-- Register Link -->
+                <div class="mt-6 text-center">
+                    <p class="text-gray-600">
+                        Нет аккаунта? 
+                        <a href="{% url 'home:customer_register' %}" class="text-primary-600 hover:text-primary-700 font-medium">
+                            Зарегистрироваться
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.form-control {
+    @apply block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors;
+}
+
+.form-control:focus {
+    @apply ring-2 ring-primary-500 border-primary-500;
+}
+</style>
+{% endblock straniza %} 

@@ -1,0 +1,149 @@
+{% extends 'moderation/base.html' %}
+
+{% block moderation_content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
+            SEO анализ статей
+        </h1>
+        <p class="text-gray-700 text-lg font-medium">Анализ и оптимизация SEO параметров</p>
+    </div>
+    
+    <!-- Фильтры -->
+    <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
+        <div class="flex flex-wrap gap-2">
+            <a href="{% url 'moderation:seo_list' %}" 
+               class="px-4 py-2 rounded-lg {% if score_filter == 'all' %}bg-indigo-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors">
+                Все
+            </a>
+            <a href="{% url 'moderation:seo_list' %}?score=high" 
+               class="px-4 py-2 rounded-lg {% if score_filter == 'high' %}bg-indigo-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors">
+                Высокий (80+)
+            </a>
+            <a href="{% url 'moderation:seo_list' %}?score=medium" 
+               class="px-4 py-2 rounded-lg {% if score_filter == 'medium' %}bg-indigo-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors">
+                Средний (50-79)
+            </a>
+            <a href="{% url 'moderation:seo_list' %}?score=low" 
+               class="px-4 py-2 rounded-lg {% if score_filter == 'low' %}bg-indigo-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors">
+                Низкий (<50)
+            </a>
+        </div>
+    </div>
+    
+    <!-- Список SEO анализов -->
+    <div class="bg-white rounded-2xl shadow-xl p-6">
+        {% if page_obj %}
+        <div class="space-y-4">
+            {% for analysis in page_obj %}
+            <div class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <h3 class="text-xl font-semibold text-gray-900">
+                                <a href="{% url 'moderation:seo_detail' analysis.id %}" class="hover:text-indigo-600">
+                                    {{ analysis.post.title }}
+                                </a>
+                            </h3>
+                            <div class="flex items-center space-x-2">
+                                <div class="relative w-16 h-16">
+                                    <svg class="transform -rotate-90 w-16 h-16">
+                                        <circle cx="32" cy="32" r="28" stroke="#e5e7eb" stroke-width="4" fill="none"></circle>
+                                        <circle cx="32" cy="32" r="28" 
+                                                stroke="{% if analysis.seo_score >= 80 %}#10b981{% elif analysis.seo_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %}" 
+                                                stroke-width="4" fill="none"
+                                                stroke-dasharray="{% widthratio analysis.seo_score 100 176 %} 176"
+                                                stroke-dashoffset="0"></circle>
+                                    </svg>
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <span class="text-lg font-bold {% if analysis.seo_score >= 80 %}text-green-600{% elif analysis.seo_score >= 50 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                                            {{ analysis.seo_score }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
+                            <div>
+                                <span class="text-gray-600">Meta Title:</span>
+                                <span class="font-medium text-gray-900 block truncate">{{ analysis.meta_title|default:"Не указан" }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Meta Description:</span>
+                                <span class="font-medium text-gray-900 block truncate">{{ analysis.meta_description|default:"Не указано" }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Ключевое слово:</span>
+                                <span class="font-medium text-gray-900">{{ analysis.focus_keyword|default:"Не указано" }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Проанализировано:</span>
+                                <span class="font-medium text-gray-900">{{ analysis.analyzed_at|date:"d.m.Y H:i" }}</span>
+                            </div>
+                        </div>
+                        
+                        {% if analysis.analysis_data.checks %}
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-gray-800 mb-2">Детали проверки:</h4>
+                            <div class="grid grid-cols-2 gap-2 text-sm">
+                                {% for check, data in analysis.analysis_data.checks.items %}
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-700">{{ check }}:</span>
+                                    <span class="font-medium {% if data.score >= 15 %}text-green-600{% elif data.score >= 8 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                                        {{ data.score }}/{{ data.max_score|default:20 }}
+                                    </span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="ml-6 flex flex-col space-y-2">
+                        <a href="{% url 'moderation:seo_detail' analysis.id %}" 
+                           class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-center whitespace-nowrap">
+                            Детали
+                        </a>
+                        <a href="{{ analysis.post.get_absolute_url }}" target="_blank"
+                           class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-center whitespace-nowrap">
+                            Просмотр
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Пагинация -->
+        {% if page_obj.has_other_pages %}
+        <div class="mt-6 flex justify-center">
+            <nav class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if score_filter != 'all' %}&score={{ score_filter }}{% endif %}" 
+                   class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+                    Назад
+                </a>
+                {% endif %}
+                
+                <span class="px-4 py-2 bg-indigo-600 text-white rounded-lg">
+                    Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if score_filter != 'all' %}&score={{ score_filter }}{% endif %}" 
+                   class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+                    Вперед
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+        {% else %}
+        <p class="text-gray-500 text-center py-12">Нет SEO анализов для отображения</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

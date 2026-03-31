@@ -1,0 +1,496 @@
+{% extends 'assistant/dashboard/base.html' %}
+
+{% block dashboard_content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Breadcrumbs -->
+    <nav class="mb-6" aria-label="Breadcrumb">
+        <ol class="flex items-center space-x-2 text-sm">
+            <li>
+                <a href="{% url 'assistant:dashboard_main' %}" class="text-gray-500 hover:text-gray-700">Главная</a>
+            </li>
+            <li>
+                <span class="text-gray-400">/</span>
+            </li>
+            <li>
+                <a href="{% url 'assistant:dashboard_templates' %}" class="text-gray-500 hover:text-gray-700">Шаблоны</a>
+            </li>
+            <li>
+                <span class="text-gray-400">/</span>
+            </li>
+            <li class="text-gray-900 font-medium">{{ title }}</li>
+        </ol>
+    </nav>
+    
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
+        {% if template.pk %}
+        <a href="{% url 'assistant:dashboard_template_test' template.pk %}" 
+           class="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl font-semibold flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Тестировать шаблон
+        </a>
+        {% endif %}
+    </div>
+    
+    <form method="post" enctype="multipart/form-data" class="bg-white rounded-xl shadow-lg p-8 border-2 border-gray-100">
+        {% csrf_token %}
+        
+        {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+            <div class="p-4 rounded-lg mb-4 {% if message.tags == 'error' %}bg-red-50 border-l-4 border-red-500 text-red-700{% elif message.tags == 'success' %}bg-green-50 border-l-4 border-green-500 text-green-700{% else %}bg-blue-50 border-l-4 border-blue-500 text-blue-700{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        {% if form.non_field_errors %}
+        <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+            <ul class="list-disc list-inside text-red-700">
+                {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        <style>
+            .form-control {
+                width: 100%;
+                padding: 0.75rem 1rem;
+                border: 2px solid #e5e7eb;
+                border-radius: 0.75rem;
+                background-color: #f9fafb;
+                transition: all 0.3s ease;
+                font-size: 0.95rem;
+            }
+            .form-control:focus {
+                outline: none;
+                border-color: #3b82f6;
+                background-color: #ffffff;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                transform: translateY(-1px);
+            }
+            .form-control:hover {
+                border-color: #93c5fd;
+                background-color: #ffffff;
+            }
+            textarea.form-control {
+                min-height: 120px;
+                resize: vertical;
+                font-family: 'Courier New', monospace;
+            }
+            select.form-control {
+                cursor: pointer;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+                background-position: right 0.5rem center;
+                background-repeat: no-repeat;
+                background-size: 1.5em 1.5em;
+                padding-right: 2.5rem;
+            }
+            .form-label {
+                display: block;
+                font-size: 0.95rem;
+                font-weight: 600;
+                color: #1f2937;
+                margin-bottom: 0.5rem;
+                padding-left: 0.25rem;
+            }
+            .form-label::before {
+                content: "▸ ";
+                color: #3b82f6;
+                font-weight: bold;
+            }
+        </style>
+        
+        <div class="space-y-8">
+            <!-- Название шаблона -->
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border-l-4 border-blue-500 shadow-sm">
+                <h3 class="text-lg font-bold text-blue-900 mb-4">📝 Название шаблона</h3>
+                <label class="form-label text-blue-900">{{ form.name.label }}</label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                <p class="text-red-600 text-sm mt-2 font-medium">{{ form.name.errors }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Описание -->
+            <div class="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-xl border-l-4 border-purple-500 shadow-sm">
+                <h3 class="text-lg font-bold text-purple-900 mb-4">📄 Описание</h3>
+                <label class="form-label text-purple-900">{{ form.description.label }}</label>
+                {{ form.description }}
+            </div>
+            
+            <!-- Промпт для заголовка -->
+            <div class="bg-gradient-to-r from-amber-50 to-yellow-50 p-6 rounded-xl border-l-4 border-amber-500 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-amber-900">✏️ Промпт для заголовка</h3>
+                        <p class="text-xs text-amber-700 mt-1">Промпт для генерации заголовка статьи</p>
+                    </div>
+                    <div class="bg-white p-3 rounded-lg border border-amber-200 flex items-center">
+                        {{ form.generate_title }}
+                        <label class="ml-2 text-sm font-semibold text-amber-800 cursor-pointer">{{ form.generate_title.label }}</label>
+                    </div>
+                </div>
+                <div id="title_prompt_block" class="{% if not form.generate_title.value %}hidden{% endif %}">
+                    <label class="form-label text-amber-900">{{ form.title_prompt.label }}</label>
+                    {{ form.title_prompt }}
+                    {% if form.title_prompt.errors %}
+                    <div class="mt-2 p-3 bg-red-50 border-l-4 border-red-500 rounded-lg">
+                        <ul class="list-disc list-inside text-red-700 text-sm">
+                            {% for error in form.title_prompt.errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    <p class="text-xs text-amber-700 mt-2 font-medium bg-amber-100 px-3 py-2 rounded-lg">{{ form.title_prompt.help_text }}</p>
+                </div>
+            </div>
+            
+            <!-- Информация об описании -->
+            <div class="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-xl border-l-4 border-blue-500 shadow-sm">
+                <h3 class="text-lg font-bold text-blue-900 mb-4">ℹ️ Описание для Telegram</h3>
+                <p class="text-xs text-blue-700">
+                    Описание генерируется автоматически из первых 200 слов основного контента статьи.
+                    Это описание используется только для отправки в Telegram и не публикуется на сайте.
+                </p>
+            </div>
+            
+            <!-- Промпт для контента -->
+            <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-xl border-l-4 border-green-500 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-green-900">📝 Промпт для основного контента</h3>
+                        <p class="text-xs text-green-700 mt-1">Промпт для генерации основного текста статьи</p>
+                    </div>
+                    <div class="bg-white p-3 rounded-lg border border-green-200 flex items-center">
+                        {{ form.generate_content }}
+                        <label class="ml-2 text-sm font-semibold text-green-800 cursor-pointer">{{ form.generate_content.label }}</label>
+                    </div>
+                </div>
+                <div id="content_prompt_block" class="{% if not form.generate_content.value %}hidden{% endif %}">
+                    <label class="form-label text-green-900">{{ form.content_prompt.label }}</label>
+                    {{ form.content_prompt }}
+                    {% if form.content_prompt.errors %}
+                    <div class="mt-2 p-3 bg-red-50 border-l-4 border-red-500 rounded-lg">
+                        <ul class="list-disc list-inside text-red-700 text-sm">
+                            {% for error in form.content_prompt.errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    <p class="text-xs text-green-700 mt-2 font-medium bg-green-100 px-3 py-2 rounded-lg">{{ form.content_prompt.help_text }}</p>
+                    
+                    <!-- Режим генерации контента -->
+                    <div class="mt-4 pt-4 border-t border-green-200">
+                        <label class="form-label text-green-900">{{ form.content_generation_mode.label }}</label>
+                        {{ form.content_generation_mode }}
+                        <div class="text-xs text-green-700 mt-2 space-y-1">
+                            <p><strong>1. Генерация:</strong> Основной текст статьи на основании промпта (с динамическими переменными)</p>
+                            <p><strong>2. Парсинг 200 слов + генерация:</strong> Поиск и парсинг 200 слов из интернета, затем генерация текста на основе этих данных и промпта</p>
+                            <p><strong>3. Полный парсинг:</strong> Полный парсинг текста статьи в полном объёме как у источника без изменений (по поисковому запросу или перебору источников, указанных в промпте)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Промпт для изображения -->
+            <div class="bg-gradient-to-r from-cyan-50 to-teal-50 p-6 rounded-xl border-l-4 border-cyan-500 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-cyan-900">🖼️ Промпт для изображения</h3>
+                        <p class="text-xs text-cyan-700 mt-1">Промпт для генерации/поиска изображения для статьи</p>
+                    </div>
+                    <div class="bg-white p-3 rounded-lg border border-cyan-200 flex items-center">
+                        {{ form.generate_image }}
+                        <label class="ml-2 text-sm font-semibold text-cyan-800 cursor-pointer">{{ form.generate_image.label }}</label>
+                    </div>
+                </div>
+                <div id="image_prompt_block" class="{% if not form.generate_image.value %}hidden{% endif %}">
+                    <label class="form-label text-cyan-900">{{ form.image_prompt.label }}</label>
+                    {{ form.image_prompt }}
+                    {% if form.image_prompt.errors %}
+                    <div class="mt-2 p-3 bg-red-50 border-l-4 border-red-500 rounded-lg">
+                        <ul class="list-disc list-inside text-red-700 text-sm">
+                            {% for error in form.image_prompt.errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    <p class="text-xs text-cyan-700 mt-2 font-medium bg-cyan-100 px-3 py-2 rounded-lg">{{ form.image_prompt.help_text }}</p>
+                    
+                    <!-- Режим генерации изображения -->
+                    <div class="mt-4 pt-4 border-t border-cyan-200">
+                        <label class="form-label text-cyan-900">{{ form.image_generation_mode.label }}</label>
+                        {{ form.image_generation_mode }}
+                        <div class="text-xs text-cyan-700 mt-2 space-y-1">
+                            <p><strong>1. Генерация:</strong> Генерация на основании промпта из image_prompt</p>
+                            <p><strong>2. Поиск и парсинг:</strong> Искать и парсить изображение на основании запроса (указать критерий ниже)</p>
+                        </div>
+                        
+                        <!-- Критерий поиска изображения (показывать только при выборе "search_and_parse") -->
+                        <div id="image_search_criteria_block" class="mt-4 {% if form.image_generation_mode.value != 'search_and_parse' %}hidden{% endif %}">
+                            <label class="form-label text-cyan-900">{{ form.image_search_criteria.label }}</label>
+                            {{ form.image_search_criteria }}
+                            <p class="text-xs text-cyan-600 mt-1">Укажите критерии для поиска изображения (например: "красота, мода, стиль")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Блок с найденными переменными -->
+            {% if template.pk %}
+            <div class="bg-gradient-to-r from-orange-50 to-red-50 p-6 rounded-xl border-l-4 border-orange-500 shadow-sm">
+                <h3 class="text-lg font-bold text-orange-900 mb-4">📋 Найденные динамические переменные в промптах</h3>
+                <div id="dynamic-variables" class="mt-2">
+                    <p class="text-xs text-orange-700">Загрузка переменных...</p>
+                </div>
+                <p class="text-xs text-orange-600 mt-2">Эти переменные можно заполнить при тестировании шаблона или в расписании</p>
+            </div>
+            {% endif %}
+            
+            <!-- Настройки по умолчанию -->
+            <div class="bg-gradient-to-r from-indigo-50 to-violet-50 p-6 rounded-xl border-l-4 border-indigo-500 shadow-sm">
+                <h3 class="text-lg font-bold text-indigo-900 mb-4">⚙️ Настройки по умолчанию</h3>
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label class="form-label text-indigo-900">{{ form.default_category.label }}</label>
+                        {{ form.default_category }}
+                    </div>
+                    <div>
+                        <label class="form-label text-indigo-900">{{ form.default_tags.label }}</label>
+                        {{ form.default_tags }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Информация об управлении генерацией -->
+            <div class="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-xl border-l-4 border-purple-500 shadow-sm">
+                <h3 class="text-lg font-bold text-purple-900 mb-4">🎛️ Управление генерацией элементов</h3>
+                <p class="text-xs text-purple-700 mb-2">Чекбоксы управления генерацией находятся в заголовках соответствующих секций</p>
+                <div class="p-3 bg-purple-100 rounded-lg">
+                    <p class="text-xs text-purple-800">
+                        <strong>Примеры использования:</strong><br>
+                        • Только изображение: выключите заголовок и текст в соответствующих секциях<br>
+                        • Текст без изображения: выключите изображение в секции промпта изображения<br>
+                        • Только заголовок: выключите текст и изображение в их секциях<br>
+                        • Тестирование отдельных элементов по отдельности
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Дополнительная секция -->
+            <div class="bg-gradient-to-r from-amber-50 to-yellow-50 p-6 rounded-xl border-l-4 border-amber-500 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-amber-900">➕ Дополнительная секция</h3>
+                        <p class="text-xs text-amber-700 mt-1">Универсальный блок, который генерируется после основного текста (FAQ, слоганы, TO-DO, таблица содержания и т.д.)</p>
+                    </div>
+                    <div class="bg-white p-3 rounded-lg border border-amber-200 flex items-center">
+                        {{ form.generate_additional_section }}
+                        <label class="ml-2 text-sm font-semibold text-amber-800 cursor-pointer">{{ form.generate_additional_section.label }}</label>
+                    </div>
+                </div>
+                
+                <div id="additional_section_prompt_block" class="{% if not form.generate_additional_section.value %}hidden{% endif %}">
+                    <label class="form-label text-amber-900">{{ form.additional_section_prompt.label }}</label>
+                    {{ form.additional_section_prompt }}
+                    {% if form.additional_section_prompt.errors %}
+                    <div class="mt-2 p-3 bg-red-50 border-l-4 border-red-500 rounded-lg">
+                        <ul class="list-disc list-inside text-red-700 text-sm">
+                            {% for error in form.additional_section_prompt.errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    <div class="mt-3 p-3 bg-amber-100 rounded-lg">
+                        <p class="text-xs text-amber-800 font-semibold mb-2">📝 Примеры промптов:</p>
+                        <div class="text-xs text-amber-700 space-y-2">
+                            <p><strong>FAQ блок:</strong> На основе основной статьи создай HTML-блок FAQ. Найди в основном тексте ситуации, персонажей, действия... Формат: &lt;section class="faq-section"&gt;...</p>
+                            <p><strong>Мотивационные слоганы:</strong> Создай 3 мотивационных слогана на основе статьи {title}...</p>
+                            <p><strong>TO-DO задачи:</strong> Создай список TO-DO задач на основе статьи {content}...</p>
+                            <p><strong>Таблица содержания:</strong> Создай таблицу содержания основного текста со ссылками на абзацы...</p>
+                        </div>
+                        <p class="text-xs text-amber-600 mt-2">💡 Используйте переменные: {title}, {content}, {category}, {keywords}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Активность шаблона -->
+            <div class="bg-gradient-to-r from-gray-50 to-slate-50 p-6 rounded-xl border-l-4 border-gray-500 shadow-sm">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">🔘 Активность шаблона</h3>
+                <div class="bg-white p-3 rounded-lg border border-gray-200 flex items-center">
+                    {{ form.is_active }}
+                    <label class="ml-3 text-sm font-semibold text-gray-800 cursor-pointer">{{ form.is_active.label }}</label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-10 flex gap-4 pt-6 border-t-2 border-gray-200">
+            <button type="submit" class="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300">
+                💾 Сохранить
+            </button>
+            <a href="{% url 'assistant:dashboard_templates' %}" class="px-8 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 font-semibold shadow-md hover:shadow-lg transition-all duration-300">
+                Отмена
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+// Показ/скрытие поля критерия поиска изображения
+document.addEventListener('DOMContentLoaded', function() {
+    const imageModeSelect = document.getElementById('id_image_generation_mode');
+    const imageCriteriaBlock = document.getElementById('image_search_criteria_block');
+    
+    if (imageModeSelect && imageCriteriaBlock) {
+        function toggleImageCriteria() {
+            if (imageModeSelect.value === 'search_and_parse') {
+                imageCriteriaBlock.classList.remove('hidden');
+            } else {
+                imageCriteriaBlock.classList.add('hidden');
+            }
+        }
+        
+        imageModeSelect.addEventListener('change', toggleImageCriteria);
+        toggleImageCriteria(); // Вызываем при загрузке страницы
+    }
+    
+    // Показ/скрытие полей при изменении чекбоксов генерации
+    const titleCheckbox = document.getElementById('id_generate_title');
+    const titlePromptBlock = document.getElementById('title_prompt_block');
+    
+    if (titleCheckbox && titlePromptBlock) {
+        function toggleTitlePrompt() {
+            if (titleCheckbox.checked) {
+                titlePromptBlock.classList.remove('hidden');
+            } else {
+                titlePromptBlock.classList.add('hidden');
+            }
+        }
+        titleCheckbox.addEventListener('change', toggleTitlePrompt);
+        toggleTitlePrompt();
+    }
+    
+    const contentCheckbox = document.getElementById('id_generate_content');
+    const contentPromptBlock = document.getElementById('content_prompt_block');
+    
+    if (contentCheckbox && contentPromptBlock) {
+        function toggleContentPrompt() {
+            if (contentCheckbox.checked) {
+                contentPromptBlock.classList.remove('hidden');
+            } else {
+                contentPromptBlock.classList.add('hidden');
+            }
+        }
+        contentCheckbox.addEventListener('change', toggleContentPrompt);
+        toggleContentPrompt();
+    }
+    
+    const imageCheckbox = document.getElementById('id_generate_image');
+    const imagePromptBlock = document.getElementById('image_prompt_block');
+    
+    if (imageCheckbox && imagePromptBlock) {
+        function toggleImagePrompt() {
+            if (imageCheckbox.checked) {
+                imagePromptBlock.classList.remove('hidden');
+            } else {
+                imagePromptBlock.classList.add('hidden');
+            }
+        }
+        imageCheckbox.addEventListener('change', toggleImagePrompt);
+        toggleImagePrompt();
+    }
+    
+    // Показ/скрытие поля промпта дополнительной секции
+    const additionalSectionCheckbox = document.getElementById('id_generate_additional_section');
+    const additionalSectionPromptBlock = document.getElementById('additional_section_prompt_block');
+    
+    if (additionalSectionCheckbox && additionalSectionPromptBlock) {
+        function toggleAdditionalSectionPrompt() {
+            if (additionalSectionCheckbox.checked) {
+                additionalSectionPromptBlock.classList.remove('hidden');
+            } else {
+                additionalSectionPromptBlock.classList.add('hidden');
+            }
+        }
+        
+        additionalSectionCheckbox.addEventListener('change', toggleAdditionalSectionPrompt);
+        toggleAdditionalSectionPrompt(); // Вызываем при загрузке страницы
+    }
+    
+    // Загрузка найденных переменных
+    {% if template.pk %}
+    function loadDynamicVariables() {
+        // Парсим переменные из всех промптов на странице
+        const prompts = [
+            document.getElementById('id_title_prompt')?.value || '',
+            document.getElementById('id_content_prompt')?.value || '',
+            document.getElementById('id_image_prompt')?.value || '',
+            document.getElementById('id_additional_section_prompt')?.value || '',
+        ].join(' ');
+        
+        // Ищем все переменные в формате {variable}
+        const pattern = /\{(\w+)\}/g;
+        const allVariables = new Set();
+        const systemVars = ['topic', 'category', 'keywords', 'title', 'content', 'parsed_news_content', 'news_title', 'news_url', 'news_source'];
+        let match;
+        
+        while ((match = pattern.exec(prompts)) !== null) {
+            allVariables.add(match[1]);
+        }
+        
+        // Разделяем на системные и пользовательские
+        const systemVariables = Array.from(allVariables).filter(v => systemVars.includes(v)).sort();
+        const customVariables = Array.from(allVariables).filter(v => !systemVars.includes(v)).sort();
+        
+        const variablesDiv = document.getElementById('dynamic-variables');
+        
+        if (allVariables.size > 0) {
+            let html = '<div class="space-y-2">';
+            
+            // Системные переменные
+            if (systemVariables.length > 0) {
+                html += '<div class="mb-3"><p class="text-xs font-semibold text-orange-800 mb-1">Системные переменные:</p><div class="flex flex-wrap gap-2">';
+                html += systemVariables.map(v => `<span class="px-3 py-1 bg-blue-200 text-blue-900 rounded-lg text-xs font-mono font-semibold">{${v}}</span>`).join('');
+                html += '</div></div>';
+            }
+            
+            // Пользовательские переменные
+            if (customVariables.length > 0) {
+                html += '<div><p class="text-xs font-semibold text-orange-800 mb-1">Пользовательские переменные:</p><div class="flex flex-wrap gap-2">';
+                html += customVariables.map(v => `<span class="px-3 py-1 bg-orange-200 text-orange-900 rounded-lg text-xs font-mono font-semibold">{${v}}</span>`).join('');
+                html += '</div></div>';
+            }
+            
+            html += '</div>';
+            variablesDiv.innerHTML = html;
+        } else {
+            variablesDiv.innerHTML = '<p class="text-xs text-orange-600">Динамические переменные не найдены. Используйте формат {variable_name} в промптах.</p>';
+        }
+    }
+    
+    // Обновляем переменные при изменении промптов
+    ['id_title_prompt', 'id_content_prompt', 'id_image_prompt'].forEach(id => {
+        const field = document.getElementById(id);
+        if (field) {
+            field.addEventListener('input', loadDynamicVariables);
+            field.addEventListener('change', loadDynamicVariables);
+        }
+    });
+    
+    loadDynamicVariables(); // Загружаем при загрузке страницы
+    {% endif %}
+});
+</script>
+{% endblock %}
+

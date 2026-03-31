@@ -1,0 +1,249 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block reclama_1 %}
+{% include "reclama/1.html" %}
+{% endblock reclama_1 %}
+
+{% block meny %}
+<!-- Modern Navigation -->
+<nav class="bg-white shadow-lg border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex justify-between items-center h-16">
+            <!-- Logo -->
+            <div class="flex items-center">
+                <a href="{% url 'home:home' %}" class="flex items-center space-x-3">
+                    <img src="{% static 'img/400-crug.png' %}" alt="LukInterLab" class="w-10 h-10 rounded-full">
+                    <span class="text-xl font-bold text-gray-900">LukInterLab</span>
+                </a>
+            </div>
+
+            <!-- Desktop Navigation -->
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="{% url 'home:home' %}" class="text-gray-700 hover:text-primary-600 font-medium transition-colors duration-300">
+                    Главная
+                </a>
+                <a href="{% url 'Blog:post_list' %}" class="text-primary-600 font-semibold border-b-2 border-primary-600">
+                    Блог
+                </a>
+                <a href="{% url 'Blog:post_search' %}" class="text-gray-700 hover:text-primary-600 font-medium transition-colors duration-300">
+                    Поиск
+                </a>
+            </div>
+
+            <!-- Mobile menu button -->
+            <div class="md:hidden">
+                <button id="mobile-menu-button" class="text-gray-700 hover:text-primary-600 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation -->
+        <div id="mobile-menu" class="md:hidden hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1 bg-white border-t border-gray-200">
+                <a href="{% url 'home:home' %}" class="block px-3 py-2 text-gray-700 hover:text-primary-600 font-medium">
+                    Главная
+                </a>
+                <a href="{% url 'Blog:post_list' %}" class="block px-3 py-2 text-primary-600 font-semibold bg-primary-50 rounded-md">
+                    Блог
+                </a>
+                <a href="{% url 'Blog:post_search' %}" class="block px-3 py-2 text-gray-700 hover:text-primary-600 font-medium">
+                    Поиск
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<script>
+document.getElementById('mobile-menu-button').addEventListener('click', function() {
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenu.classList.toggle('hidden');
+});
+</script>
+{% endblock %}
+
+{% block straniza %}
+<!-- Post Edit Section -->
+<section class="py-12 bg-gray-50">
+    <div class="max-w-4xl mx-auto px-4">
+        <!-- Breadcrumb -->
+        <nav class="mb-8">
+            <ol class="flex items-center space-x-2 text-sm text-gray-500">
+                <li><a href="{% url 'home:home' %}" class="hover:text-primary-600">Главная</a></li>
+                <li><span class="mx-2">/</span></li>
+                <li><a href="{% url 'Blog:post_list' %}" class="hover:text-primary-600">Блог</a></li>
+                <li><span class="mx-2">/</span></li>
+                <li><a href="{{ post.get_absolute_url }}" class="hover:text-primary-600">{{ post.title|truncatechars:30 }}</a></li>
+                <li><span class="mx-2">/</span></li>
+                <li class="text-gray-900">Редактирование</li>
+            </ol>
+        </nav>
+
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Редактирование статьи</h1>
+            <p class="text-xl text-gray-600">{{ post.title }}</p>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+            <div class="px-4 py-3 rounded-lg mb-4 {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Edit Form -->
+        <div class="bg-white rounded-2xl shadow-lg p-8">
+            <form method="post" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Title -->
+                <div>
+                    <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Заголовок статьи *
+                    </label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.title.errors }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Slug -->
+                <div>
+                    <label for="{{ form.slug.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        URL (slug)
+                    </label>
+                    {{ form.slug }}
+                    <p class="text-xs text-gray-500 mt-1">Оставьте пустым для автоматической генерации</p>
+                    {% if form.slug.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.slug.errors }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Category and Status -->
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Категория *
+                        </label>
+                        {{ form.category }}
+                        {% if form.category.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.category.errors }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Статус *
+                        </label>
+                        {{ form.status }}
+                        {% if form.status.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.status.errors }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Fixed Checkbox -->
+                <div class="flex items-center">
+                    {{ form.fixed }}
+                    <label for="{{ form.fixed.id_for_label }}" class="ml-2 text-sm font-medium text-gray-700">
+                        Отметить как важное (★ Важное)
+                    </label>
+                </div>
+
+                <!-- Image -->
+                <div>
+                    <label for="{{ form.kartinka.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Превью изображение
+                    </label>
+                    {% if post.kartinka %}
+                    <div class="mb-4">
+                        <img src="{{ post.kartinka.url }}" alt="Текущее изображение" class="w-64 h-48 object-cover rounded-lg border border-gray-300">
+                        <p class="text-xs text-gray-500 mt-2">Текущее изображение</p>
+                    </div>
+                    {% endif %}
+                    {{ form.kartinka }}
+                    {% if form.kartinka.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.kartinka.errors }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Description for Telegram -->
+                <div>
+                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Описание для Telegram
+                    </label>
+                    {{ form.description }}
+                    <p class="text-xs text-gray-500 mt-1">Используется только для публикации в Telegram, не отображается на сайте</p>
+                    {% if form.description.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.description.errors }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Content -->
+                <div>
+                    <label for="{{ form.content.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Основной текст статьи *
+                    </label>
+                    {{ form.content }}
+                    {% if form.content.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.content.errors }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Video -->
+                <div>
+                    <label for="{{ form.video.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Видео контент
+                    </label>
+                    {{ form.video }}
+                    {% if form.video.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.video.errors }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Tags -->
+                <div>
+                    <label for="{{ form.tags.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Теги
+                    </label>
+                    {{ form.tags }}
+                    <p class="text-xs text-gray-500 mt-1">Введите теги через запятую</p>
+                    {% if form.tags.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.tags.errors }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex items-center gap-4 pt-6 border-t border-gray-200">
+                    <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-semibold">
+                        Сохранить изменения
+                    </button>
+                    <a href="{{ post.get_absolute_url }}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-semibold">
+                        Отмена
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock straniza %}
+
+{% block extra_scripts %}
+<!-- CKEditor Scripts -->
+<script id="ckeditor-init-script" 
+        type="text/javascript" 
+        data-ckeditor-basepath="{% static 'ckeditor/ckeditor/' %}">
+</script>
+<script type="text/javascript" src="{% static 'ckeditor/ckeditor/ckeditor.js' %}"></script>
+<script type="text/javascript" src="{% static 'ckeditor/ckeditor-init.js' %}"></script>
+{% endblock %}
+

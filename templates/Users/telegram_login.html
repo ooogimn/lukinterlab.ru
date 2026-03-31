@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-center">Вход через Telegram</h3>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="telegram_id">Telegram ID:</label>
+                            <input type="text" class="form-control" id="telegram_id" name="telegram_id" required>
+                            <small class="form-text text-muted">
+                                Введите ваш Telegram ID, который вы получили после регистрации через бота.
+                            </small>
+                        </div>
+                        <div class="text-center mt-3">
+                            <button type="submit" class="btn btn-primary">Войти</button>
+                        </div>
+                    </form>
+                    
+                    <div class="mt-4">
+                        <p class="text-center">
+                            Еще не зарегистрированы? 
+                            <a href="https://t.me/your_bot_username" target="_blank">
+                                Зарегистрируйтесь через Telegram бота
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

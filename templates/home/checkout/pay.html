@@ -1,0 +1,107 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block meny %}
+{% include "meny/sidibar-1.html" %}
+{% endblock meny %}
+
+{% block straniza %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-credit-card me-2"></i>
+                        Оплата заказа №{{ order.order_number }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Информация о заказе -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5 class="text-primary">Информация о заказе</h5>
+                            <p><strong>Номер заказа:</strong> {{ order.order_number }}</p>
+                            <p><strong>Дата создания:</strong> {{ order.created|date:"d.m.Y H:i" }}</p>
+                            <p><strong>Статус:</strong> 
+                                <span class="badge bg-{% if order.status == 'new' %}secondary{% elif order.status == 'confirmed' %}success{% else %}warning{% endif %}">
+                                    {{ order.get_status_display }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="text-primary">Клиент</h5>
+                            <p><strong>Имя:</strong> {{ order.customer_name }}</p>
+                            <p><strong>Email:</strong> {{ order.customer_email }}</p>
+                            <p><strong>Телефон:</strong> {{ order.customer_phone }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Товары в заказе -->
+                    <div class="mb-4">
+                        <h5 class="text-primary">Товары в заказе</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Товар</th>
+                                        <th>Цена</th>
+                                        <th>Количество</th>
+                                        <th>Сумма</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in order.orderitem_set.all %}
+                                    <tr>
+                                        <td>{{ item.title }}</td>
+                                        <td>{{ item.price }}</td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td>{{ item.get_total_price }} ₽</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-primary">
+                                        <th colspan="3" class="text-end">Итого:</th>
+                                        <th>{{ order.total_price }} ₽</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Форма оплаты -->
+                    <div class="text-center">
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-credit-card me-2"></i>
+                                Оплатить {{ order.total_price }} ₽
+                            </button>
+                        </form>
+                        
+                        <a href="{% url 'home:order_detail' order.id %}" class="btn btn-secondary btn-lg ms-2">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Вернуться к заказу
+                        </a>
+                    </div>
+
+                    <!-- Информация о безопасности -->
+                    <div class="mt-4 p-3 bg-light rounded">
+                        <h6 class="text-muted">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            Безопасная оплата
+                        </h6>
+                        <p class="text-muted mb-0">
+                            Оплата производится через защищенное соединение с использованием платежной системы YooKassa. 
+                            Ваши данные защищены и не передаются третьим лицам.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,46 @@
+from django.conf import settings
+from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import path, include, re_path
+from django.views.generic import TemplateView
+from django.contrib.sitemaps.views import sitemap
+from django.views.static import serve
+from home.sitemaps import (
+    StaticViewSitemap, BlogPostSitemap, BlogCategorySitemap,
+    OtzivSitemap, RabotaSitemap
+)
+from Blog.feeds import LatestPostsFeed, LatestPostsRSSFeed
+
+# Sitemap configuration
+sitemaps = {
+    'static': StaticViewSitemap,
+    'blog_posts': BlogPostSitemap,
+    'blog_categories': BlogCategorySitemap,
+    'otzivs': OtzivSitemap,
+    'rabotas': RabotaSitemap,
+}
+
+urlpatterns = [
+    path('ckeditor/', include('ckeditor_uploader.urls')),
+    path('admin/', admin.site.urls),
+    path('', include('home.urls')),
+    path('blog/', include('Blog.urls', namespace='Blog')),
+    path('assistant/', include('Assistant.urls', namespace='assistant')),
+    path('moderation/', include('Moderation.urls', namespace='moderation')),
+    path('robots.txt', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
+    # RSS Feeds
+    path('blog/feed/', LatestPostsFeed(), name='blog_feed'),
+    path('blog/rss/', LatestPostsRSSFeed(), name='blog_rss'),
+]
+
+# Раздача медиа-файлов (работает и в продакшене, если веб-сервер не настроен)
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+else:
+    # Для продакшена: раздача медиа-файлов через Django (временное решение)
+    # В идеале нужно настроить nginx/apache для раздачи медиа-файлов
+    urlpatterns += [
+        re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+    ]

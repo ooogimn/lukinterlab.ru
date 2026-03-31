@@ -1,0 +1,132 @@
+{% extends 'moderation/base.html' %}
+
+{% block moderation_content %}
+<div class="max-w-5xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <nav class="mb-4" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2 text-sm">
+                <li><a href="{% url 'moderation:dashboard' %}" class="text-gray-500 hover:text-gray-700">Дашборд</a></li>
+                <li><span class="text-gray-400">/</span></li>
+                <li><a href="{% url 'moderation:article_list' %}" class="text-gray-500 hover:text-gray-700">Статьи</a></li>
+                <li><span class="text-gray-400">/</span></li>
+                <li class="text-gray-900 font-medium">Модерация</li>
+            </ol>
+        </nav>
+        <h1 class="text-4xl font-bold text-gray-900 mb-2">{{ post.title }}</h1>
+        <p class="text-gray-600">Автор: {{ post.author.get_full_name|default:post.author.username }} • {{ moderation.submitted_at|date:"d.m.Y H:i" }}</p>
+        <p class="text-sm text-gray-600 mt-3 max-w-2xl">
+            Здесь вы фиксируете <strong>решение модератора</strong> по записи (одобрено / доработка / отклонено).
+            Видимость статьи на сайте задаётся в админке блога полем «Статус поста».
+            {% if post.status == 'published' %}
+            {% if moderation.status == 'pending' or moderation.status == 'needs_revision' %}
+            <span class="block mt-2 text-amber-800">Статья уже опубликована, а статус модерации ещё не закрыт — выберите «Одобрено» и сохраните (или выполните команду синхронизации на сервере).</span>
+            {% endif %}
+            {% endif %}
+        </p>
+    </div>
+    
+    <!-- Форма модерации -->
+    <form method="post" class="bg-white rounded-2xl shadow-xl p-6 mb-6">
+        {% csrf_token %}
+        
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Статус модерации</label>
+            <select name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                {% for status, label in status_choices %}
+                <option value="{{ status }}" {% if moderation.status == status %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Комментарий модератора</label>
+            <textarea name="moderator_comment" rows="5" 
+                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="Добавьте комментарий для автора...">{{ moderation.moderator_comment }}</textarea>
+        </div>
+        
+        <div class="flex space-x-4">
+            <button type="submit" class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                Сохранить решение
+            </button>
+            <a href="{% url 'moderation:article_list' %}" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                Отмена
+            </a>
+        </div>
+    </form>
+    
+    <!-- Результаты проверки -->
+    {% if moderation.check_results %}
+    <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Результаты проверки</h2>
+        
+        {% if moderation.check_results.errors %}
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <h3 class="font-semibold text-red-800 mb-2">Ошибки:</h3>
+            <ul class="list-disc list-inside text-sm text-red-700">
+                {% for error in moderation.check_results.errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        {% if moderation.check_results.warnings %}
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+            <h3 class="font-semibold text-yellow-800 mb-2">Предупреждения:</h3>
+            <ul class="list-disc list-inside text-sm text-yellow-700">
+                {% for warning in moderation.check_results.warnings %}
+                <li>{{ warning }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        {% if moderation.check_results.checks %}
+        <div class="bg-gray-50 rounded-lg p-4">
+            <h3 class="font-semibold text-gray-800 mb-2">Детальная проверка:</h3>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                {% for check, result in moderation.check_results.checks.items %}
+                <div class="flex items-center">
+                    <span class="font-medium text-gray-700">{{ check }}:</span>
+                    {% if result == True %}
+                    <span class="ml-2 text-green-600">✓ Пройдено</span>
+                    {% elif result == False %}
+                    <span class="ml-2 text-red-600">✗ Не пройдено</span>
+                    {% else %}
+                    <span class="ml-2 text-yellow-600">⚠ {{ result }}</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <!-- Превью статьи -->
+    <div class="bg-white rounded-2xl shadow-xl p-6">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Превью статьи</h2>
+        
+        {% if post.kartinka %}
+        <img src="{{ post.kartinka.url }}" alt="{{ post.title }}" class="w-full rounded-lg mb-4">
+        {% endif %}
+        
+        <div class="prose max-w-none">
+            {{ post.content|safe }}
+        </div>
+        
+        <div class="mt-6 pt-6 border-t border-gray-200">
+            <a href="{{ post.get_absolute_url }}" target="_blank" 
+               class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                </svg>
+                Открыть статью
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

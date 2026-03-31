@@ -1,0 +1,194 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Регистрация - Личный кабинет{% endblock %}
+
+{% block meny %}
+{% include "meny/sidibar-1.html" %}
+{% endblock meny %}
+
+{% block straniza %}
+<section class="py-20 relative overflow-hidden section-background section-background-animate" 
+         style="{{ section_backgrounds.resume.background_style|default:'background: #f9fafb;' }}">
+    
+    <!-- Видео фон -->
+    {% if section_backgrounds.resume.type == 'video' and section_backgrounds.resume.video_url %}
+    <video class="section-video-background" autoplay muted loop playsinline>
+        <source src="{{ section_backgrounds.resume.video_url }}" type="video/mp4">
+    </video>
+    {% endif %}
+    
+    <!-- Наложение -->
+    {% if section_backgrounds.resume.has_overlay %}
+    <div class="section-overlay" style="{{ section_backgrounds.resume.overlay_style }}"></div>
+    {% endif %}
+    
+    <!-- Контент -->
+    <div class="section-content">
+        <div class="max-w-md mx-auto px-4">
+            <!-- Breadcrumb -->
+            <nav class="mb-8">
+                <ol class="flex items-center space-x-2 text-sm text-white">
+                    <li><a href="{% url 'home:home' %}" class="hover:text-primary-300">Главная</a></li>
+                    <li><span class="mx-2">/</span></li>
+                    <li class="text-primary-300">Регистрация</li>
+                </ol>
+            </nav>
+            
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-white mb-2">Регистрация</h1>
+                <p class="text-gray-100">Создайте аккаунт для доступа к личному кабинету</p>
+            </div>
+            
+            <!-- Registration Form -->
+            <div class="bg-white rounded-2xl shadow-lg p-8">
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <!-- Personal Information -->
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Имя *
+                            </label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                                <p class="text-red-600 text-sm mt-1">{{ form.first_name.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Фамилия *
+                            </label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                                <p class="text-red-600 text-sm mt-1">{{ form.last_name.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Email *
+                        </label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.email.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Телефон *
+                        </label>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.phone.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Логин *
+                        </label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.username.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Company Information -->
+                    <div>
+                        <label for="{{ form.company.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Компания
+                        </label>
+                        {{ form.company }}
+                        {% if form.company.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.company.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.position.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Должность
+                        </label>
+                        {{ form.position }}
+                        {% if form.position.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.position.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.address.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Адрес
+                        </label>
+                        {{ form.address }}
+                        {% if form.address.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.address.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Password -->
+                    <div>
+                        <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Пароль *
+                        </label>
+                        {{ form.password1 }}
+                        {% if form.password1.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.password1.errors.0 }}</p>
+                        {% endif %}
+                        {% if form.password1.help_text %}
+                            <p class="text-gray-500 text-sm mt-1">{{ form.password1.help_text }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Подтвердите пароль *
+                        </label>
+                        {{ form.password2 }}
+                        {% if form.password2.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.password2.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    {# Honeypot: не заполнять; боты часто вставляют URL — форма отклонится. #}
+                    <div class="customer-reg-hp" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+                        <label for="{{ form.company_fax.id_for_label }}">Факс (не заполняйте)</label>
+                        {{ form.company_fax }}
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <button type="submit" class="w-full bg-gradient-to-r from-primary-600 to-secondary-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-primary-700 hover:to-secondary-700 transition-all duration-300 transform hover:scale-105">
+                        Зарегистрироваться
+                    </button>
+                </form>
+
+                {% include "home/customer/vkid_oauth_widget.html" %}
+                
+                <!-- Login Link -->
+                <div class="mt-6 text-center">
+                    <p class="text-gray-600">
+                        Уже есть аккаунт? 
+                        <a href="{% url 'home:customer_login' %}" class="text-primary-600 hover:text-primary-700 font-medium">
+                            Войти
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.form-control {
+    @apply block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors;
+}
+
+.form-control:focus {
+    @apply ring-2 ring-primary-500 border-primary-500;
+}
+</style>
+{% endblock straniza %} 

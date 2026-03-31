@@ -1,0 +1,139 @@
+{% extends 'assistant/dashboard/base.html' %}
+
+{% block dashboard_content %}
+<div class="max-w-5xl mx-auto">
+    <!-- Breadcrumbs -->
+    <nav class="mb-6" aria-label="Breadcrumb">
+        <ol class="flex items-center space-x-2 text-sm">
+            <li>
+                <a href="{% url 'assistant:dashboard_main' %}" class="text-gray-500 hover:text-gray-700">Главная</a>
+            </li>
+            <li>
+                <span class="text-gray-400">/</span>
+            </li>
+            <li>
+                <a href="{% url 'assistant:dashboard_history' %}" class="text-gray-500 hover:text-gray-700">История</a>
+            </li>
+            <li>
+                <span class="text-gray-400">/</span>
+            </li>
+            <li class="text-gray-900 font-medium">Детали</li>
+        </ol>
+    </nav>
+    
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">Детали генерации</h1>
+    
+    <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Основная информация</h2>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <p class="text-sm text-gray-600">Статья</p>
+                <p class="font-medium">{{ article.post.title }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Расписание</p>
+                <p class="font-medium">{{ article.schedule.name }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Шаблон</p>
+                <p class="font-medium">{{ article.prompt_template.name }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Время генерации</p>
+                <p class="font-medium">{{ article.generation_time|floatformat:2 }}с</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Сгенерированный контент</h2>
+        <div class="space-y-4">
+            <div>
+                <p class="text-sm font-medium text-gray-700 mb-2">Заголовок</p>
+                <p class="text-gray-900">{{ article.generated_title }}</p>
+            </div>
+            {% if article.generated_description %}
+            <div>
+                <p class="text-sm font-medium text-gray-700 mb-2">Описание</p>
+                <p class="text-gray-900">{{ article.generated_description }}</p>
+            </div>
+            {% endif %}
+            <div>
+                <p class="text-sm font-medium text-gray-700 mb-2">Контент</p>
+                <div class="text-gray-900 prose max-w-none">{{ article.generated_content|safe|truncatewords:100 }}</div>
+            </div>
+        </div>
+    </div>
+    
+    {% if article.context_data.news_source %}
+    <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Источники новостей</h2>
+        <div class="space-y-4">
+            <div>
+                <p class="text-sm font-medium text-gray-700 mb-2">Выбранный источник</p>
+                <p class="text-gray-900">
+                    <span class="font-semibold">{{ article.context_data.news_source }}</span>
+                    {% if article.context_data.news_source_type %}
+                    <span class="text-sm text-gray-500">({{ article.context_data.news_source_type|upper }})</span>
+                    {% endif %}
+                </p>
+                {% if article.context_data.news_url %}
+                <p class="text-sm text-gray-600 mt-1">
+                    <a href="{{ article.context_data.news_url }}" target="_blank" class="text-blue-600 hover:underline">
+                        {{ article.context_data.news_url|truncatechars:60 }}
+                    </a>
+                </p>
+                {% endif %}
+            </div>
+            
+            {% if article.context_data.sources_statistics %}
+            <div>
+                <p class="text-sm font-medium text-gray-700 mb-2">Статистика по всем источникам</p>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    {% if article.context_data.total_news_found %}
+                    <p class="text-sm text-gray-600 mb-3">
+                        Всего найдено новостей: <span class="font-semibold">{{ article.context_data.total_news_found }}</span>
+                    </p>
+                    {% endif %}
+                    
+                    <div class="space-y-2">
+                        {% for source_name, stats in article.context_data.sources_statistics.items %}
+                        <div class="flex items-center justify-between py-2 border-b border-gray-200 last:border-0">
+                            <div class="flex items-center space-x-2">
+                                <span class="font-medium text-gray-900">{{ source_name }}</span>
+                                {% if stats.type %}
+                                <span class="text-xs px-2 py-1 bg-gray-200 rounded text-gray-600">{{ stats.type|upper }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-right">
+                                <span class="font-semibold text-gray-900">{{ stats.count }}</span>
+                                <span class="text-sm text-gray-600 ml-1">({{ stats.percentage|floatformat:1 }}%)</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Использованные промпты</h2>
+        <div class="space-y-4">
+            <details class="border-l-4 border-blue-500 pl-4">
+                <summary class="cursor-pointer font-medium text-gray-900">Промпт для заголовка</summary>
+                <pre class="mt-2 text-sm text-gray-600 whitespace-pre-wrap">{{ article.title_prompt_used }}</pre>
+            </details>
+            {% if article.content_prompt_used %}
+            <details class="border-l-4 border-green-500 pl-4">
+                <summary class="cursor-pointer font-medium text-gray-900">Промпт для контента</summary>
+                <pre class="mt-2 text-sm text-gray-600 whitespace-pre-wrap">{{ article.content_prompt_used }}</pre>
+            </details>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

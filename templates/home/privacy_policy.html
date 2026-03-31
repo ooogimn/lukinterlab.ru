@@ -1,0 +1,426 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Политика конфиденциальности - ООО "ЛукИнтерЛаб"{% endblock %}
+
+{% block meny %}
+{% include "meny/sidibar-1.html" %}
+{% endblock %}
+
+{% block straniza %}
+<div class="min-h-screen bg-gray-50 py-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Заголовок -->
+        <div class="mb-12">
+            <div class="text-center mb-6">
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                    Политика конфиденциальности
+                </h1>
+                <p class="text-xl text-gray-600">
+                    ООО "ЛукИнтерЛаб"
+                </p>
+                <p class="text-sm text-gray-500 mt-2">
+                    Последнее обновление: {% now "d.m.Y" %}
+                </p>
+            </div>
+            {% if user.is_authenticated and user.is_superuser %}
+            <div class="flex justify-center mb-4">
+                <button id="edit-privacy-policy-btn" class="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg shadow-lg transition flex items-center gap-2 whitespace-nowrap text-lg font-semibold">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    Редактировать
+                </button>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg p-8 md:p-12 space-y-8">
+            <!-- 1. Общие положения -->
+            <section>
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">1. Общие положения</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>
+                        Настоящая Политика конфиденциальности (далее — «Политика») определяет порядок обработки и защиты персональных данных пользователей веб-сайта <strong>lukinterlab.ru</strong> (далее — «Сайт»), принадлежащего Обществу с ограниченной ответственностью "ЛукИнтерЛаб" (далее — «Оператор», «Компания», «Мы»).
+                    </p>
+                    <p>
+                        Политика разработана в соответствии с Федеральным законом от 27.07.2006 № 152-ФЗ «О персональных данных» (далее — «ФЗ-152») и иными нормативными правовыми актами Российской Федерации в области защиты персональных данных.
+                    </p>
+                    <p>
+                        Используя Сайт, Вы даете согласие на обработку Ваших персональных данных в соответствии с настоящей Политикой конфиденциальности.
+                    </p>
+                </div>
+            </section>
+
+            <!-- 2. Основные понятия -->
+            <section>
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">2. Основные понятия</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p><strong>Персональные данные</strong> — любая информация, относящаяся к прямо или косвенно определенному или определяемому физическому лицу (субъекту персональных данных).</p>
+                    <p><strong>Оператор</strong> — ООО "ЛукИнтерЛаб", организующее и (или) осуществляющее обработку персональных данных, а также определяющее цели обработки персональных данных, состав персональных данных, подлежащих обработке, действия (операции), совершаемые с персональными данными.</p>
+                    <p><strong>Обработка персональных данных</strong> — любое действие (операция) или совокупность действий (операций) с персональными данными, включая сбор, запись, систематизацию, накопление, хранение, уточнение (обновление, изменение), извлечение, использование, передачу (распространение, предоставление, доступ), обезличивание, блокирование, удаление, уничтожение персональных данных.</p>
+                    <p><strong>Субъект персональных данных</strong> — физическое лицо, к которому относятся персональные данные.</p>
+                    <p><strong>Согласие субъекта персональных данных</strong> — свободное, конкретное, информированное и сознательное волеизъявление субъекта персональных данных в отношении обработки его персональных данных.</p>
+                </div>
+            </section>
+
+            <!-- 3. Оператор персональных данных -->
+            <section>
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">3. Оператор персональных данных</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p><strong>Полное наименование:</strong> Общество с ограниченной ответственностью "ЛукИнтерЛаб"</p>
+                    <p><strong>Сокращенное наименование:</strong> ООО "ЛукИнтерЛаб"</p>
+                    <p><strong>Юридический адрес:</strong> г. Москва, ул. Ярославская, д. 9</p>
+                    <p><strong>ИНН:</strong> [указать при наличии]</p>
+                    <p><strong>КПП:</strong> [указать при наличии]</p>
+                    <p><strong>ОГРН:</strong> [указать при наличии]</p>
+                    <p><strong>Контактная информация:</strong></p>
+                    <ul class="list-disc list-inside ml-4 space-y-2">
+                        <li>Телефон: <a href="tel:+7-905-856-02-82" class="text-primary-600 hover:text-primary-700">+7-905-856-02-82</a></li>
+                        <li>Email: <a href="mailto:Ya@LukyanovSY.ru" class="text-primary-600 hover:text-primary-700">Ya@LukyanovSY.ru</a></li>
+                        <li>Сайт: <a href="https://lukinterlab.ru" target="_blank" class="text-primary-600 hover:text-primary-700">lukinterlab.ru</a></li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 4. Цели обработки персональных данных -->
+            <section>
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">4. Цели обработки персональных данных</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Оператор обрабатывает персональные данные в следующих целях:</p>
+                    <ol class="list-decimal list-inside ml-4 space-y-2">
+                        <li>Предоставление информационных услуг, консультаций и ответов на запросы пользователей Сайта;</li>
+                        <li>Обработка заказов на услуги, оформление договоров и иных документов;</li>
+                        <li>Организация обратной связи с пользователями Сайта;</li>
+                        <li>Информирование пользователей о новых услугах, акциях и специальных предложениях (при наличии согласия);</li>
+                        <li>Проведение статистических исследований и анализа данных для улучшения работы Сайта;</li>
+                        <li>Соблюдение требований законодательства Российской Федерации;</li>
+                        <li>Защита законных прав и интересов Оператора и третьих лиц.</li>
+                    </ol>
+                </div>
+            </section>
+
+            <!-- 5. Правовые основания обработки персональных данных -->
+            <section>
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">5. Правовые основания обработки персональных данных</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Обработка персональных данных осуществляется на основании:</p>
+                    <ol class="list-decimal list-inside ml-4 space-y-2">
+                        <li>Федерального закона от 27.07.2006 № 152-ФЗ «О персональных данных»;</li>
+                        <li>Согласия субъекта персональных данных на обработку его персональных данных;</li>
+                        <li>Договоров, стороной которых является субъект персональных данных;</li>
+                        <li>Иных нормативных правовых актов Российской Федерации.</li>
+                    </ol>
+                </div>
+            </section>
+
+            <!-- 6. Объем обрабатываемых персональных данных -->
+            <section>
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">6. Объем обрабатываемых персональных данных</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Оператор обрабатывает следующие категории персональных данных:</p>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg mt-4">
+                        <h3 class="text-lg font-semibold mb-2">6.1. Данные, предоставляемые пользователем при использовании Сайта:</h3>
+                        <ul class="list-disc list-inside ml-4 space-y-1">
+                            <li>Фамилия, имя, отчество;</li>
+                            <li>Номер телефона;</li>
+                            <li>Адрес электронной почты (email);</li>
+                            <li>Название компании (при указании);</li>
+                            <li>Текст сообщения или запроса;</li>
+                            <li>Иные данные, добровольно предоставленные пользователем.</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-gray-50 p-4 rounded-lg mt-4">
+                        <h3 class="text-lg font-semibold mb-2">6.2. Данные, автоматически собираемые при использовании Сайта:</h3>
+                        <ul class="list-disc list-inside ml-4 space-y-1">
+                            <li>IP-адрес;</li>
+                            <li>Информация о браузере и операционной системе;</li>
+                            <li>Информация об устройстве пользователя;</li>
+                            <li>Данные о посещенных страницах Сайта;</li>
+                            <li>Время и дата посещения Сайта;</li>
+                            <li>Источник перехода на Сайт;</li>
+                            <li>Cookie-файлы и аналогичные технологии.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7. Способы и сроки обработки персональных данных -->
+            <section>
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">7. Способы и сроки обработки персональных данных</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p><strong>7.1. Способы обработки:</strong></p>
+                    <ul class="list-disc list-inside ml-4 space-y-1">
+                        <li>Сбор, запись, систематизация;</li>
+                        <li>Накопление, хранение;</li>
+                        <li>Уточнение (обновление, изменение);</li>
+                        <li>Извлечение, использование;</li>
+                        <li>Передача (предоставление, доступ);</li>
+                        <li>Обезличивание, блокирование, удаление, уничтожение.</li>
+                    </ul>
+                    
+                    <p class="mt-4"><strong>7.2. Сроки обработки:</strong></p>
+                    <p>Обработка персональных данных осуществляется в течение срока, необходимого для достижения целей обработки, но не более:</p>
+                    <ul class="list-disc list-inside ml-4 space-y-1">
+                        <li>Для персональных данных, предоставленных при обращении через форму обратной связи — до момента выполнения запроса и в течение 3 (трех) лет после его выполнения;</li>
+                        <li>Для персональных данных, предоставленных при оформлении заказа — в течение срока действия договора и в течение 5 (пяти) лет после его окончания (в соответствии с требованиями налогового законодательства);</li>
+                        <li>Для данных, собираемых автоматически (cookie, IP-адрес и т.д.) — в течение 12 (двенадцати) месяцев с момента последнего посещения Сайта.</li>
+                    </ul>
+                    
+                    <p class="mt-4"><strong>7.3. Условия прекращения обработки:</strong></p>
+                    <p>Обработка персональных данных прекращается при достижении целей обработки, истечении срока действия согласия субъекта персональных данных, отзыве согласия субъектом персональных данных, а также при выявлении неправомерной обработки персональных данных.</p>
+                </div>
+            </section>
+
+            <!-- 8. Меры по обеспечению безопасности персональных данных -->
+            <section>
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">8. Меры по обеспечению безопасности персональных данных</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Оператор принимает необходимые правовые, организационные и технические меры для защиты персональных данных от неправомерного доступа, уничтожения, изменения, блокирования, копирования, предоставления, распространения, а также от иных неправомерных действий в отношении персональных данных, включая:</p>
+                    <ul class="list-disc list-inside ml-4 space-y-2">
+                        <li>Определение угроз безопасности персональных данных при их обработке;</li>
+                        <li>Применение организационных и технических мер по обеспечению безопасности персональных данных;</li>
+                        <li>Контроль за принимаемыми мерами по обеспечению безопасности персональных данных;</li>
+                        <li>Оценка эффективности принимаемых мер до ввода в эксплуатацию информационной системы персональных данных;</li>
+                        <li>Учет машинных носителей персональных данных;</li>
+                        <li>Обнаружение фактов несанкционированного доступа к персональным данным и принятие мер по их устранению;</li>
+                        <li>Восстановление персональных данных, модифицированных или уничтоженных вследствие несанкционированного доступа к ним;</li>
+                        <li>Установление правил доступа к персональным данным, обрабатываемым в информационной системе персональных данных;</li>
+                        <li>Контроль за действиями с персональными данными в информационной системе персональных данных;</li>
+                        <li>Использование средств защиты информации, прошедших процедуру оценки соответствия.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 9. Права субъектов персональных данных -->
+            <section>
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">9. Права субъектов персональных данных</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>В соответствии с ФЗ-152, субъект персональных данных имеет право:</p>
+                    <ol class="list-decimal list-inside ml-4 space-y-2">
+                        <li><strong>Получать информацию</strong>, касающуюся обработки его персональных данных, в том числе содержащую:
+                            <ul class="list-disc list-inside ml-6 mt-2 space-y-1">
+                                <li>Подтверждение факта обработки персональных данных Оператором;</li>
+                                <li>Правовые основания и цели обработки персональных данных;</li>
+                                <li>Способы обработки персональных данных, применяемые Оператором;</li>
+                                <li>Сроки обработки персональных данных, в том числе сроки их хранения;</li>
+                                <li>Иную информацию, предусмотренную ФЗ-152.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Требовать уточнения</strong> персональных данных, их блокирования или уничтожения в случае, если персональные данные являются неполными, устаревшими, неточными, незаконно полученными или не являются необходимыми для заявленной цели обработки;</li>
+                        <li><strong>Отозвать согласие</strong> на обработку персональных данных;</li>
+                        <li><strong>Обжаловать</strong> действия или бездействие Оператора в уполномоченный орган по защите прав субъектов персональных данных или в судебном порядке;</li>
+                        <li><strong>Получить возмещение убытков</strong> и (или) компенсацию морального вреда в судебном порядке в случае нарушения прав субъекта персональных данных.</li>
+                    </ol>
+                    
+                    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mt-4">
+                        <p class="text-sm"><strong>Для реализации указанных прав</strong> субъект персональных данных может направить запрос Оператору по адресу электронной почты: <a href="mailto:Ya@LukyanovSY.ru" class="text-primary-600 hover:text-primary-700 font-semibold">Ya@LukyanovSY.ru</a> или по телефону: <a href="tel:+7-905-856-02-82" class="text-primary-600 hover:text-primary-700 font-semibold">+7-905-856-02-82</a>.</p>
+                        <p class="text-sm mt-2">Оператор обязуется рассмотреть запрос и направить ответ в течение 30 (тридцати) дней с момента получения запроса.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 10. Согласие на обработку персональных данных -->
+            <section>
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">10. Согласие на обработку персональных данных</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Используя Сайт и предоставляя свои персональные данные через формы обратной связи, регистрации, заказа услуг и иные формы на Сайте, субъект персональных данных:</p>
+                    <ul class="list-disc list-inside ml-4 space-y-2">
+                        <li>Подтверждает, что все указанные им данные принадлежат лично ему;</li>
+                        <li>Подтверждает и признает, что им внимательно и в полном объеме прочитана настоящая Политика конфиденциальности и условия обработки его персональных данных, указанные в ней;</li>
+                        <li>Дает согласие на обработку Оператором предоставленных персональных данных без оговорок и ограничений;</li>
+                        <li>Дает согласие на передачу его персональных данных третьим лицам, указанным в настоящей Политике конфиденциальности, исключительно в целях, указанных в разделе 4 настоящей Политики;</li>
+                        <li>Подтверждает, что в случае необходимости предоставления персональных данных для достижения указанных целей третьему лицу, а также при привлечении третьих лиц к оказанию услуг, Оператор передает таким третьим лицам персональные данные в объеме, необходимом для оказания услуг;</li>
+                        <li>Согласен с тем, что Оператор вправе предоставлять персональные данные третьим лицам, если это необходимо для соблюдения требований законодательства Российской Федерации.</li>
+                    </ul>
+                    <p class="mt-4">Согласие на обработку персональных данных может быть отозвано субъектом персональных данных путем направления соответствующего запроса Оператору.</p>
+                </div>
+            </section>
+
+            <!-- 11. Трансграничная передача персональных данных -->
+            <section>
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">11. Трансграничная передача персональных данных</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Оператор до начала осуществления трансграничной передачи персональных данных обязан убедиться в том, что иностранным государством, на территорию которого предполагается осуществлять передачу персональных данных, обеспечивается адекватная защита прав субъектов персональных данных.</p>
+                    <p>Трансграничная передача персональных данных на территории иностранных государств, не обеспечивающих адекватной защиты прав субъектов персональных данных, может осуществляться только в случае наличия согласия в письменной форме субъекта персональных данных на трансграничную передачу его персональных данных и (или) исполнения договора, стороной которого является субъект персональных данных.</p>
+                </div>
+            </section>
+
+            <!-- 12. Использование cookie и аналогичных технологий -->
+            <section>
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">12. Использование cookie и аналогичных технологий</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Сайт использует cookie-файлы и аналогичные технологии для обеспечения функциональности Сайта, улучшения пользовательского опыта, проведения аналитических исследований.</p>
+                    <p>Подробная информация об использовании cookie-файлов доступна в разделе настроек cookie на Сайте.</p>
+                    <p>Продолжая использовать Сайт, Вы соглашаетесь с использованием cookie-файлов в соответствии с настройками Вашего браузера.</p>
+                </div>
+            </section>
+
+            <!-- 13. Заключительные положения -->
+            <section>
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">13. Заключительные положения</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>13.1. Настоящая Политика конфиденциальности является неотъемлемой частью пользовательского соглашения, размещенного на Сайте.</p>
+                    <p>13.2. Оператор оставляет за собой право вносить изменения в настоящую Политику конфиденциальности. Все изменения вступают в силу с момента их публикации на Сайте.</p>
+                    <p>13.3. При внесении существенных изменений в Политику конфиденциальности Оператор уведомляет пользователей путем размещения соответствующего уведомления на Сайте.</p>
+                    <p>13.4. В случае несогласия с условиями настоящей Политики конфиденциальности пользователь должен прекратить использование Сайта.</p>
+                    <p>13.5. Все отношения, связанные с обработкой персональных данных, регулируются законодательством Российской Федерации.</p>
+                </div>
+            </section>
+
+            <!-- Контактная информация -->
+            <section class="bg-gray-50 p-6 rounded-lg">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Контактная информация Оператора</h2>
+                <div class="prose max-w-none text-gray-700 space-y-2">
+                    <p><strong>ООО "ЛукИнтерЛаб"</strong></p>
+                    <p>Юридический адрес: г. Москва, ул. Ярославская, д. 9</p>
+                    <p>Телефон: <a href="tel:+7-905-856-02-82" class="text-primary-600 hover:text-primary-700">+7-905-856-02-82</a></p>
+                    <p>Email: <a href="mailto:Ya@LukyanovSY.ru" class="text-primary-600 hover:text-primary-700">Ya@LukyanovSY.ru</a></p>
+                    <p>Сайт: <a href="https://lukinterlab.ru" target="_blank" class="text-primary-600 hover:text-primary-700">lukinterlab.ru</a></p>
+                </div>
+            </section>
+
+            <!-- Дата и подпись -->
+            <div class="text-center text-sm text-gray-500 pt-8 border-t border-gray-200">
+                <p>Политика конфиденциальности вступила в силу с {% now "d" %} {% now "F" %} {% now "Y" %} года</p>
+                <p class="mt-2">ООО "ЛукИнтерЛаб"</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования -->
+{% if user.is_authenticated and user.is_superuser %}
+<div id="edit-privacy-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center" style="display: none;">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+            <h2 class="text-2xl font-bold text-gray-900">Редактирование политики конфиденциальности</h2>
+            <button id="close-privacy-modal-btn" class="text-gray-500 hover:text-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="p-6" id="edit-privacy-form-container">
+            <div class="text-center py-8">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+                <p class="mt-4 text-gray-600">Загрузка формы...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+{% if user.is_authenticated and user.is_superuser %}
+document.addEventListener('DOMContentLoaded', function() {
+    const editBtn = document.getElementById('edit-privacy-policy-btn');
+    const modal = document.getElementById('edit-privacy-modal');
+    const closeBtn = document.getElementById('close-privacy-modal-btn');
+    const formContainer = document.getElementById('edit-privacy-form-container');
+    
+    if (!editBtn || !modal) return;
+    
+    // Открытие модального окна
+    editBtn.addEventListener('click', function() {
+        modal.style.display = 'flex';
+        // Создаём форму для редактирования только privacy_policy
+        const currentText = `{{ legal_info.privacy_policy|default:''|escapejs }}`;
+        formContainer.innerHTML = `
+            <form id="privacy-policy-form" method="post" enctype="multipart/form-data" class="space-y-6">
+                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-4">Политика конфиденциальности</h3>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Текст политики конфиденциальности</label>
+                        <textarea name="privacy_policy" id="id_privacy_policy" rows="25" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm">${currentText}</textarea>
+                        <p class="text-xs text-gray-500 mt-2">Вы можете использовать HTML-разметку для форматирования текста</p>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-4 pt-4 border-t">
+                    <button type="button" id="cancel-edit-privacy-btn" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">Отмена</button>
+                    <button type="submit" class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">Сохранить</button>
+                </div>
+            </form>
+        `;
+        
+        // Обработка отправки формы
+        const form = document.getElementById('privacy-policy-form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(form);
+                
+                // Добавляем все остальные поля из legal_info (чтобы не потерять данные)
+                {% if legal_info %}
+                formData.append('company_name', '{{ legal_info.company_name|default:""|escapejs }}');
+                formData.append('company_full_name', '{{ legal_info.company_full_name|default:""|escapejs }}');
+                formData.append('inn', '{{ legal_info.inn|default:""|escapejs }}');
+                formData.append('kpp', '{{ legal_info.kpp|default:""|escapejs }}');
+                formData.append('ogrn', '{{ legal_info.ogrn|default:""|escapejs }}');
+                formData.append('legal_address', '{{ legal_info.legal_address|default:""|escapejs }}');
+                formData.append('actual_address', '{{ legal_info.actual_address|default:""|escapejs }}');
+                formData.append('phone', '{{ legal_info.phone|default:""|escapejs }}');
+                formData.append('email', '{{ legal_info.email|default:""|escapejs }}');
+                formData.append('website', '{{ legal_info.website|default:""|escapejs }}');
+                formData.append('bank_name', '{{ legal_info.bank_name|default:""|escapejs }}');
+                formData.append('bank_account', '{{ legal_info.bank_account|default:""|escapejs }}');
+                formData.append('correspondent_account', '{{ legal_info.correspondent_account|default:""|escapejs }}');
+                formData.append('bik', '{{ legal_info.bik|default:""|escapejs }}');
+                formData.append('about_site', '{{ legal_info.about_site|default:""|escapejs }}');
+                formData.append('about_company', '{{ legal_info.about_company|default:""|escapejs }}');
+                formData.append('terms_of_use', '{{ legal_info.terms_of_use|default:""|escapejs }}');
+                {% endif %}
+                
+                fetch('{% url "home:edit_legal_info" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Политика конфиденциальности успешно сохранена!');
+                        location.reload();
+                    } else {
+                        alert('Ошибка: ' + (data.errors ? JSON.stringify(data.errors) : data.message || 'Неизвестная ошибка'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Произошла ошибка при сохранении');
+                });
+            });
+        }
+        // Обработка кнопки отмены
+        const cancelBtn = document.getElementById('cancel-edit-privacy-btn');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+        }
+    });
+    
+    // Закрытие модального окна
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            modal.style.display = 'none';
+        });
+    }
+    
+    // Закрытие при клике вне модального окна
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

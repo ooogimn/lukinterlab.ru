@@ -1,0 +1,24 @@
+{% load static %}
+
+<!--ОТЗЫВЫ|truncatechars:200-->
+<div class="owl-carousel owl-theme">
+    {% for otziv in otzivs %}
+    <div class="testimonial-item">
+        <div class="testimonial-content">
+            <p>{{ otziv.body|truncatechars:200 }}</p>
+        </div>
+        <div class="testimonial-meta">
+            {% if otziv.foto %}
+            <img src="{{ otziv.foto.url }}" alt="">
+            {% else %}
+            <img src="{% static 'img/лого_.gif' %}" alt="">
+            {% endif %}
+            <div class="meta-info">
+                <h4>{{ otziv.name }}</h4>
+                <p>{{ otziv.firma }}</p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<!--ОТЗЫВЫ|truncatechars:200-->

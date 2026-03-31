@@ -1,0 +1,144 @@
+{% load static %}
+
+<style>
+/* 3D эффект для заголовка "Отзывы наших клиентов" */
+.testimonials-header-3d {
+    text-shadow: 
+        3px 3px 0px #1e40af,
+        6px 6px 0px #1e3a8a,
+        9px 9px 0px #1e3a8a,
+        12px 12px 20px rgba(0, 0, 0, 0.3);
+    transform: perspective(500px) rotateX(5deg);
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.testimonials-header-3d:hover {
+    transform: perspective(500px) rotateX(0deg) scale(1.05);
+    text-shadow: 
+        3px 3px 0px #1e40af,
+        6px 6px 0px #1e3a8a,
+        9px 9px 0px #1e3a8a,
+        12px 12px 30px rgba(59, 130, 246, 0.5);
+}
+
+/* Анимация появления */
+@keyframes slideIn3D {
+    from {
+        opacity: 0;
+        transform: perspective(500px) rotateX(-10deg) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: perspective(500px) rotateX(5deg) translateY(0);
+    }
+}
+
+.testimonials-header-3d {
+    animation: slideIn3D 0.8s ease-out;
+}
+</style>
+
+<!-- Отзывы Section -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Заголовок секции -->
+    <div class="text-center mb-16">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-6">
+            <i class="fas fa-star text-2xl text-primary-600"></i>
+        </div>
+        <a href="{% url 'home:otzivs' %}" class="inline-block">
+            <h2 class="text-4xl md:text-5xl font-extrabold text-primary-600 mb-4 testimonials-header-3d cursor-pointer hover:text-primary-700 transition-colors duration-200">
+                Отзывы наших клиентов
+            </h2>
+        </a>
+    </div>
+
+    <!-- Отзывы Grid -->
+    {% if otzivs %}
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {% for otziv in otzivs %}
+        <a href="{% url 'home:otzivs' %}" class="block bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 p-8 border border-gray-100 cursor-pointer group">
+            <!-- Рейтинг -->
+            <div class="flex items-center mb-6">
+                <div class="flex text-yellow-400">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <span class="ml-2 text-sm text-gray-500">5.0</span>
+            </div>
+
+            <!-- Текст отзыва -->
+            <blockquote class="text-green-600 mb-6 italic group-hover:text-primary-600 transition-colors">
+                "{{ otziv.body|truncatewords:30 }}"
+            </blockquote>
+
+            <!-- Информация о клиенте -->
+            <div class="flex items-center">
+                {% if otziv.foto %}
+                <div class="flex-shrink-0 mr-4">
+                    {% if otziv.foto_webp %}
+                        <picture>
+                            <source srcset="{{ otziv.foto_webp.url }}" type="image/webp">
+                            <img src="{{ otziv.foto.url }}" alt="{{ otziv.name }}" loading="lazy" class="w-12 h-12 rounded-full object-cover">
+                        </picture>
+                    {% else %}
+                        <img src="{{ otziv.foto.url }}" alt="{{ otziv.name }}" loading="lazy" class="w-12 h-12 rounded-full object-cover">
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="flex-shrink-0 mr-4">
+                    <div class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-primary-600"></i>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="flex-1">
+                    <h4 class="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{{ otziv.name|default:"Анонимный клиент" }}</h4>
+                    {% if otziv.firma %}
+                    <p class="text-sm text-gray-600">{{ otziv.firma }}</p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500">{{ otziv.created|date:"d.m.Y" }}</p>
+                </div>
+                
+                <!-- Иконка стрелки -->
+                <div class="ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Кнопка "Все отзывы" -->
+    <div class="text-center mt-12">
+        <a href="{% url 'home:otzivs' %}" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+            </svg>
+            Все отзывы
+        </a>
+    </div>
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-12">
+        <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i class="fas fa-star text-3xl text-gray-400"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-primary-500 mb-2">Отзывов пока нет</h3>
+        <p class="text-green-600 mb-6">Будьте первым, кто оставит отзыв о нашей работе</p>
+        <a href="{% url 'home:otziv-create' %}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-colors duration-300">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            Оставить отзыв
+        </a>
+    </div>
+    {% endif %}
+</div> 

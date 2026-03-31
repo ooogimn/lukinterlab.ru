@@ -1,0 +1,167 @@
+{% extends 'assistant/dashboard/base.html' %}
+
+{% block dashboard_content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Breadcrumbs -->
+    <nav class="mb-6" aria-label="Breadcrumb">
+        <ol class="flex items-center space-x-2 text-sm">
+            <li>
+                <a href="{% url 'assistant:dashboard_main' %}" class="text-gray-500 hover:text-gray-700">Главная</a>
+            </li>
+            <li>
+                <span class="text-gray-400">/</span>
+            </li>
+            <li class="text-gray-900 font-medium">Мониторинг</li>
+        </ol>
+    </nav>
+    
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">Мониторинг системы</h1>
+    
+    <!-- GigaChat Status -->
+    <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Статус GigaChat</h2>
+        <div class="grid grid-cols-3 gap-4">
+            <div>
+                <p class="text-sm text-gray-600">Настроен</p>
+                <p class="text-lg font-semibold {% if gigachat_status.configured %}text-green-600{% else %}text-red-600{% endif %}">
+                    {% if gigachat_status.configured %}✓ Да{% else %}✗ Нет{% endif %}
+                </p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Модель</p>
+                <p class="text-lg font-semibold text-gray-900">{{ gigachat_status.model|default:"—" }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Scope</p>
+                <p class="text-lg font-semibold text-gray-900">{{ gigachat_status.scope|default:"—" }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Django-Q Schedules -->
+    <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Расписания Django-Q</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Расписание</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">CRON</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Последний запуск</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Следующий запуск</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for item in q_schedules_status %}
+                    <tr>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                            {{ item.ai_schedule.name|default:"Не найдено" }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">{{ item.q_schedule.cron }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                            {{ item.last_run|date:"d.m.Y H:i"|default:"—" }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                            {{ item.next_run|date:"d.m.Y H:i"|default:"—" }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-4 text-center text-gray-500">Нет активных расписаний</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Statistics 24h -->
+    <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Статистика за 24 часа</h2>
+        <div class="grid grid-cols-3 gap-4">
+            <div>
+                <p class="text-sm text-gray-600">Сгенерировано</p>
+                <p class="text-2xl font-bold text-gray-900">{{ stats_24h.generated }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Среднее время</p>
+                <p class="text-2xl font-bold text-gray-900">{{ stats_24h.avg_time|floatformat:1 }}с</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Успешность</p>
+                <p class="text-2xl font-bold text-green-600">{{ stats_24h.success_rate }}%</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Token Limits Status -->
+    {% if token_limits_status %}
+    <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Лимиты токенов</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {% for limit_info in token_limits_status %}
+            <div class="border rounded-lg p-4 {% if limit_info.is_critical %}bg-red-50 border-red-300{% elif limit_info.is_near_limit %}bg-yellow-50 border-yellow-300{% else %}bg-gray-50 border-gray-200{% endif %}">
+                <h3 class="font-semibold text-gray-900 mb-2">{{ limit_info.model }}</h3>
+                <div class="space-y-1">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Использовано:</span>
+                        <span class="font-medium">{{ limit_info.used|floatformat:0 }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Лимит:</span>
+                        <span class="font-medium">{{ limit_info.limit|floatformat:0 }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Осталось:</span>
+                        <span class="font-medium {% if limit_info.is_critical %}text-red-600{% elif limit_info.is_near_limit %}text-yellow-600{% else %}text-green-600{% endif %}">
+                            {{ limit_info.remaining|floatformat:0 }}
+                        </span>
+                    </div>
+                    <div class="mt-2">
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="h-2 rounded-full {% if limit_info.is_critical %}bg-red-500{% elif limit_info.is_near_limit %}bg-yellow-500{% else %}bg-green-500{% endif %}" 
+                                 style="width: {{ limit_info.used_percent|floatformat:1 }}%"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">{{ limit_info.used_percent|floatformat:1 }}%</p>
+                    </div>
+                    {% if limit_info.is_critical %}
+                    <p class="text-xs text-red-600 font-semibold mt-2">⚠️ Критический уровень!</p>
+                    {% elif limit_info.is_near_limit %}
+                    <p class="text-xs text-yellow-600 font-semibold mt-2">⚠️ Приближается к лимиту</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Daily Token Statistics Chart -->
+    {% if daily_token_stats %}
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Потребление токенов (7 дней)</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Дата</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Токены</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Запросы</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for stat in daily_token_stats %}
+                    <tr>
+                        <td class="px-6 py-4 text-sm text-gray-900">{{ stat.date|date:"d.m.Y" }}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ stat.tokens|floatformat:0 }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">{{ stat.requests|default:0 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

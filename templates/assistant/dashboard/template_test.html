@@ -1,0 +1,1093 @@
+{% extends 'assistant/dashboard/base.html' %}
+
+{% block dashboard_content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Breadcrumbs -->
+    <nav class="mb-6" aria-label="Breadcrumb">
+        <ol class="flex items-center space-x-2 text-sm">
+            <li>
+                <a href="{% url 'assistant:dashboard_main' %}" class="text-gray-500 hover:text-gray-700">Главная</a>
+            </li>
+            <li>
+                <span class="text-gray-400">/</span>
+            </li>
+            <li>
+                <a href="{% url 'assistant:dashboard_templates' %}" class="text-gray-500 hover:text-gray-700">Шаблоны</a>
+            </li>
+            <li>
+                <span class="text-gray-400">/</span>
+            </li>
+            <li class="text-gray-900 font-medium">Тестирование: {{ template.name }}</li>
+        </ol>
+    </nav>
+    
+    <!-- Header -->
+    <div class="mb-8 flex items-center justify-between">
+        <div>
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                Тестирование шаблона
+            </h1>
+            <p class="text-gray-700 text-lg font-medium">{{ template.name }}</p>
+        </div>
+        <a href="{% url 'assistant:dashboard_template_edit' template.pk %}" 
+           class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl font-semibold flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+            Редактировать шаблон
+        </a>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Форма параметров -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100" id="parameters-section">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Параметры генерации</h2>
+            
+            <form id="test-form" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Категория -->
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Категория
+                    </label>
+                    <div class="w-full px-4 py-3 bg-white border-2 border-blue-200 rounded-xl">
+                        <p class="text-gray-900 font-medium text-lg">
+                            {% if template.default_category %}
+                                {{ template.default_category.title|upper }}
+                            {% else %}
+                                ВЫСОКО "ИНТЕЛЛЕКТУАЛЬНЫЕ" НОВОСТИ (по умолчанию)
+                            {% endif %}
+                        </p>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Категория определяется из шаблона промпта и не может быть изменена при тестировании
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Динамические переменные из промпт-шаблона -->
+                <div id="dynamic-variables-section" class="bg-gradient-to-r from-amber-50 to-yellow-50 p-4 rounded-xl border border-amber-200 hidden">
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="block text-sm font-medium text-gray-700 font-semibold">
+                            📋 Динамические переменные из промпт-шаблона
+                        </label>
+                        <button type="button" id="refresh-variables-btn" 
+                                class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors duration-200 font-semibold"
+                                title="Обновить переменные из шаблона">
+                            🔄 Обновить
+                        </button>
+                    </div>
+                    
+                    <!-- Системные переменные -->
+                    <div id="system-variables-fields" class="space-y-3 mb-4">
+                        <!-- Поля будут добавлены через JavaScript -->
+                    </div>
+                    
+                    <!-- Пользовательские переменные -->
+                    <div id="custom-variables-fields" class="space-y-3">
+                        <!-- Поля будут добавлены через JavaScript -->
+                    </div>
+                    
+                    <p class="text-xs text-gray-500 mt-3 p-2 bg-white rounded-lg border border-amber-200">
+                        <strong>Системные переменные</strong> (topic, category, keywords) - заполняются автоматически, но можно переопределить.<br>
+                        <strong>Пользовательские переменные</strong> - заполните вручную. Если не заполнено - будет пустота.
+                    </p>
+                </div>
+                
+                <!-- Кнопка предпросмотра промптов -->
+                <button type="button" id="preview-prompts-btn"
+                        class="w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl hover:from-purple-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl font-semibold flex items-center justify-center mb-3">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                    Предпросмотр промптов
+                </button>
+                
+                <button type="submit" id="generate-btn"
+                        class="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl font-semibold flex items-center justify-center">
+                    <svg id="loading-spinner" class="hidden animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span id="generate-btn-text">Создать статью</span>
+                </button>
+                
+                <!-- Прогресс генерации -->
+                <div id="generation-progress" class="hidden mt-4">
+                    <div class="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <span id="progress-message" class="text-sm font-medium text-blue-900">Инициализация...</span>
+                            <span id="progress-percent" class="text-sm font-bold text-blue-700">0%</span>
+                        </div>
+                        <div class="w-full bg-blue-200 rounded-full h-2.5">
+                            <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Область отображения статьи -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Результат</h2>
+            
+            <div id="article-container" class="hidden">
+                <div id="article-content" class="space-y-4">
+                    <!-- Заголовок -->
+                    <div>
+                        <h3 id="article-title" class="text-2xl font-bold text-gray-900"></h3>
+                        <p id="article-category" class="text-sm text-gray-600 mt-1"></p>
+                    </div>
+                    
+                    <!-- Изображение -->
+                    <div id="article-image-container" class="hidden">
+                        <img id="article-image" src="" alt="" class="w-full rounded-lg shadow-md">
+                    </div>
+                    
+                    <!-- Описание -->
+                    <div>
+                        <p id="article-description" class="text-gray-700"></p>
+                    </div>
+                    
+                    <!-- Основной текст -->
+                    <div id="article-content-container" class="hidden">
+                        <h4 class="text-lg font-bold text-gray-900 mb-3">Основной текст:</h4>
+                        <div class="relative">
+                            <div id="article-content-text" class="prose max-w-none text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-200"></div>
+                            <div id="article-content-word-count" class="absolute bottom-2 right-2 text-xs text-gray-500 font-medium"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Дополнительная секция -->
+                    <div id="article-additional-section-container" class="hidden mt-6">
+                        <h4 class="text-lg font-bold text-gray-900 mb-3">Дополнительная секция:</h4>
+                        <div class="relative">
+                            <div id="article-additional-section" class="prose max-w-none text-gray-700 bg-blue-50 rounded-lg p-4 border border-blue-200"></div>
+                            <div id="article-additional-section-word-count" class="absolute bottom-2 right-2 text-xs text-gray-500 font-medium"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Теги -->
+                    <div id="article-tags-container" class="hidden mt-4">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-2">Теги:</h4>
+                        <div id="article-tags" class="flex flex-wrap gap-2">
+                            <!-- Теги будут добавлены через JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Статус -->
+                    <div>
+                        <span id="article-status" class="px-3 py-1 text-xs font-bold rounded-full"></span>
+                    </div>
+                    
+                    <!-- Статистика генерации -->
+                    <div id="generation-stats" class="hidden mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                        <h4 class="text-lg font-bold text-gray-900 mb-3">Статистика генерации</h4>
+                        <div id="stats-content" class="space-y-2 text-sm">
+                            <!-- Статистика будет добавлена через JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Кнопки управления -->
+                    <div class="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
+                        <button id="edit-btn" 
+                                class="hidden px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                            Редактировать
+                        </button>
+                        <button id="publish-btn" 
+                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200">
+                            Опубликовать
+                        </button>
+                        <button id="draft-btn" 
+                                class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors duration-200">
+                            В черновик
+                        </button>
+                        <button id="schedule-btn" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                            В расписание
+                        </button>
+                        <button id="delete-btn" 
+                                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200">
+                            Удалить
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="empty-state" class="text-center py-12">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <p class="mt-4 text-sm text-gray-500">Статья будет отображена здесь после генерации</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для расписания -->
+<div id="schedule-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-xl bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">Установить расписание публикации</h3>
+            
+            <form id="schedule-form" class="space-y-4">
+                <div>
+                    <label for="schedule_date" class="block text-sm font-medium text-gray-700 mb-2">
+                        Дата <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date" id="schedule_date" name="schedule_date" required
+                           class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                </div>
+                
+                <div>
+                    <label for="schedule_time" class="block text-sm font-medium text-gray-700 mb-2">
+                        Время <span class="text-red-500">*</span>
+                    </label>
+                    <input type="time" id="schedule_time" name="schedule_time" required
+                           class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                </div>
+                
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" 
+                            class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                        Сохранить
+                    </button>
+                    <button type="button" id="cancel-schedule-btn"
+                            class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200">
+                        Отмена
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+let currentPostId = null;
+
+// Генерация статьи
+document.getElementById('test-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const form = e.target;
+    const generateBtn = document.getElementById('generate-btn');
+    const generateBtnText = document.getElementById('generate-btn-text');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const articleContainer = document.getElementById('article-container');
+    const emptyState = document.getElementById('empty-state');
+    
+    // Показываем загрузку
+    generateBtn.disabled = true;
+    loadingSpinner.classList.remove('hidden');
+    generateBtnText.textContent = 'Генерация...';
+    
+    // Собираем данные формы
+    const formData = {
+        keywords: '',  // Будет заполнено из переменной {keywords} если она есть
+        context_data: {}
+    };
+    
+    // Собираем динамические переменные
+    const dynamicFields = document.querySelectorAll('[data-variable-name]');
+    console.log(`Найдено ${dynamicFields.length} полей с переменными`);
+    dynamicFields.forEach(field => {
+        const varName = field.getAttribute('data-variable-name');
+        const varValue = field.value.trim();
+        // Если это переменная keywords - сохраняем отдельно и в context_data
+        if (varName === 'keywords' && varValue) {
+            formData.keywords = varValue;
+            formData.context_data[varName] = varValue;
+            console.log(`Добавлена переменная keywords: "${varValue}"`);
+        } else if (varValue) {
+            // Добавляем остальные переменные в контекст
+            formData.context_data[varName] = varValue;
+            console.log(`Добавлена переменная: {${varName}} = "${varValue}"`);
+        } else {
+            console.log(`Переменная {${varName}} пустая, пропускаем`);
+        }
+    });
+    
+    console.log('Итоговый keywords:', formData.keywords);
+    console.log('Итоговый context_data:', formData.context_data);
+    
+    // Показываем прогресс
+    const progressContainer = document.getElementById('generation-progress');
+    progressContainer.classList.remove('hidden');
+    updateProgress(0, 'Инициализация генерации...');
+    
+    try {
+        const response = await fetch('{% url "assistant:dashboard_template_test_generate" template.pk %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        // Если есть progress_id - начинаем отслеживание прогресса
+        if (data.progress_id) {
+            trackGenerationProgress(data.progress_id);
+        }
+        
+        if (data.success) {
+            // Сохраняем ID статьи
+            currentPostId = data.post_id;
+            
+            // Отображаем статью
+            const articleTitle = document.getElementById('article-title');
+            const articleCategory = document.getElementById('article-category');
+            const articleDescription = document.getElementById('article-description');
+            
+            if (articleTitle) articleTitle.textContent = data.title || '';
+            if (articleCategory) articleCategory.textContent = 'Категория: ' + (data.category || '');
+            if (articleDescription) articleDescription.textContent = data.description || 'Описание отсутствует';
+            
+            // Изображение
+            const imageContainer = document.getElementById('article-image-container');
+            const articleImage = document.getElementById('article-image');
+            if (data.image_url && articleImage && imageContainer) {
+                articleImage.src = data.image_url;
+                articleImage.alt = data.title || '';
+                imageContainer.classList.remove('hidden');
+            } else {
+                if (imageContainer) imageContainer.classList.add('hidden');
+            }
+            
+            // Функция подсчета слов в HTML тексте
+            function countWords(htmlText) {
+                if (!htmlText) return 0;
+                // Создаем временный элемент для извлечения текста
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = htmlText;
+                // Получаем текстовое содержимое без HTML тегов
+                const text = tempDiv.textContent || tempDiv.innerText || '';
+                // Убираем лишние пробелы и считаем слова
+                const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+                return words.length;
+            }
+            
+            // Основной текст
+            const contentContainer = document.getElementById('article-content-container');
+            const articleContent = document.getElementById('article-content-text');
+            const contentWordCount = document.getElementById('article-content-word-count');
+            if (data.content && data.content.trim() && articleContent) {
+                articleContent.innerHTML = data.content;
+                // Подсчитываем слова
+                const wordCount = countWords(data.content);
+                if (contentWordCount) {
+                    contentWordCount.textContent = `${wordCount} ${wordCount === 1 ? 'слово' : wordCount < 5 ? 'слова' : 'слов'}`;
+                }
+                contentContainer.classList.remove('hidden');
+            } else {
+                if (contentContainer) contentContainer.classList.add('hidden');
+            }
+            
+            // Дополнительная секция
+            const additionalSectionContainer = document.getElementById('article-additional-section-container');
+            const articleAdditionalSection = document.getElementById('article-additional-section');
+            const additionalSectionWordCount = document.getElementById('article-additional-section-word-count');
+            if (data.additional_section && data.additional_section.trim() && articleAdditionalSection) {
+                articleAdditionalSection.innerHTML = data.additional_section;
+                // Подсчитываем слова
+                const wordCount = countWords(data.additional_section);
+                if (additionalSectionWordCount) {
+                    additionalSectionWordCount.textContent = `${wordCount} ${wordCount === 1 ? 'слово' : wordCount < 5 ? 'слова' : 'слов'}`;
+                }
+                if (additionalSectionContainer) additionalSectionContainer.classList.remove('hidden');
+            } else {
+                if (additionalSectionContainer) additionalSectionContainer.classList.add('hidden');
+            }
+            
+            // Теги
+            const tagsContainer = document.getElementById('article-tags-container');
+            const articleTags = document.getElementById('article-tags');
+            if (data.tags && Array.isArray(data.tags) && data.tags.length > 0 && articleTags) {
+                articleTags.innerHTML = '';
+                data.tags.forEach(tag => {
+                    const tagElement = document.createElement('span');
+                    tagElement.className = 'px-3 py-1 bg-indigo-100 text-indigo-800 text-xs font-semibold rounded-full';
+                    tagElement.textContent = tag;
+                    articleTags.appendChild(tagElement);
+                });
+                if (tagsContainer) tagsContainer.classList.remove('hidden');
+            } else {
+                if (tagsContainer) tagsContainer.classList.add('hidden');
+            }
+            
+            // Статус
+            const statusEl = document.getElementById('article-status');
+            if (statusEl) {
+                if (data.status === 'published') {
+                    statusEl.textContent = 'Опубликовано';
+                    statusEl.className = 'px-3 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800';
+                } else {
+                    statusEl.textContent = 'Черновик';
+                    statusEl.className = 'px-3 py-1 text-xs font-bold rounded-full bg-yellow-100 text-yellow-800';
+                }
+            }
+            
+            // Отображаем статистику
+            if (data.generation_stats || data.tokens_used || data.estimated_cost) {
+                displayGenerationStats(data.generation_stats, data.tokens_used, data.estimated_cost);
+            }
+            
+            // Устанавливаем URL редактирования
+            const editBtn = document.getElementById('edit-btn');
+            if (data.edit_url) {
+                editBtn.onclick = function() {
+                    window.location.href = data.edit_url;
+                };
+                editBtn.classList.remove('hidden');
+            } else {
+                editBtn.classList.add('hidden');
+            }
+            
+            // Показываем контейнер
+            articleContainer.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            
+            // Скрываем прогресс
+            progressContainer.classList.add('hidden');
+        } else {
+            // Скрываем прогресс при ошибке
+            progressContainer.classList.add('hidden');
+            
+            // Улучшенное отображение ошибок
+            const errorMsg = data.error || 'Неизвестная ошибка';
+            console.error('Ошибка генерации статьи:', errorMsg);
+            console.error('Полный ответ сервера:', data);
+            
+            // Форматируем сообщение для alert (заменяем \n на переносы строк)
+            const formattedError = errorMsg.replace(/\\n/g, '\n');
+            
+            // Показываем детальную ошибку
+            alert('Ошибка генерации статьи:\n\n' + formattedError + 
+                  '\n\nПроверьте:\n' +
+                  '1. Настройки GigaChat в админ-панели Django\n' +
+                  '2. Заполнены ли промпты в шаблоне\n' +
+                  '3. Правильность переменных в промптах\n' +
+                  '\nДетали в консоли браузера (F12)');
+        }
+    } catch (error) {
+        alert('Ошибка при генерации статьи: ' + error.message);
+        progressContainer.classList.add('hidden');
+    } finally {
+        generateBtn.disabled = false;
+        loadingSpinner.classList.add('hidden');
+        generateBtnText.textContent = 'Создать статью';
+    }
+});
+
+// Функция обновления прогресса
+function updateProgress(percent, message) {
+    const progressBar = document.getElementById('progress-bar');
+    const progressPercent = document.getElementById('progress-percent');
+    const progressMessage = document.getElementById('progress-message');
+    
+    if (progressBar) progressBar.style.width = percent + '%';
+    if (progressPercent) progressPercent.textContent = percent + '%';
+    if (progressMessage) progressMessage.textContent = message;
+}
+
+// Отслеживание прогресса генерации
+let progressInterval = null;
+function trackGenerationProgress(progressId) {
+    if (progressInterval) clearInterval(progressInterval);
+    
+    progressInterval = setInterval(async () => {
+        try {
+            const response = await fetch(`/assistant/dashboard/generation-progress/${progressId}/`);
+            const data = await response.json();
+            
+            if (data.success && data.progress) {
+                const progress = data.progress;
+                updateProgress(progress.progress, progress.message);
+                
+                if (progress.status === 'completed' || progress.status === 'error') {
+                    clearInterval(progressInterval);
+                    if (progress.status === 'error') {
+                        document.getElementById('generation-progress').classList.add('hidden');
+                    }
+                }
+            } else {
+                clearInterval(progressInterval);
+            }
+        } catch (error) {
+            console.error('Ошибка получения прогресса:', error);
+            clearInterval(progressInterval);
+        }
+    }, 1000); // Опрашиваем каждую секунду
+}
+
+// Отображение статистики генерации
+function displayGenerationStats(stats, tokens, cost) {
+    const statsContainer = document.getElementById('generation-stats');
+    const statsContent = document.getElementById('stats-content');
+    
+    if (!statsContainer || !statsContent) return;
+    
+    let html = '';
+    
+    // Время генерации элементов
+    if (stats) {
+        html += '<div class="mb-3"><strong class="text-gray-700">Время генерации:</strong></div>';
+        for (const [key, value] of Object.entries(stats)) {
+            if (key !== 'total' && value.time) {
+                const stepNames = {
+                    'title': 'Заголовок',
+                    'content': 'Контент',
+                    'description': 'Описание',
+                    'image': 'Изображение',
+                    'additional_section': 'Доп. секция',
+                    'tags': 'Теги'
+                };
+                html += `<div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-600">${stepNames[key] || key}:</span>
+                    <span class="font-medium text-gray-900">${value.time} сек</span>
+                </div>`;
+            }
+        }
+        if (stats.total) {
+            html += `<div class="flex justify-between text-sm mt-2 pt-2 border-t border-gray-300">
+                <span class="font-bold text-gray-900">Всего:</span>
+                <span class="font-bold text-gray-900">${stats.total.time} сек</span>
+            </div>`;
+        }
+    }
+    
+    // Токены
+    if (tokens && Object.keys(tokens).length > 0) {
+        html += '<div class="mt-4 mb-3"><strong class="text-gray-700">Использовано токенов:</strong></div>';
+        let totalTokens = 0;
+        for (const [key, value] of Object.entries(tokens)) {
+            if (value.tokens) {
+                totalTokens += value.tokens;
+                const stepNames = {
+                    'title': 'Заголовок',
+                    'content': 'Контент',
+                    'description': 'Описание',
+                    'image': 'Изображение',
+                    'additional_section': 'Доп. секция',
+                    'tags': 'Теги'
+                };
+                html += `<div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-600">${stepNames[key] || key}:</span>
+                    <span class="font-medium text-gray-900">${value.tokens.toLocaleString()} токенов</span>
+                </div>`;
+            }
+        }
+        html += `<div class="flex justify-between text-sm mt-2 pt-2 border-t border-gray-300">
+            <span class="font-bold text-gray-900">Всего:</span>
+            <span class="font-bold text-gray-900">${totalTokens.toLocaleString()} токенов</span>
+        </div>`;
+    }
+    
+    // Стоимость
+    if (cost !== undefined && cost !== null) {
+        html += `<div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <div class="flex justify-between items-center">
+                <span class="font-bold text-gray-900">Примерная стоимость:</span>
+                <span class="text-xl font-bold text-blue-600">${cost.toFixed(4)} ₽</span>
+            </div>
+        </div>`;
+    }
+    
+    statsContent.innerHTML = html;
+    statsContainer.classList.remove('hidden');
+}
+
+// Предпросмотр промптов
+document.getElementById('preview-prompts-btn').addEventListener('click', async function() {
+    const btn = this;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="animate-spin">⏳</span> Загрузка...';
+    
+    // Собираем данные формы
+    const formData = {
+        keywords: '',
+        context_data: {}
+    };
+    
+    const dynamicFields = document.querySelectorAll('[data-variable-name]');
+    dynamicFields.forEach(field => {
+        const varName = field.getAttribute('data-variable-name');
+        const varValue = field.value.trim();
+        if (varName === 'keywords' && varValue) {
+            formData.keywords = varValue;
+            formData.context_data[varName] = varValue;
+        } else if (varValue) {
+            formData.context_data[varName] = varValue;
+        }
+    });
+    
+    try {
+        const response = await fetch('{% url "assistant:dashboard_template_preview" template.pk %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showPreviewModal(data.previews, data.warnings);
+        } else {
+            alert('Ошибка предпросмотра: ' + (data.error || 'Неизвестная ошибка'));
+        }
+    } catch (error) {
+        alert('Ошибка при предпросмотре: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+});
+
+// Модальное окно предпросмотра
+function showPreviewModal(previews, warnings) {
+    // Создаем модальное окно если его нет
+    let modal = document.getElementById('preview-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'preview-modal';
+        modal.className = 'hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50';
+        modal.innerHTML = `
+            <div class="relative top-10 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-xl bg-white">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-bold text-gray-900">Предпросмотр промптов</h3>
+                    <button id="close-preview-modal" class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div id="preview-content" class="space-y-4 max-h-96 overflow-y-auto"></div>
+                <div class="mt-4 flex justify-end">
+                    <button id="close-preview-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                        Закрыть
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        document.getElementById('close-preview-modal').addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+        document.getElementById('close-preview-btn').addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+    }
+    
+    // Заполняем контент
+    const content = document.getElementById('preview-content');
+    let html = '';
+    
+    if (warnings && warnings.length > 0) {
+        html += `<div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg mb-4">
+            <p class="text-sm font-medium text-yellow-800">⚠️ Предупреждение: Не заполнены переменные: ${warnings.join(', ')}</p>
+        </div>`;
+    }
+    
+    if (previews.title) {
+        html += `<div class="border border-gray-200 rounded-lg p-4">
+            <h4 class="font-bold text-gray-900 mb-2">Промпт для заголовка:</h4>
+            <pre class="bg-gray-50 p-3 rounded text-sm whitespace-pre-wrap">${escapeHtml(previews.title)}</pre>
+        </div>`;
+    }
+    
+    if (previews.content) {
+        html += `<div class="border border-gray-200 rounded-lg p-4">
+            <h4 class="font-bold text-gray-900 mb-2">Промпт для контента:</h4>
+            <pre class="bg-gray-50 p-3 rounded text-sm whitespace-pre-wrap">${escapeHtml(previews.content)}</pre>
+        </div>`;
+    }
+    
+    if (previews.image) {
+        html += `<div class="border border-gray-200 rounded-lg p-4">
+            <h4 class="font-bold text-gray-900 mb-2">Промпт для изображения:</h4>
+            <pre class="bg-gray-50 p-3 rounded text-sm whitespace-pre-wrap">${escapeHtml(previews.image)}</pre>
+        </div>`;
+    }
+    
+    if (previews.additional_section) {
+        html += `<div class="border border-gray-200 rounded-lg p-4">
+            <h4 class="font-bold text-gray-900 mb-2">Промпт для дополнительной секции:</h4>
+            <pre class="bg-gray-50 p-3 rounded text-sm whitespace-pre-wrap">${escapeHtml(previews.additional_section)}</pre>
+        </div>`;
+    }
+    
+    content.innerHTML = html;
+    modal.classList.remove('hidden');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Публикация
+document.getElementById('publish-btn').addEventListener('click', async function() {
+    if (!currentPostId) return;
+    
+    if (!confirm('Опубликовать статью?')) return;
+    
+    try {
+        const response = await fetch(`/assistant/dashboard/posts/${currentPostId}/publish/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('article-status').textContent = 'Опубликовано';
+            document.getElementById('article-status').className = 'px-3 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800';
+            alert('Статья опубликована');
+        } else {
+            alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+        }
+    } catch (error) {
+        alert('Ошибка: ' + error.message);
+    }
+});
+
+// Черновик
+document.getElementById('draft-btn').addEventListener('click', async function() {
+    if (!currentPostId) return;
+    
+    if (!confirm('Перевести статью в черновик?')) return;
+    
+    try {
+        const response = await fetch(`/assistant/dashboard/posts/${currentPostId}/draft/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('article-status').textContent = 'Черновик';
+            document.getElementById('article-status').className = 'px-3 py-1 text-xs font-bold rounded-full bg-yellow-100 text-yellow-800';
+            alert('Статья переведена в черновик');
+        } else {
+            alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+        }
+    } catch (error) {
+        alert('Ошибка: ' + error.message);
+    }
+});
+
+// Расписание - открытие модального окна
+document.getElementById('schedule-btn').addEventListener('click', function() {
+    if (!currentPostId) return;
+    
+    // Устанавливаем минимальную дату - сегодня
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('schedule_date').min = today;
+    
+    // Устанавливаем текущее время + 1 час по умолчанию
+    const now = new Date();
+    now.setHours(now.getHours() + 1);
+    const timeString = now.toTimeString().slice(0, 5);
+    document.getElementById('schedule_time').value = timeString;
+    
+    document.getElementById('schedule-modal').classList.remove('hidden');
+});
+
+// Закрытие модального окна
+document.getElementById('cancel-schedule-btn').addEventListener('click', function() {
+    document.getElementById('schedule-modal').classList.add('hidden');
+});
+
+// Сохранение расписания
+document.getElementById('schedule-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    if (!currentPostId) return;
+    
+    const formData = {
+        schedule_date: document.getElementById('schedule_date').value,
+        schedule_time: document.getElementById('schedule_time').value
+    };
+    
+    try {
+        const response = await fetch(`/assistant/dashboard/posts/${currentPostId}/schedule/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('schedule-modal').classList.add('hidden');
+            document.getElementById('article-status').textContent = 'Запланировано';
+            document.getElementById('article-status').className = 'px-3 py-1 text-xs font-bold rounded-full bg-blue-100 text-blue-800';
+            alert(data.message);
+        } else {
+            alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+        }
+    } catch (error) {
+        alert('Ошибка: ' + error.message);
+    }
+});
+
+// Загрузка динамических переменных из шаблона
+document.addEventListener('DOMContentLoaded', function() {
+    'use strict';
+    
+    console.log('🚀 Инициализация загрузки динамических переменных...');
+    
+    // Получаем ID шаблона из контекста Django
+    const templateId = {{ template.pk|default:0 }};
+    
+    if (!templateId || templateId <= 0) {
+        console.warn('⚠️ ID шаблона не найден или равен 0');
+        return;
+    }
+    
+    console.log('📋 ID шаблона:', templateId);
+    
+    // Получаем элементы DOM
+    const section = document.getElementById('dynamic-variables-section');
+    const systemFieldsContainer = document.getElementById('system-variables-fields');
+    const customFieldsContainer = document.getElementById('custom-variables-fields');
+    const refreshBtn = document.getElementById('refresh-variables-btn');
+    
+    if (!section || !systemFieldsContainer || !customFieldsContainer) {
+        console.error('❌ Не найдены необходимые элементы DOM');
+        return;
+    }
+    
+    // Функция для загрузки и отображения переменных
+    function loadVariables() {
+        console.log('🔍 Начало загрузки переменных...');
+        
+        // Формируем URL
+        const url = `/assistant/dashboard/templates/${templateId}/variables/`;
+        console.log('📡 URL запроса:', url);
+        
+        // Отправляем запрос
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            credentials: 'same-origin'
+        })
+        .then(function(response) {
+            console.log('📡 Статус ответа:', response.status);
+            if (!response.ok) {
+                throw new Error('HTTP error! status: ' + response.status);
+            }
+            return response.json();
+        })
+        .then(function(data) {
+            console.log('📦 Получены данные:', data);
+            
+            // Очищаем контейнеры
+            systemFieldsContainer.innerHTML = '';
+            customFieldsContainer.innerHTML = '';
+            
+            // Получаем массивы переменных
+            const systemVars = Array.isArray(data.system_variables) ? data.system_variables : [];
+            const customVars = Array.isArray(data.custom_variables) ? data.custom_variables : [];
+            
+            console.log('📊 Системные переменные (' + systemVars.length + '):', systemVars);
+            console.log('📊 Пользовательские переменные (' + customVars.length + '):', customVars);
+            
+            // Проверяем есть ли переменные
+            const hasVars = (systemVars.length > 0) || (customVars.length > 0);
+            
+            if (data.success && hasVars) {
+                // Показываем блок
+                section.classList.remove('hidden');
+                section.style.display = 'block';
+                console.log('✅ Блок переменных показан');
+                
+                // Добавляем системные переменные
+                if (systemVars.length > 0) {
+                    const systemHeader = document.createElement('div');
+                    systemHeader.className = 'mb-3 p-2 bg-blue-50 rounded border border-blue-200';
+                    systemHeader.innerHTML = '<p class="text-xs font-semibold text-blue-900">Системные переменные (заполняются автоматически, можно переопределить):</p>';
+                    systemFieldsContainer.appendChild(systemHeader);
+                    
+                    systemVars.forEach(function(varName) {
+                        const fieldDiv = document.createElement('div');
+                        fieldDiv.className = 'mb-3';
+                        
+                        // Для переменной category автоматически подставляем значение из default_category
+                        let defaultValue = '';
+                        let placeholder = 'Значение для {' + varName + '} (опционально)';
+                        if (varName === 'category' && data.default_category_name) {
+                            defaultValue = data.default_category_name;
+                            placeholder = 'Категория из шаблона (можно переопределить)';
+                            console.log('📋 Категория получена из backend:', defaultValue);
+                            console.log('📋 Длина категории:', defaultValue.length);
+                            console.log('📋 Полное значение:', JSON.stringify(defaultValue));
+                        }
+                        
+                        // Создаем элементы через DOM API для безопасной обработки значений (включая кавычки)
+                        const label = document.createElement('label');
+                        label.setAttribute('for', 'var_' + varName);
+                        label.className = 'block text-sm font-medium text-blue-800 mb-1';
+                        label.textContent = '{' + varName + '}';
+                        
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.id = 'var_' + varName;
+                        input.name = 'var_' + varName;
+                        input.setAttribute('data-variable-name', varName);
+                        // Используем value напрямую (DOM API правильно обрабатывает любые символы)
+                        input.value = defaultValue || '';
+                        input.placeholder = placeholder;
+                        input.className = 'w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 bg-white';
+                        
+                        fieldDiv.appendChild(label);
+                        fieldDiv.appendChild(input);
+                        systemFieldsContainer.appendChild(fieldDiv);
+                        
+                        // Проверяем, что значение установлено правильно
+                        if (varName === 'category' && defaultValue) {
+                            console.log('✅ Значение в поле input.value:', input.value);
+                            console.log('✅ Длина значения в поле:', input.value.length);
+                            console.log('✅ Совпадает с исходным:', input.value === defaultValue);
+                        }
+                        
+                        console.log('✅ Добавлено системное поле: {' + varName + '}' + (defaultValue ? ' со значением по умолчанию: "' + defaultValue + '"' : ''));
+                    });
+                }
+                
+                // Добавляем пользовательские переменные
+                if (customVars.length > 0) {
+                    const customHeader = document.createElement('div');
+                    customHeader.className = 'mb-3 p-2 bg-purple-50 rounded border border-purple-200';
+                    customHeader.innerHTML = '<p class="text-xs font-semibold text-purple-900">Пользовательские переменные (заполните вручную):</p>';
+                    customFieldsContainer.appendChild(customHeader);
+                    
+                    customVars.forEach(function(varName) {
+                        // Создаем элементы через DOM API для безопасной обработки значений
+                        const fieldDiv = document.createElement('div');
+                        fieldDiv.className = 'mb-3';
+                        
+                        const label = document.createElement('label');
+                        label.setAttribute('for', 'var_' + varName);
+                        label.className = 'block text-sm font-medium text-purple-800 mb-1';
+                        label.textContent = '{' + varName + '}';
+                        
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.id = 'var_' + varName;
+                        input.name = 'var_' + varName;
+                        input.setAttribute('data-variable-name', varName);
+                        input.placeholder = 'Значение для {' + varName + '} (обязательно)';
+                        input.className = 'w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200 bg-white';
+                        
+                        fieldDiv.appendChild(label);
+                        fieldDiv.appendChild(input);
+                        customFieldsContainer.appendChild(fieldDiv);
+                        console.log('✅ Добавлено пользовательское поле: {' + varName + '}');
+                    });
+                }
+                
+                console.log('✅ Всего переменных: ' + (systemVars.length + customVars.length));
+            } else {
+                console.log('ℹ️ Переменные не найдены в шаблоне');
+                section.classList.add('hidden');
+                section.style.display = 'none';
+            }
+        })
+        .catch(function(error) {
+            console.error('❌ Ошибка загрузки переменных:', error);
+            console.error('Детали:', error.message);
+            
+            // Показываем ошибку пользователю
+            section.innerHTML = 
+                '<div class="p-4 bg-red-50 border border-red-200 rounded-lg">' +
+                '<p class="text-red-800 font-semibold">Ошибка загрузки переменных</p>' +
+                '<p class="text-red-600 text-sm mt-1">' + error.message + '</p>' +
+                '<p class="text-red-500 text-xs mt-2">Проверьте консоль браузера для деталей</p>' +
+                '</div>';
+            section.style.display = 'block';
+            section.classList.remove('hidden');
+        });
+    }
+    
+    // Загружаем переменные сразу
+    loadVariables();
+    
+    // Кнопка обновления
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            console.log('🔄 Обновление переменных...');
+            loadVariables();
+        });
+    }
+});
+
+// Удаление
+document.getElementById('delete-btn').addEventListener('click', async function() {
+    if (!currentPostId) return;
+    
+    if (!confirm('Удалить статью? Это действие нельзя отменить.')) return;
+    
+    try {
+        const response = await fetch(`/assistant/dashboard/posts/${currentPostId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Скрываем статью
+            document.getElementById('article-container').classList.add('hidden');
+            document.getElementById('empty-state').classList.remove('hidden');
+            currentPostId = null;
+            alert(data.message);
+        } else {
+            alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+        }
+    } catch (error) {
+        alert('Ошибка: ' + error.message);
+    }
+});
+</script>
+{% endblock %}
+

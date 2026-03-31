@@ -1,0 +1,71 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Оплата прошла успешно!
+                    </h4>
+                </div>
+                <div class="card-body text-center">
+                    <!-- Иконка успеха -->
+                    <div class="mb-4">
+                        <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                    </div>
+
+                    <h3 class="text-success mb-3">Спасибо за оплату!</h3>
+                    <p class="lead">Ваш заказ №{{ order.order_number }} успешно оплачен.</p>
+
+                    <!-- Информация о платеже -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5 class="text-primary">Детали платежа</h5>
+                            <p><strong>Сумма:</strong> {{ order.total_price }} ₽</p>
+                            <p><strong>Статус:</strong> 
+                                <span class="badge bg-success">Оплачен</span>
+                            </p>
+                            <p><strong>Дата оплаты:</strong> {{ order.updated|date:"d.m.Y H:i" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="text-primary">Следующие шаги</h5>
+                            <p>Мы свяжемся с вами в ближайшее время для уточнения деталей проекта.</p>
+                            <p>Ожидайте звонка или письма на {{ order.customer_email }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Кнопки действий -->
+                    <div class="mb-4">
+                        <a href="{% url 'home:order_detail' order.id %}" class="btn btn-primary btn-lg me-2">
+                            <i class="fas fa-eye me-2"></i>
+                            Посмотреть заказ
+                        </a>
+                        <a href="{% url 'home:home' %}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-home me-2"></i>
+                            На главную
+                        </a>
+                    </div>
+
+                    <!-- Информация о поддержке -->
+                    <div class="p-3 bg-light rounded">
+                        <h6 class="text-muted">
+                            <i class="fas fa-headset me-2"></i>
+                            Нужна помощь?
+                        </h6>
+                        <p class="text-muted mb-0">
+                            Если у вас есть вопросы по заказу, свяжитесь с нами: 
+                            <a href="mailto:{{ settings.ADMIN_EMAIL }}">{{ settings.ADMIN_EMAIL }}</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

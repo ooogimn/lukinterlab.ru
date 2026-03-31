@@ -1,0 +1,87 @@
+{% if vkid_app_id and not request.user.is_authenticated %}
+<div class="vkid-oauth-widget mt-6 pt-6 border-t border-gray-200">
+    <p class="text-center text-sm text-gray-600 mb-4">или войти через VK ID с использованием данных из сервиса</p>
+    <div id="lukinterlab-vkid-oauth-list" class="flex justify-center"></div>
+</div>
+<script src="https://unpkg.com/@vkid/sdk@2/dist-sdk/umd/index.js" async></script>
+<script>
+(function () {
+    function getCookie(name) {
+        var m = document.cookie.match(new RegExp('(^|; )' + name.replace(/[-.+*]/g, '\\$&') + '=([^;]*)'));
+        return m ? decodeURIComponent(m[2]) : '';
+    }
+    function initVkId() {
+        if (!('VKIDSDK' in window)) return false;
+        var VKID = window.VKIDSDK;
+        var container = document.getElementById('lukinterlab-vkid-oauth-list');
+        if (!container || container.dataset.vkidInit === '1') return true;
+        container.dataset.vkidInit = '1';
+
+        VKID.Config.init({
+            app: {{ vkid_app_id }},
+            redirectUrl: '{{ vkid_redirect_url|escapejs }}',
+            responseMode: VKID.ConfigResponseMode.Callback,
+            source: VKID.ConfigSource.LOWCODE,
+            scope: ''
+        });
+
+        var oauthNames = (VKID.OAuthName && VKID.OAuthName.VK)
+            ? [VKID.OAuthName.VK, VKID.OAuthName.OK, VKID.OAuthName.MAIL]
+            : ['vkid', 'ok_ru', 'mail_ru'];
+
+        var oauthList = new VKID.OAuthList();
+        oauthList.render({
+            container: container,
+            oauthList: oauthNames,
+            scheme: VKID.Scheme.LIGHT,
+            lang: VKID.Languages.RUS,
+            styles: { height: 44, borderRadius: 8 }
+        })
+        .on(VKID.WidgetEvents.ERROR, function (err) {
+            if (typeof console !== 'undefined' && console.warn) console.warn('VK ID:', err);
+        })
+        .on(VKID.OAuthListInternalEvents.LOGIN_SUCCESS, function (payload) {
+            VKID.Auth.exchangeCode(payload.code, payload.device_id)
+                .then(function (data) {
+                    var token = data && (data.access_token || data.accessToken);
+                    if (!token) return;
+                    return fetch('{% url "home:customer_vkid_complete" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({ access_token: token })
+                    }).then(function (res) {
+                        return res.json().then(function (j) {
+                            if (res.ok && j.redirect) {
+                                window.location.href = j.redirect;
+                            } else if (typeof console !== 'undefined' && console.warn) {
+                                console.warn('VK ID вход:', j);
+                            }
+                        });
+                    });
+                })
+                .catch(function (err) {
+                    if (typeof console !== 'undefined' && console.warn) console.warn('VK ID exchange:', err);
+                });
+        });
+        return true;
+    }
+    function poll() {
+        if (initVkId()) return;
+        var n = 0;
+        var t = setInterval(function () {
+            n += 1;
+            if (initVkId() || n > 200) clearInterval(t);
+        }, 50);
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', poll);
+    } else {
+        poll();
+    }
+})();
+</script>
+{% endif %}

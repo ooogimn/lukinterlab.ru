@@ -1,0 +1,373 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="title" content="{% block title %}{{ seo_title|default:'LukInterLab - Создание IT-решений и ИИ' }}{% endblock %}">
+    <meta name="description" content="{% block description %}{{ seo_description|default:'Мы создаем мощные сайты, ботов, приложения и интернет-магазины с применением искусственного интеллекта. Повышаем продажи и автоматизируем бизнес.' }}{% endblock %}">
+    <meta name="keywords" content="{% block keywords %}{{ seo_keywords|default:'разработка сайтов, IT компания, искусственный интеллект, боты, GPT, автоматизация бизнеса' }}{% endblock %}">
+    <meta name="author" content="LukInterLab">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="ru">
+    <meta name="revisit-after" content="7 days">
+    <meta name="distribution" content="global">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{{ seo_canonical }}">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="{% block og_title %}{{ seo_og_title|default:'LukInterLab - Создание IT-решений и ИИ' }}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ seo_og_description|default:'Мы создаем мощные сайты, ботов, приложения и интернет-магазины с применением искусственного интеллекта.' }}{% endblock %}">
+    <meta property="og:image" content="{{ seo_og_image|default:'https://lukinterlab.ru/static/img/400-crug.png' }}">
+    <meta property="og:url" content="{{ seo_canonical|default:'https://lukinterlab.ru' }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="LukInterLab">
+    <meta property="og:locale" content="ru_RU">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ seo_og_title|default:'LukInterLab - Создание IT-решений и ИИ' }}">
+    <meta name="twitter:description" content="{{ seo_og_description|default:'Мы создаем мощные сайты, ботов, приложения и интернет-магазины с применением искусственного интеллекта.' }}">
+    <meta name="twitter:image" content="{{ seo_og_image|default:'https://lukinterlab.ru/static/img/400-crug.png' }}">
+    
+    <!-- Additional SEO -->
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="msapplication-TileColor" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    
+    <!-- Yandex Verification -->
+    <meta name="yandex-verification" content="05cb940f69f8439a">
+    
+    <!-- Geo targeting -->
+    <meta name="geo.region" content="RU-MOW">
+    <meta name="geo.placename" content="Москва">
+    <meta name="geo.position" content="55.7558;37.6173">
+    <meta name="ICBM" content="55.7558, 37.6173">
+    
+    <title>{% block page_title %}{{ seo_title|default:'LukInterLab - IT решения' }}{% endblock %}</title>
+    
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "LukInterLab",
+        "url": "https://lukinterlab.ru",
+        "logo": "https://lukinterlab.ru/static/img/400-crug.png",
+        "description": "Создаем сайты, боты, приложения и интернет-магазины под ключ. Современные IT решения для вашего бизнеса.",
+        "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "ул. Ярославская, д. 9",
+            "addressLocality": "Москва",
+            "addressCountry": "RU"
+        },
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": "+7-905-856-02-82",
+            "contactType": "customer service",
+            "email": "Ya@LukyanovSY.ru"
+        },
+        "sameAs": [
+            "https://t.me/LukInterLab_News",
+            "https://vk.com/lukinterlab"
+        ],
+        "serviceArea": {
+            "@type": "Country",
+            "name": "Россия"
+        },
+        "hasOfferCatalog": {
+            "@type": "OfferCatalog",
+            "name": "IT услуги",
+            "itemListElement": [
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Разработка сайтов"
+                    }
+                },
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Telegram боты"
+                    }
+                },
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Мобильные приложения"
+                    }
+                },
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Интернет-магазины"
+                    }
+                }
+            ]
+        }
+    }
+    </script>
+    
+    <!-- Favicon -->
+    <!-- SVG favicon (предпочтительно для Яндекса) -->
+    <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
+    <!-- PNG favicon 120x120 для Яндекса -->
+    <link rel="icon" type="image/png" sizes="120x120" href="{% static 'img/favicon-120x120.png' %}">
+    <!-- Стандартные размеры -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon.png' %}">
+    <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/favicon.png' %}">
+    <link rel="manifest" href="/static/manifest.json">
+    
+    <!-- RSS Feeds -->
+    <link rel="alternate" type="application/atom+xml" title="LukInterLab.ru - Блог (Atom)" href="https://lukinterlab.ru/blog/feed/">
+    <link rel="alternate" type="application/rss+xml" title="LukInterLab.ru - Блог (RSS)" href="https://lukinterlab.ru/blog/rss/">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a'
+                        },
+                        secondary: {
+                            500: '#8b5cf6',
+                            600: '#7c3aed'
+                        }
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                        'bounce-slow': 'bounce 2s infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Section Backgrounds CSS -->
+    <link rel="stylesheet" href="{% static 'css/section-backgrounds.css' %}">
+    
+    <!-- Preload Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"></noscript>
+    
+    <!-- DNS Prefetch for external resources -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    
+    <!-- Preconnect for critical third-party domains -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    
+    <!-- Custom Styles -->
+    <style>
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .post-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+        }
+        
+        .posts-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+        }
+        
+        .pos-image {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+        }
+        
+        .pos-image:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Стили для уведомлений формы контактов */
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+        
+        .alert-success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .alert-danger {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        
+        .alert-container {
+            display: none;
+        }
+    </style>
+
+    <!-- Google Tag Manager -->
+    <script>
+    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-WCPSGH7C');
+    </script>
+    <!-- End Google Tag Manager -->
+    
+    <!-- Yandex.Metrika -->
+    <script type="text/javascript">
+        (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+        m[i].l=1*new Date();
+        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+        (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+        ym(102639370, "init", {
+            clickmap:true,
+            trackLinks:true,
+            accurateTrackBounce:true,
+            webvisor:true
+        });
+    </script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/102639370" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body class="bg-gray-50 text-gray-900 font-sans antialiased">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript>
+        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WCPSGH7C" 
+        height="0" width="0" style="display:none;visibility:hidden">
+        </iframe>
+    </noscript>
+    <!-- End Google Tag Manager (noscript) -->
+     
+    <!-- Индикатор загрузки -->
+    <div id="loading" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600"></div>
+    </div>
+    
+    <!-- Основное содержание -->
+    <div id="page" class="min-h-screen">
+        {% block reclama_1 %}
+        {% include "reclama/1.html" %}
+        {% endblock %}
+        
+        <!-- Header -->
+        <header class="fixed top-0 left-0 right-0 z-40 transition-all duration-300" id="header">
+            {% block meny %}
+            {% endblock %}
+        </header>
+        
+        <!-- содержание -->
+        <main id="main" class="pt-16">
+            {% block straniza %}
+            {% endblock %}
+        </main>
+        
+        <!-- Footer -->
+        {% include 'base/footer.html' %}
+        <!-- End Footer -->
+    </div>
+    
+    <!-- Кнопка "Наверх" -->
+    <button id="backToTop" class="fixed bottom-8 right-8 bg-primary-600 text-white p-3 rounded-full shadow-lg hover:bg-primary-700 transition-all duration-300 opacity-0 invisible">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+        </svg>
+    </button>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+    <script src="{% static 'js/contact-form-fix.js' %}"></script>
+    <script>
+        // Loading animation
+        window.addEventListener('load', function() {
+            document.getElementById('loading').style.display = 'none';
+        });
+        
+        // Back to top button
+        const backToTop = document.getElementById('backToTop');
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                backToTop.classList.remove('opacity-0', 'invisible');
+                backToTop.classList.add('opacity-100', 'visible');
+            } else {
+                backToTop.classList.add('opacity-0', 'invisible');
+                backToTop.classList.remove('opacity-100', 'visible');
+            }
+        });
+        
+        backToTop.addEventListener('click', function() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        
+        // Header scroll effect
+        const header = document.getElementById('header');
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 100) {
+                header.classList.add('bg-white/95', 'backdrop-blur-md', 'shadow-lg');
+            } else {
+                header.classList.remove('bg-white/95', 'backdrop-blur-md', 'shadow-lg');
+            }
+        });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+    <!-- Scripts -->
+    <!-- Виджет ассистента на основе ИИ-->
+    {% include 'assistant/chat_widget.html' %}
+    <!-- Cookie Consent Banner -->
+    {% include 'base/cookie_banner.html' %}
+</body>
+</html>

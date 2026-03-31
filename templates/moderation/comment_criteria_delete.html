@@ -1,0 +1,94 @@
+{% extends 'moderation/base.html' %}
+
+{% block moderation_content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <nav class="mb-4" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2 text-sm">
+                <li><a href="{% url 'moderation:dashboard' %}" class="text-gray-500 hover:text-gray-700">Дашборд</a></li>
+                <li><span class="text-gray-400">/</span></li>
+                <li><a href="{% url 'moderation:comment_list' %}" class="text-gray-500 hover:text-gray-700">Комментарии</a></li>
+                <li><span class="text-gray-400">/</span></li>
+                <li class="text-gray-900 font-medium">Удаление критерия</li>
+            </ol>
+        </nav>
+        <h1 class="text-4xl font-bold text-gray-900 mb-2">Удаление критерия</h1>
+    </div>
+    
+    <!-- Предупреждение -->
+    <div class="bg-white rounded-2xl shadow-xl p-8">
+        <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+            <div class="flex items-center mb-4">
+                <svg class="w-8 h-8 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <h2 class="text-xl font-bold text-red-800">Внимание! Удаление критерия</h2>
+            </div>
+            <p class="text-red-700 mb-2">
+                Вы собираетесь удалить критерий <strong>"{{ criteria.name }}"</strong>.
+            </p>
+            {% if usage_count > 0 %}
+            <p class="text-red-700 font-semibold">
+                Этот критерий использовался для модерации <strong>{{ usage_count }}</strong> комментариев.
+            </p>
+            <p class="text-red-600 text-sm mt-2">
+                После удаления связь с этими комментариями будет потеряна, но сами комментарии останутся.
+            </p>
+            {% else %}
+            <p class="text-red-600 text-sm">
+                Этот критерий еще не использовался для модерации комментариев.
+            </p>
+            {% endif %}
+        </div>
+        
+        <!-- Информация о критерии -->
+        <div class="bg-gray-50 rounded-lg p-6 mb-6">
+            <h3 class="font-semibold text-gray-900 mb-4">Информация о критерии:</h3>
+            <div class="space-y-2 text-sm">
+                <div>
+                    <span class="text-gray-600">Название:</span>
+                    <span class="font-medium text-gray-900 ml-2">{{ criteria.name }}</span>
+                </div>
+                {% if criteria.description %}
+                <div>
+                    <span class="text-gray-600">Описание:</span>
+                    <span class="font-medium text-gray-900 ml-2">{{ criteria.description }}</span>
+                </div>
+                {% endif %}
+                <div>
+                    <span class="text-gray-600">Статус:</span>
+                    {% if criteria.is_active %}
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 ml-2">Активен</span>
+                    {% else %}
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800 ml-2">Неактивен</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <span class="text-gray-600">Создан:</span>
+                    <span class="font-medium text-gray-900 ml-2">{{ criteria.created|date:"d.m.Y H:i" }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Форма удаления -->
+        <form method="post">
+            {% csrf_token %}
+            <div class="flex items-center justify-between">
+                <a href="{% url 'moderation:comment_list' %}" 
+                   class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                    Отмена
+                </a>
+                <button type="submit" 
+                        class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    Удалить критерий
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,495 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Правовая информация - {{ legal_info.company_name }}{% endblock %}
+
+{% block meny %}
+{% include "meny/sidibar-1.html" %}
+{% endblock %}
+
+{% block straniza %}
+<div class="min-h-screen bg-gray-50 py-12">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Заголовок -->
+        <div class="mb-12">
+            <div class="text-center mb-6">
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                    Правовая информация
+                </h1>
+                <p class="text-xl text-gray-600">
+                    Вся информация о компании и документах
+                </p>
+            </div>
+            {% if user.is_authenticated and user.is_superuser %}
+            <div class="flex justify-center mb-4">
+                <button id="edit-legal-info-btn" class="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg shadow-lg transition flex items-center gap-2 whitespace-nowrap text-lg font-semibold">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    Редактировать
+                </button>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Основная информация о компании -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6 pb-4 border-b-2 border-primary-500">
+                О компании
+            </h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Полное наименование</h3>
+                    <p class="text-gray-700">{{ legal_info.company_full_name|default:"Общество с ограниченной ответственностью \"ЛукИнтерЛаб\"" }}</p>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">ИНН</h3>
+                        <p class="text-gray-700">{{ legal_info.inn|default:"—" }}</p>
+                    </div>
+                    {% if legal_info.kpp %}
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">КПП</h3>
+                        <p class="text-gray-700">{{ legal_info.kpp }}</p>
+                    </div>
+                    {% endif %}
+                    {% if legal_info.ogrn %}
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">ОГРН</h3>
+                        <p class="text-gray-700">{{ legal_info.ogrn }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Адреса -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6 pb-4 border-b-2 border-primary-500">
+                Адреса
+            </h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Юридический адрес</h3>
+                    <p class="text-gray-700">{{ legal_info.legal_address|default:"г. Москва, ул. Ярославская, д. 9" }}</p>
+                </div>
+                
+                {% if legal_info.actual_address %}
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Фактический адрес</h3>
+                    <p class="text-gray-700">{{ legal_info.actual_address }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Контакты -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6 pb-4 border-b-2 border-primary-500">
+                Контакты
+            </h2>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Телефон</h3>
+                    <a href="tel:{{ legal_info.phone|default:'+7-905-856-02-82' }}" class="text-primary-600 hover:text-primary-700">
+                        {{ legal_info.phone|default:"+7-905-856-02-82" }}
+                    </a>
+                </div>
+                
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Email</h3>
+                    <a href="mailto:{{ legal_info.email|default:'Ya@LukyanovSY.ru' }}" class="text-primary-600 hover:text-primary-700">
+                        {{ legal_info.email|default:"Ya@LukyanovSY.ru" }}
+                    </a>
+                </div>
+                
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Сайт</h3>
+                    <a href="{{ legal_info.website|default:'https://lukinterlab.ru' }}" target="_blank" class="text-primary-600 hover:text-primary-700">
+                        {{ legal_info.website|default:"https://lukinterlab.ru" }}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Банковские реквизиты -->
+        {% if legal_info.bank_name or legal_info.bank_account %}
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6 pb-4 border-b-2 border-primary-500">
+                Банковские реквизиты
+            </h2>
+            
+            <div class="space-y-4">
+                {% if legal_info.bank_name %}
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Название банка</h3>
+                    <p class="text-gray-700">{{ legal_info.bank_name }}</p>
+                </div>
+                {% endif %}
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    {% if legal_info.bank_account %}
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Расчётный счёт</h3>
+                        <p class="text-gray-700">{{ legal_info.bank_account }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if legal_info.correspondent_account %}
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Корреспондентский счёт</h3>
+                        <p class="text-gray-700">{{ legal_info.correspondent_account }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if legal_info.bik %}
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">БИК</h3>
+                        <p class="text-gray-700">{{ legal_info.bik }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Документы -->
+        {% if legal_info.contract_file or legal_info.extract_file or legal_info.certificate_file %}
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6 pb-4 border-b-2 border-primary-500">
+                Документы
+            </h2>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% if legal_info.contract_file %}
+                <div class="bg-gray-50 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                    <!-- Превью документа -->
+                    <div class="relative bg-gradient-to-br from-red-50 to-red-100 h-64 flex items-center justify-center overflow-hidden">
+                        <div class="text-center">
+                            <svg class="w-24 h-24 text-red-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                            <p class="text-sm text-red-700 font-semibold mb-4">PDF документ</p>
+                            <button onclick="openPdfModal('{{ legal_info.contract_file.url }}', 'Договор')" 
+                                    class="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-gray-900 rounded-lg font-semibold transition shadow-lg">
+                                Открыть
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Информация о документе -->
+                    <div class="p-4">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-1">Договор</h3>
+                        <p class="text-sm text-gray-600 mb-3">Официальный договор компании</p>
+                        <div class="flex gap-2">
+                            <button onclick="openPdfModal('{{ legal_info.contract_file.url }}', 'Договор')" 
+                                    class="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition text-center text-sm">
+                                Просмотр
+                            </button>
+                            <a href="{{ legal_info.contract_file.url }}" download
+                               class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if legal_info.extract_file %}
+                <div class="bg-gray-50 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                    <!-- Превью документа -->
+                    <div class="relative bg-gradient-to-br from-blue-50 to-blue-100 h-64 flex items-center justify-center overflow-hidden">
+                        <div class="text-center">
+                            <svg class="w-24 h-24 text-blue-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                            <p class="text-sm text-blue-700 font-semibold mb-4">PDF документ</p>
+                            <button onclick="openPdfModal('{{ legal_info.extract_file.url }}', 'Выписка из ЕГРЮЛ')" 
+                                    class="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-gray-900 rounded-lg font-semibold transition shadow-lg">
+                                Открыть
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Информация о документе -->
+                    <div class="p-4">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-1">Выписка из ЕГРЮЛ</h3>
+                        <p class="text-sm text-gray-600 mb-3">Выписка из единого государственного реестра юридических лиц</p>
+                        <div class="flex gap-2">
+                            <button onclick="openPdfModal('{{ legal_info.extract_file.url }}', 'Выписка из ЕГРЮЛ')" 
+                                    class="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition text-center text-sm">
+                                Просмотр
+                            </button>
+                            <a href="{{ legal_info.extract_file.url }}" download
+                               class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if legal_info.certificate_file %}
+                <div class="bg-gray-50 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                    <!-- Превью документа -->
+                    <div class="relative bg-gradient-to-br from-green-50 to-green-100 h-64 flex items-center justify-center overflow-hidden">
+                        <div class="text-center">
+                            <svg class="w-24 h-24 text-green-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                            <p class="text-sm text-green-700 font-semibold mb-4">PDF документ</p>
+                            <button onclick="openPdfModal('{{ legal_info.certificate_file.url }}', 'Сертификат Минцифры')" 
+                                    class="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-gray-900 rounded-lg font-semibold transition shadow-lg">
+                                Открыть
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Информация о документе -->
+                    <div class="p-4">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-1">Сертификат Минцифры</h3>
+                        <p class="text-sm text-gray-600 mb-3">Сертификат Министерства цифрового развития, связи и массовых коммуникаций</p>
+                        <div class="flex gap-2">
+                            <button onclick="openPdfModal('{{ legal_info.certificate_file.url }}', 'Сертификат Минцифры')" 
+                                    class="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition text-center text-sm">
+                                Просмотр
+                            </button>
+                            <a href="{{ legal_info.certificate_file.url }}" download
+                               class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- О сайте -->
+        {% if legal_info.about_site %}
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6 pb-4 border-b-2 border-primary-500">
+                О сайте
+            </h2>
+            <div class="prose max-w-none text-gray-700">
+                {{ legal_info.about_site|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- О компании (подробно) -->
+        {% if legal_info.about_company %}
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6 pb-4 border-b-2 border-primary-500">
+                О компании
+            </h2>
+            <div class="prose max-w-none text-gray-700">
+                {{ legal_info.about_company|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Условия использования -->
+        {% if legal_info.terms_of_use %}
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6 pb-4 border-b-2 border-primary-500">
+                Условия использования
+            </h2>
+            <div class="prose max-w-none text-gray-700">
+                {{ legal_info.terms_of_use|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Политика конфиденциальности -->
+        {% if legal_info.privacy_policy %}
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6 pb-4 border-b-2 border-primary-500">
+                Политика конфиденциальности
+            </h2>
+            <div class="prose max-w-none text-gray-700">
+                {{ legal_info.privacy_policy|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Модальное окно редактирования -->
+{% if user.is_authenticated and user.is_superuser %}
+<div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center" style="display: none;">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+            <h2 class="text-2xl font-bold text-gray-900">Редактирование правовой информации</h2>
+            <button id="close-modal-btn" class="text-gray-500 hover:text-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="p-6" id="edit-form-container">
+            <div class="text-center py-8">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+                <p class="mt-4 text-gray-600">Загрузка формы...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+{% if user.is_authenticated and user.is_superuser %}
+document.addEventListener('DOMContentLoaded', function() {
+    const editBtn = document.getElementById('edit-legal-info-btn');
+    const modal = document.getElementById('edit-modal');
+    const closeBtn = document.getElementById('close-modal-btn');
+    const formContainer = document.getElementById('edit-form-container');
+    
+    // Открытие модального окна
+    editBtn.addEventListener('click', function() {
+        modal.style.display = 'flex';
+        // Загружаем форму
+        fetch('{% url "home:edit_legal_info" %}')
+            .then(response => response.json())
+            .then(data => {
+                formContainer.innerHTML = data.form_html;
+                // Обработка отправки формы
+                const form = document.getElementById('legal-info-form');
+                if (form) {
+                    form.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        const formData = new FormData(form);
+                        
+                        fetch('{% url "home:edit_legal_info" %}', {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert('Информация успешно сохранена!');
+                                location.reload();
+                            } else {
+                                alert('Ошибка: ' + (data.errors ? JSON.stringify(data.errors) : data.message || 'Неизвестная ошибка'));
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Произошла ошибка при сохранении');
+                        });
+                    });
+                }
+                // Обработка кнопки отмены
+                const cancelBtn = document.getElementById('cancel-edit-btn');
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', function() {
+                        modal.style.display = 'none';
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                formContainer.innerHTML = '<p class="text-red-600">Ошибка загрузки формы</p>';
+            });
+    });
+    
+    // Закрытие модального окна
+    closeBtn.addEventListener('click', function() {
+        modal.style.display = 'none';
+    });
+    
+    // Закрытие при клике вне модального окна
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+});
+{% endif %}
+
+<!-- Модальное окно для просмотра PDF -->
+<div id="pdf-modal" class="fixed inset-0 bg-black bg-opacity-75 z-50 hidden items-center justify-center" style="display: none;">
+    <div class="bg-white rounded-2xl shadow-2xl w-full h-full md:w-[90%] md:h-[90%] md:rounded-lg flex flex-col">
+        <!-- Заголовок модального окна -->
+        <div class="flex justify-between items-center p-4 border-b bg-gray-50 rounded-t-lg">
+            <h3 id="pdf-modal-title" class="text-xl font-bold text-gray-900">Просмотр документа</h3>
+            <div class="flex gap-2">
+                <a id="pdf-download-link" href="#" download class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition text-sm">
+                    <svg class="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    Скачать
+                </a>
+                <a id="pdf-open-link" href="#" target="_blank" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm">
+                    <svg class="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                    </svg>
+                    В новой вкладке
+                </a>
+                <button onclick="closePdfModal()" class="px-4 py-2 text-gray-500 hover:text-gray-700 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <!-- Контент с PDF -->
+        <div class="flex-1 overflow-hidden">
+            <iframe id="pdf-iframe" src="" class="w-full h-full border-0" type="application/pdf"></iframe>
+        </div>
+    </div>
+</div>
+
+<script>
+function openPdfModal(pdfUrl, title) {
+    const modal = document.getElementById('pdf-modal');
+    const iframe = document.getElementById('pdf-iframe');
+    const modalTitle = document.getElementById('pdf-modal-title');
+    const downloadLink = document.getElementById('pdf-download-link');
+    const openLink = document.getElementById('pdf-open-link');
+    
+    modalTitle.textContent = title;
+    iframe.src = pdfUrl + '#toolbar=1&navpanes=1&scrollbar=1';
+    downloadLink.href = pdfUrl;
+    openLink.href = pdfUrl;
+    
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // Блокируем прокрутку страницы
+}
+
+function closePdfModal() {
+    const modal = document.getElementById('pdf-modal');
+    const iframe = document.getElementById('pdf-iframe');
+    
+    modal.style.display = 'none';
+    iframe.src = ''; // Очищаем iframe для экономии ресурсов
+    document.body.style.overflow = ''; // Разблокируем прокрутку страницы
+}
+
+// Закрытие модального окна при клике вне его
+document.getElementById('pdf-modal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closePdfModal();
+    }
+});
+
+// Закрытие модального окна по клавише Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closePdfModal();
+    }
+});
+</script>
+{% endblock %}
+

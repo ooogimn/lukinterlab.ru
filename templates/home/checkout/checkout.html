@@ -1,0 +1,356 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Оформление заказа{% endblock %}
+
+{% block meny %}
+{% include "meny/sidibar-1.html" %}
+{% endblock meny %}
+
+{% block straniza %}
+<!-- Checkout Section -->
+<section class="py-20 relative overflow-hidden section-background section-background-animate" 
+         style="{{ section_backgrounds.resume.background_style|default:'background: #f9fafb;' }}">
+    
+    <!-- Видео фон -->
+    {% if section_backgrounds.resume.type == 'video' and section_backgrounds.resume.video_url %}
+    <video class="section-video-background" autoplay muted loop playsinline>
+        <source src="{{ section_backgrounds.resume.video_url }}" type="video/mp4">
+    </video>
+    {% endif %}
+    
+    <!-- Наложение -->
+    {% if section_backgrounds.resume.has_overlay %}
+    <div class="section-overlay" style="{{ section_backgrounds.resume.overlay_style }}"></div>
+    {% endif %}
+    
+    <!-- Контент -->
+    <div class="section-content">
+        <div class="max-w-7xl mx-auto px-4">
+            <!-- Breadcrumb -->
+            <nav class="mb-8">
+                <ol class="flex items-center space-x-2 text-sm text-gray-600">
+                    <li><a href="{% url 'home:home' %}" class="hover:text-primary-600">Главная</a></li>
+                    <li><span class="mx-2">/</span></li>
+                    <li><a href="{% url 'home:cart' %}" class="hover:text-primary-600">Корзина</a></li>
+                    <li><span class="mx-2">/</span></li>
+                    <li class="text-primary-600">Оформление заказа</li>
+                </ol>
+            </nav>
+            
+            <!-- Section Header -->
+            <div class="text-center mb-16">
+                <h1 class="text-4xl md:text-5xl font-bold text-primary-500 mb-4">
+                    Оформление заказа
+                </h1>
+                <p class="text-xl text-green-500 max-w-3xl mx-auto">
+                    Заполните контактные данные для оформления заказа
+                </p>
+            </div>
+            
+            <!-- Сообщения -->
+            {% if messages %}
+            <div class="mb-8">
+                {% for message in messages %}
+                <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %} rounded-xl p-4 mb-4">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <form method="post" class="grid lg:grid-cols-2 gap-12">
+                {% csrf_token %}
+                
+                <!-- Contact Information -->
+                <div class="bg-white rounded-3xl p-8 shadow-lg">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Контактная информация</h2>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <label for="{{ order_form.customer_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Полное имя *
+                            </label>
+                            {{ order_form.customer_name }}
+                            {% if order_form.customer_name.errors %}
+                            <div class="text-red-600 text-sm mt-1">
+                                {{ order_form.customer_name.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ order_form.customer_email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Email *
+                            </label>
+                            {{ order_form.customer_email }}
+                            {% if order_form.customer_email.errors %}
+                            <div class="text-red-600 text-sm mt-1">
+                                {{ order_form.customer_email.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ order_form.customer_phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Телефон *
+                            </label>
+                            {{ order_form.customer_phone }}
+                            {% if order_form.customer_phone.errors %}
+                            <div class="text-red-600 text-sm mt-1">
+                                {{ order_form.customer_phone.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {# Honeypot — поле для ботов; людям не видно и не нужно. #}
+                        <div class="checkout-hp" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+                            <label for="{{ order_form.company_fax.id_for_label }}">Факс (не заполняйте)</label>
+                            {{ order_form.company_fax }}
+                        </div>
+                        
+                        <!-- Account Creation Section -->
+                        <div class="border-t border-gray-200 pt-6">
+                            <div class="flex items-center mb-4">
+                                <input type="checkbox" id="{{ order_form.create_account.id_for_label }}" 
+                                       name="{{ order_form.create_account.name }}" 
+                                       value="on" 
+                                       {% if order_form.create_account.value %}checked{% endif %}
+                                       class="form-checkbox h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                <label for="{{ order_form.create_account.id_for_label }}" class="ml-2 text-sm font-medium text-gray-900">
+                                    {{ order_form.create_account.label }}
+                                </label>
+                            </div>
+                            
+                            <div id="account-fields" class="space-y-4">
+                                <div>
+                                    <label for="{{ order_form.username.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Логин для входа в личный кабинет *
+                                    </label>
+                                    {{ order_form.username }}
+                                    {% if order_form.username.errors %}
+                                    <div class="text-red-600 text-sm mt-1">
+                                        {{ order_form.username.errors.0 }}
+                                    </div>
+                                    {% endif %}
+                                    <p class="text-xs text-gray-500 mt-1">Будет использоваться для входа в личный кабинет</p>
+                                </div>
+                                
+                                <div>
+                                    <label for="{{ order_form.password1.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Пароль *
+                                    </label>
+                                    {{ order_form.password1 }}
+                                    {% if order_form.password1.errors %}
+                                    <div class="text-red-600 text-sm mt-1">
+                                        {{ order_form.password1.errors.0 }}
+                                    </div>
+                                    {% endif %}
+                                    <p class="text-xs text-gray-500 mt-1">Минимум 8 символов</p>
+                                </div>
+                                
+                                <div>
+                                    <label for="{{ order_form.password2.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Подтвердите пароль *
+                                    </label>
+                                    {{ order_form.password2 }}
+                                    {% if order_form.password2.errors %}
+                                    <div class="text-red-600 text-sm mt-1">
+                                        {{ order_form.password2.errors.0 }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <svg class="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-sm text-blue-800">
+                                            <strong>Преимущества личного кабинета:</strong><br>
+                                            • Отслеживание статуса заказов<br>
+                                            • История всех заказов<br>
+                                            • Комментарии к заказам<br>
+                                            • Быстрое оформление новых заказов
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Order Summary -->
+                <div class="bg-white rounded-3xl p-8 shadow-lg">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Ваш заказ</h2>
+                    
+                    <!-- Order Items -->
+                    <div class="space-y-4 mb-6">
+                        {% for item in cart_items %}
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-gradient-to-r {% if item.service_type == 'service' %}from-blue-500 to-blue-600{% else %}from-orange-500 to-red-500{% endif %} rounded-lg flex items-center justify-center">
+                                    {% if item.service_type == 'service' %}
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                    </svg>
+                                    {% else %}
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-900">{{ item.title }}</h3>
+                                    <p class="text-sm text-gray-600">
+                                        {% if item.service_type == 'service' %}Основная услуга{% else %}Дополнительная услуга{% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-semibold text-gray-900">{{ item.price }}</div>
+                                <div class="text-sm text-gray-600">x{{ item.quantity }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Total -->
+                    <div class="border-t border-gray-200 pt-6">
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-semibold text-gray-900">Итого к оплате:</span>
+                            <span class="text-2xl font-bold text-primary-600">{{ total_price|floatformat:0 }} ₽</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="mt-8 space-y-4">
+                        <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-full font-semibold text-lg hover:bg-blue-700 transition-all duration-300">
+                            Перейти к опросному листу →
+                        </button>
+                        <a href="{% url 'home:cart' %}" class="block w-full bg-gray-600 text-white py-3 rounded-full font-semibold text-center hover:bg-gray-700 transition-colors">
+                            ← Вернуться в корзину
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock straniza %}
+
+{% block extra_scripts %}
+<style>
+    .alert {
+        padding: 1rem;
+        border-radius: 0.75rem;
+        margin-bottom: 1rem;
+        font-weight: 500;
+    }
+    
+    .alert-success {
+        background-color: #d1fae5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+    }
+    
+    .alert-danger {
+        background-color: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+    }
+    
+    .alert-info {
+        background-color: #dbeafe;
+        color: #1e3a8a;
+        border: 1px solid #bfdbfe;
+    }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const createAccountCheckbox = document.getElementById('{{ order_form.create_account.id_for_label }}');
+    const accountFields = document.getElementById('account-fields');
+    const usernameField = document.getElementById('{{ order_form.username.id_for_label }}');
+    const password1Field = document.getElementById('{{ order_form.password1.id_for_label }}');
+    const password2Field = document.getElementById('{{ order_form.password2.id_for_label }}');
+    const form = document.querySelector('form');
+    
+    console.log('DEBUG: Checkout page initialized');
+    console.log('DEBUG: Form found:', form);
+    console.log('DEBUG: Create account checkbox found:', createAccountCheckbox);
+    console.log('DEBUG: Create account checkbox checked:', createAccountCheckbox ? createAccountCheckbox.checked : 'null');
+    
+    function toggleAccountFields() {
+        if (!createAccountCheckbox) return;
+        
+        const isChecked = createAccountCheckbox.checked;
+        console.log('DEBUG: Toggle account fields, checkbox is:', isChecked);
+        
+        if (isChecked) {
+            accountFields.style.display = 'block';
+            usernameField.required = true;
+            password1Field.required = true;
+            password2Field.required = true;
+            console.log('DEBUG: Account fields shown and required');
+        } else {
+            accountFields.style.display = 'none';
+            usernameField.required = false;
+            password1Field.required = false;
+            password2Field.required = false;
+            // Очищаем поля при отключении
+            usernameField.value = '';
+            password1Field.value = '';
+            password2Field.value = '';
+            console.log('DEBUG: Account fields hidden and not required');
+        }
+    }
+    
+    // Инициализация - скрываем поля аккаунта по умолчанию
+    if (createAccountCheckbox && accountFields) {
+        toggleAccountFields();
+    }
+    
+    // Обработчик изменения чекбокса
+    if (createAccountCheckbox) {
+        createAccountCheckbox.addEventListener('change', function() {
+            console.log('DEBUG: Checkbox changed to:', this.checked);
+            toggleAccountFields();
+        });
+    }
+    
+    // Обработчик отправки формы
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            console.log('DEBUG: Form submit event triggered');
+            console.log('DEBUG: Create account checkbox checked:', createAccountCheckbox.checked);
+            
+            // Собираем данные формы для отладки
+            const formData = new FormData(form);
+            console.log('DEBUG: Form data:');
+            for (let pair of formData.entries()) {
+                console.log('  ', pair[0], '=', pair[1]);
+            }
+            
+            // Проверяем валидность формы
+            if (!form.checkValidity()) {
+                console.log('DEBUG: Form is not valid - browser validation failed');
+                e.preventDefault();
+                // Показываем какие поля не валидны
+                const invalidFields = form.querySelectorAll(':invalid');
+                console.log('DEBUG: Invalid fields:', invalidFields);
+                invalidFields.forEach(field => {
+                    console.log('  - Invalid field:', field.name, field.validationMessage);
+                });
+                return false;
+            }
+            
+            console.log('DEBUG: Form is valid, submitting to server...');
+        });
+    }
+});
+</script>
+{% endblock extra_scripts %} 

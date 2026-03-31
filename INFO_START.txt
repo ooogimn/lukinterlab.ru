@@ -1,0 +1,270 @@
+
+Переменные окружения (обязательно перед runserver)
+  Скопировать: copy env.example .env  (или cp env.example .env)
+  Заполнить DJANGO_SECRET_KEY и ключи VK/GigaChat и т.д. (см. env.example).
+  На сервере те же имена переменных — в .env рядом с проектом или в панели хостинга.
+
+source .venv/python313/Scripts/activate
+python manage.py runserver
+
+
+=== Git и деплой на сервер ===
+Секреты в коде не хранятся — только в .env на машине (файл .env не в git). Репозиторий на GitHub лучше держать приватным до полной ротации ключей, если они уже светились в истории.
+
+В проекте уже есть .gitignore и ветка main (git init выполнен один раз).
+Локально, в каталоге lukinterlab.ru:
+  git add -A
+  git status
+  git commit -m "Описание изменений"
+  Если remote ещё не настроен — на GitHub/GitLab создать пустой приватный репозиторий, затем:
+  git remote add origin <URL>
+  git push -u origin main
+  При ошибке "index.lock" — закрыть другие окна с этим репозиторием и удалить файл .git/index.lock, повторить git add.
+
+На сервере (первый раз — клон в каталог сайта или отдельно + symlink):
+  cd ~/domains/lukinterlab.ru
+  git clone <URL> .          # если каталог пустой, или git init + remote add + pull
+  # дальше при каждом обновлении:
+  git pull origin main
+  # Убедиться, что на сервере есть .env (или переменные в панели) с DJANGO_SECRET_KEY, DJANGO_DEBUG=False, ключами API.
+  source <путь-к-venv>/bin/activate   # или свой способ активации venv на хостинге
+  pip install -r requirements.txt    # при изменении зависимостей
+  python manage.py migrate
+  python manage.py collectstatic --noinput
+  Перезапуск приложения (панель хостинга / touch tmp/restart.txt / gunicorn и т.д.)
+
+Не коммитится (.gitignore): db.sqlite3, media/, static/ (собранная), .venv, логи.
+
+cd ~/domains/lukinterlab.ru
+
+Ключи доступа
+VK ID и прочие секреты — в файле .env (шаблон env.example). Не коммитить .env.
+Подключение авторизации
+Базовый домен 
+lukinterlab.ru
+Доверенный Redirect URL 
+https://lukinterlab.ru/
+54515641
+Сохранено
+
+---
+Автопостинг статей блога на стену сообщества VK (уже в коде: Blog/vk_utils.send_to_vk)
+Это ОТДЕЛЬНЫЙ ключ от VK ID (сервисный/защищённый ключ приложения для wall.post не подходят).
+
+1) Откройте сообщество как администратор → Управление → Настройки → Работа с API.
+2) Создать ключ → отметить права «Стена», «Фотографии» → скопировать токен.
+3) ID группы в settings: VK_GROUP_ID (сейчас 231035215; при другой группе замените или задайте VK_GROUP_ID в окружении).
+4) На хостинге: в .env переменная VK_ACCESS_TOKEN=<токен> и перезапуск приложения (gunicorn/uwsgi/panel).
+5) SITE_URL должен быть https://lukinterlab.ru (уже задан) — в пост идёт ссылка «Читать далее».
+6) Пост уходит при первой публикации статьи (status=published), если vk_posted_at пусто. VK_AUTO_POST=True.
+
+Проверка: опубликовать тестовую статью в админке → запись на стене группы; ошибки — в логах Django (VK wall.post).
+
+
+Интеграция элементов
+Кнопка One Tap
+
+Язык
+Русский
+Стиль кнопки
+Основная
+Тема
+Скругление, px
+8
+Высота, px
+44
+Ширина, px
+360
+ 
+Отображаемый текст
+Войти с VK ID
+Дополнительный способ входа
+Одноклассники 
+Включая эту опцию, вы принимаете оферту
+Mail 
+Включая эту опцию, вы принимаете оферту
+Redirect URL
+https://lukinterlab.ru/
+Код для вставки
+<div>
+  <script nonce="csp_nonce" src="https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js"></script>
+  <script nonce="csp_nonce" type="text/javascript">
+    if ('VKIDSDK' in window) {
+      const VKID = window.VKIDSDK;
+
+      VKID.Config.init({
+        app: 54515641,
+        redirectUrl: 'https://lukinterlab.ru/',
+        responseMode: VKID.ConfigResponseMode.Callback,
+        source: VKID.ConfigSource.LOWCODE,
+        scope: '', // Заполните нужными доступами по необходимости
+      });
+
+      const oneTap = new VKID.OneTap();
+
+      oneTap.render({
+        container: document.currentScript.parentElement,
+        showAlternativeLogin: true,
+        oauthList: [
+          'ok_ru',
+          'mail_ru'
+        ]
+      })
+      .on(VKID.WidgetEvents.ERROR, vkidOnError)
+      .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, function (payload) {
+        const code = payload.code;
+        const deviceId = payload.device_id;
+
+        VKID.Auth.exchangeCode(code, deviceId)
+          .then(vkidOnSuccess)
+          .catch(vkidOnError);
+      });
+    
+      function vkidOnSuccess(data) {
+        // Обработка полученного результата
+      }
+    
+      function vkidOnError(error) {
+        // Обработка ошибки
+      }
+    }
+  </script>
+</div>
+
+
+
+Интеграция элементов
+Шторка авторизации
+Язык
+Русский
+Тема
+Отступ справа, px
+12
+Отступ сверху, px
+76
+Отступ снизу, px
+12
+Отображаемый текст
+Войдите в сервис или зарегистрируйтесь
+Дополнительный способ входа
+Одноклассники 
+Включая эту опцию, вы принимаете оферту
+Mail 
+Включая эту опцию, вы принимаете оферту
+Redirect URL
+https://lukinterlab.ru/
+Код для вставки
+<div>
+  <script nonce="csp_nonce" src="https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js"></script>
+  <script nonce="csp_nonce" type="text/javascript">
+    if ('VKIDSDK' in window) {
+      const VKID = window.VKIDSDK;
+
+      VKID.Config.init({
+        app: 54515641,
+        redirectUrl: 'https://lukinterlab.ru/',
+        responseMode: VKID.ConfigResponseMode.Callback,
+        source: VKID.ConfigSource.LOWCODE,
+        scope: '', // Заполните нужными доступами по необходимости
+      });
+
+      const floatingOneTap = new VKID.FloatingOneTap();
+
+      floatingOneTap.render({
+        appName: 'luckInterLab',
+        oauthList: [
+          'ok_ru',
+          'mail_ru'
+        ],
+        showAlternativeLogin: true
+      })
+      .on(VKID.WidgetEvents.ERROR, vkidOnError)
+      .on(VKID.FloatingOneTapInternalEvents.LOGIN_SUCCESS, function (payload) {
+        const code = payload.code;
+        const deviceId = payload.device_id;
+
+        VKID.Auth.exchangeCode(code, deviceId)
+          .then(vkidOnSuccess)
+          .catch(vkidOnError);
+      });
+    
+      function vkidOnSuccess(data) {
+        floatingOneTap.close();
+        
+        // Обработка полученного результата
+      }
+    
+      function vkidOnError(error) {
+        // Обработка ошибки
+      }
+    }
+  </script>
+</div>
+
+
+
+Интеграция элементов
+Виджет 3 в 1
+или войти через VK ID с использованием данных из сервиса
+Язык
+Русский
+Тема
+Высота, px
+44
+Скругление, px
+8
+Дополнительный способ входа
+Одноклассники 
+Включая эту опцию, вы принимаете оферту
+Mail 
+Включая эту опцию, вы принимаете оферту
+Redirect URL
+https://lukinterlab.ru/
+Код для вставки
+<div>
+  <script nonce="csp_nonce" src="https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js"></script>
+  <script nonce="csp_nonce" type="text/javascript">
+    if ('VKIDSDK' in window) {
+      const VKID = window.VKIDSDK;
+
+      VKID.Config.init({
+        app: 54515641,
+        redirectUrl: 'https://lukinterlab.ru/',
+        responseMode: VKID.ConfigResponseMode.Callback,
+        source: VKID.ConfigSource.LOWCODE,
+        scope: '', // Заполните нужными доступами по необходимости
+      });
+
+      const oAuth = new VKID.OAuthList();
+
+      oAuth.render({
+        container: document.currentScript.parentElement,
+        oauthList: [
+          'vkid',
+          'ok_ru',
+          'mail_ru'
+        ]
+      })
+      .on(VKID.WidgetEvents.ERROR, vkidOnError)
+      .on(VKID.OAuthListInternalEvents.LOGIN_SUCCESS, function (payload) {
+        const code = payload.code;
+        const deviceId = payload.device_id;
+
+        VKID.Auth.exchangeCode(code, deviceId)
+          .then(vkidOnSuccess)
+          .catch(vkidOnError);
+      });
+    
+      function vkidOnSuccess(data) {
+        // Обработка полученного результата
+      }
+    
+      function vkidOnError(error) {
+        // Обработка ошибки
+      }
+    }
+  </script>
+</div>
+
+
+

@@ -1,0 +1,48 @@
+
+    <!--СИДИБАР Menus-->
+    <nav class="nav-menu">
+        <ul>
+            <li><a href="#home"class="pt-link active"><span class="nav-menu-icon"><i class="lnr lnr-home"></i></span>Главная </a> </li>
+            <li><a href="#about" class="pt-link"><span class="nav-menu-icon"><i class="lnr lnr-user"></i></span>О нас</a></li>
+            <li><a href="#resume" class="pt-link"><span class="nav-menu-icon"><i class="lnr lnr-license"></i></span>Услуги</a></li>
+            <!--<li><a href="#portfolio" class="pt-link"><span class="nav-menu-icon"><i class="lnr lnr-briefcase"></i></span>Шаблоны</a></li>-->
+            <li><a href="#blog" class="pt-link"><span class="nav-menu-icon"><i class="lnr lnr-book"></i></span>Журнал</a></li>
+            <li><a href="#contact" class="pt-link"><span class="nav-menu-icon"><i class="lnr lnr-envelope"></i></span>Контакты</a></li>
+            <li {% if not category %}class="selected"{% endif %}>
+                <a href="{% url 'Blog:post_list' %}" class="pt-link active">
+                    <span class="nav-menu-icon"><i class="lnr lnr-book"></i></span>
+                    все категории-{{ count_post }}
+                </a>
+            </li>
+            {% for c in categories %}
+                {% if c.parent is None %}
+                    <li {% if category.slug == c.slug %}class="selected"{% endif %}>
+                        <a href="{{ c.get_absolute_url }}" class="pt-link parent-category" data-category-id="{{ c.id }}">
+                           
+                            {% if c.kartinka_cat %}
+                                <img src="{{ c.kartinka_cat.url }}" alt='{{ c.title|slice:":1"}}' class="category-image">
+                            {% else %}
+                                <div class="category-image-placeholder">{{ c.title|slice:":1" }}</div>
+                            {% endif %}
+                            <span class="post-count">{{ c.title|slice:":9"}}</span>
+                        </a>
+                        {% if c.get_children %}
+                            <div class="child-categories" style="display: none;">
+                                {% for child in c.get_children %}
+                                    {% if child.posts.count > 0 %}
+                                        <a href="{{ child.get_absolute_url }}" class="pt-link child-category">
+                                            {{ child.title }} 
+                                        </a>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            
+                        {% endif %}
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </nav>
+    <!--СИДИБАР Menus-->
+
+    

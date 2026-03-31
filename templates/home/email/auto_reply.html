@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Спасибо за ваше сообщение</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 8px 8px 0 0;
+            text-align: center;
+        }
+        .content {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 0 0 8px 8px;
+        }
+        .message-box {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+        }
+        .social-links {
+            margin: 20px 0;
+        }
+        .social-links a {
+            display: inline-block;
+            margin: 0 10px;
+            color: #667eea;
+            text-decoration: none;
+        }
+        .btn {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🙏 Спасибо за ваше сообщение!</h1>
+        <p>Мы получили ваше обращение и скоро свяжемся с вами</p>
+    </div>
+    
+    <div class="content">
+        <p>Здравствуйте, <strong>{{ name }}</strong>!</p>
+        
+        <p>Спасибо, что обратились к нам. Мы получили ваше сообщение и обязательно свяжемся с вами в ближайшее время.</p>
+        
+        <div class="message-box">
+            <h3>📧 Ваше сообщение получено</h3>
+            <p>Наша команда уже работает над вашим запросом. Обычно мы отвечаем в течение 24 часов в рабочие дни.</p>
+        </div>
+        
+        <h3>🕒 Что дальше?</h3>
+        <ul>
+            <li>Мы изучим ваше сообщение</li>
+            <li>Направим его соответствующему специалисту</li>
+            <li>Свяжемся с вами для уточнения деталей</li>
+            <li>Предложим решение или ответим на ваши вопросы</li>
+        </ul>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ site_url }}" class="btn">
+                🌐 Посетить сайт
+            </a>
+            <a href="{{ site_url }}/contact/" class="btn">
+                📞 Связаться с нами
+            </a>
+        </div>
+        
+        <div class="social-links">
+            <h4>📱 Мы в социальных сетях:</h4>
+            <a href="https://t.me/LukInterLab_News">Telegram</a> |
+            <a href="https://vk.com/lukinterlab">VK</a> |
+            <a href="mailto:Ya@LukyanovSY.ru">Email</a>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p><strong>LukInterLab</strong> - Ваш надежный партнер в разработке</p>
+        <p>📍 г. Москва, ул. Ярославская, д. 9</p>
+        <p>📞 +7 (905) 856 02 82 | 📧 Ya@LukyanovSY.ru</p>
+        <p style="font-size: 12px; margin-top: 20px;">
+            Это автоматическое сообщение. Пожалуйста, не отвечайте на него.
+        </p>
+    </div>
+</body>
+</html> 

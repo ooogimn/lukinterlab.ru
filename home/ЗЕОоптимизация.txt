@@ -1,0 +1,227 @@
+План комплексной SEO оптимизации для lukinterlab.ru
+Анализ текущего состояния
+Что уже есть:
+Базовая SEO инфраструктура (SEOModel, SEOUtils, SEOService)
+Sitemap.xml и robots.txt настроены
+Базовые мета-теги в base.html
+Structured data для главной страницы и работ
+WebP версии изображений через ImageKit
+Команда optimize_seo.py для автогенерации
+Критические проблемы:
+Модель Post не имеет SEO полей - нет meta_title, meta_description, og_image
+Нет structured data (JSON-LD) для статей блога
+Нет автогенерации SEO мета-тегов при создании/обновлении статей
+Нет breadcrumbs structured data для статей
+Неполная оптимизация изображений - нет alt текстов везде, нет lazy loading
+Нет внутренней перелинковки между статьями
+Нет микроразметки FAQ, HowTo для статей
+Нет автогенерации canonical URL для статей
+План реализации
+Этап 1: Расширение модели Post (КРИТИЧНО)
+Файл: Blog/models.py
+
+Добавить SEO поля в модель Post:
+
+meta_title (CharField, max_length=60) - для переопределения title
+meta_description (CharField, max_length=160) - для переопределения description  
+meta_keywords (TextField, blank=True) - ключевые слова
+og_image (ImageField, blank=True) - отдельное изображение для соцсетей
+focus_keyword (CharField, max_length=50, blank=True) - главное ключевое слово
+seo_score (IntegerField, default=0) - кэшированный SEO score
+Миграция: python manage.py makemigrations Blog --name add_seo_fields
+
+Этап 2: Автогенерация SEO мета-тегов
+Файл: Blog/signals.py (создать новый)
+
+Сигнал post_save для Post:
+
+Автогенерация meta_title из title (если не указан)
+Автогенерация meta_description из description или content (если не указан)
+Автогенерация meta_keywords из тегов и контента
+Автогенерация focus_keyword из title
+Автоматический SEO анализ через SEOService
+Файл: Blog/admin.py
+
+Добавить SEO поля в админку с подсказками:
+
+Показывать длину meta_title/description в реальном времени
+Валидация длины полей
+Предпросмотр как будет выглядеть в поисковиках
+Этап 3: Structured Data (JSON-LD) для статей
+Файл: Blog/utils.py (создать новый)
+
+Функция generate_article_structured_data(post):
+
+Schema.org Article с полными данными
+BreadcrumbList для навигации
+Author Person/Organization
+Publisher Organization
+ImageObject для изображений
+AggregateRating (если есть лайки/комментарии)
+Файл: templates/blog/singl-1.html
+
+Добавить блок {% block structured_data %} с JSON-LD:
+
+Article schema
+BreadcrumbList
+Author schema
+Publisher schema
+Этап 4: Оптимизация шаблонов блога
+Файл: templates/blog/singl-1.html
+
+Мета-теги в head:
+Переопределить блоки title, description, keywords
+Добавить og:image с полным URL
+Добавить canonical URL
+Twitter Card мета-теги
+Изображения:
+Добавить loading="lazy" для всех изображений кроме главного
+Улучшить alt тексты (использовать SEOUtils.optimize_image_alt)
+Добавить srcset для WebP версий
+Добавить width/height для предотвращения CLS
+Breadcrumbs:
+Добавить structured data BreadcrumbList
+Улучшить визуальное отображение
+Файл: templates/blog/page_blog-1.html
+
+Добавить lazy loading для всех изображений
+Оптимизировать alt тексты
+Добавить structured data для списка статей (ItemList)
+Этап 5: Внутренняя перелинковка
+Файл: Blog/utils.py
+
+Функция get_related_posts(post, limit=5):
+
+Поиск статей по тегам (приоритет 1)
+Поиск статей по категории (приоритет 2)
+Поиск статей по ключевым словам в title (приоритет 3)
+Исключать текущую статью
+Файл: Blog/views.py
+
+В post_detail добавить:
+
+related_posts = get_related_posts(post)
+Передать в контекст
+Файл: templates/blog/singl-1.html
+
+Добавить блок "Похожие статьи" в конце статьи:
+
+Ссылки на related_posts
+Структурированные карточки с изображениями
+Автоматические анкоры из title статей
+Этап 6: Микроразметка FAQ и HowTo
+Файл: Blog/models.py
+
+Добавить модель PostFAQ:
+
+post (ForeignKey to Post)
+question (CharField)
+answer (TextField)
+order (IntegerField)
+Файл: Blog/admin.py
+
+Inline для FAQ в админке Post
+
+Файл: Blog/utils.py
+
+Функция generate_faq_structured_data(post):
+
+Schema.org FAQPage если есть FAQ
+Schema.org HowTo если статья содержит инструкции
+Файл: templates/blog/singl-1.html
+
+Добавить FAQ блок с structured data если есть FAQ
+
+Этап 7: Оптимизация скорости загрузки
+Файл: templates/base/base.html
+
+Preload критических ресурсов:
+Preload главного изображения статьи
+Preconnect к внешним доменам
+Defer/Async скрипты:
+Все не-критические скрипты с defer
+Аналитика с async
+Resource hints:
+DNS prefetch для внешних ресурсов
+Prefetch для следующих страниц
+Файл: ALUKINTERLAB/settings.py
+
+Добавить:
+
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+Этап 8: Автоматизация SEO анализа
+Файл: Blog/signals.py
+
+В сигнале post_save:
+
+Автоматический SEO анализ через SEOService
+Сохранение seo_score в поле Post
+Уведомление автора если score < 50
+Файл: Blog/management/commands/analyze_all_posts_seo.py
+
+Команда для массового анализа:
+
+Анализ всех опубликованных статей
+Генерация отчета
+Рекомендации по улучшению
+Этап 9: Улучшение sitemap
+Файл: Blog/sitemaps.py
+
+Улучшить BlogPostSitemap:
+
+Правильные приоритеты по дате обновления
+Правильные changefreq
+Добавить изображения в sitemap (Image sitemap)
+Файл: home/sitemaps.py
+
+Добавить Image sitemap для статей
+
+Этап 10: Оптимизация robots.txt
+Файл: static/robots.txt
+
+Улучшить:
+
+Добавить правила для разных ботов
+Указать sitemap для изображений
+Добавить crawl-delay для агрессивных ботов
+Приоритеты внедрения
+Высокий приоритет (сразу):
+Расширение модели Post SEO полями
+Автогенерация мета-тегов через сигналы
+Structured data для статей
+Оптимизация мета-тегов в шаблонах
+Средний приоритет (следующая итерация):
+Внутренняя перелинковка
+Микроразметка FAQ/HowTo
+Оптимизация изображений (lazy loading, alt)
+Низкий приоритет (когда будет время):
+Автоматизация SEO анализа
+Улучшение sitemap
+Оптимизация robots.txt
+Ожидаемые результаты
+Улучшение позиций в поисковиках - структурированные данные и правильные мета-теги
+Увеличение CTR - оптимизированные title и description
+Улучшение индексации - правильный sitemap и robots.txt
+Увеличение времени на сайте - внутренняя перелинковка
+Улучшение Core Web Vitals - оптимизация скорости загрузки
+Rich snippets в поиске - structured data для FAQ, HowTo, Article
+Технические детали
+Файлы для изменения:
+Blog/models.py - добавить SEO поля
+Blog/admin.py - SEO поля в админке
+Blog/signals.py - автогенерация SEO
+Blog/utils.py - утилиты для SEO
+Blog/views.py - передача SEO данных в контекст
+templates/blog/singl-1.html - мета-теги и structured data
+templates/blog/page_blog-1.html - оптимизация списка
+templates/base/base.html - базовые оптимизации
+home/sitemaps.py - улучшение sitemap
+static/robots.txt - оптимизация robots.txt
+Миграции:
+python manage.py makemigrations Blog --name add_seo_fields
+python manage.py migrate
+Команды для запуска:
+python manage.py optimize_seo --force - автогенерация SEO для всех статей
+python manage.py analyze_all_posts_seo - анализ всех статей

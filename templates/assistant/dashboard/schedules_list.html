@@ -1,0 +1,156 @@
+{% extends 'assistant/dashboard/base.html' %}
+
+{% block dashboard_content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Breadcrumbs -->
+    <nav class="mb-6" aria-label="Breadcrumb">
+        <ol class="flex items-center space-x-2 text-sm">
+            <li>
+                <a href="{% url 'assistant:dashboard_main' %}" class="text-gray-500 hover:text-gray-700">Главная</a>
+            </li>
+            <li>
+                <span class="text-gray-400">/</span>
+            </li>
+            <li class="text-gray-900 font-medium">Расписания</li>
+        </ol>
+    </nav>
+    
+    <!-- Header with actions -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 bg-clip-text text-transparent mb-2">Расписания генерации</h1>
+            <p class="text-gray-700 text-lg font-medium">Управление автоматической генерацией статей</p>
+        </div>
+        <a href="{% url 'assistant:dashboard_schedule_create' %}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl hover:from-purple-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 font-semibold">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Создать расписание
+        </a>
+    </div>
+    
+    <!-- Filters -->
+    <div class="bg-white rounded-2xl shadow-xl p-6 mb-6 border border-gray-100">
+        <form method="get" class="flex gap-4">
+            <input type="text" name="search" value="{{ search_query }}" placeholder="Поиск..." class="flex-1 px-5 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200">
+            <select name="active" class="px-5 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200">
+                <option value="">Все</option>
+                <option value="true" {% if active_filter == 'true' %}selected{% endif %}>Активные</option>
+                <option value="false" {% if active_filter == 'false' %}selected{% endif %}>Неактивные</option>
+            </select>
+            <button type="submit" class="px-8 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl hover:from-purple-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl font-semibold">Поиск</button>
+        </form>
+    </div>
+    
+    <!-- Schedules List -->
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gradient-to-r from-purple-50 to-indigo-50">
+                <tr>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Название</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Шаблон</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Частота</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Статей</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Сгенерировано</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Статус</th>
+                    <th class="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Действия</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for schedule in schedules %}
+                <tr class="hover:bg-purple-50 transition-colors duration-200">
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-semibold text-gray-900">{{ schedule.name }}</div>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-600 font-medium">{{ schedule.prompt_template.name }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-600 font-medium">{{ schedule.get_frequency_display }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-600 font-medium">{{ schedule.articles_per_run }}</td>
+                    <td class="px-6 py-4 text-sm text-purple-600 font-bold">{{ schedule.total_generated }}</td>
+                    <td class="px-6 py-4">
+                        {% if schedule.is_active %}
+                        <span class="px-3 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-300">Активно</span>
+                        {% else %}
+                        <span class="px-3 py-1 text-xs font-bold rounded-full bg-gray-100 text-gray-700 border border-gray-300">Неактивно</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-right text-sm font-semibold">
+                        <button onclick="runSchedule({{ schedule.pk }})" class="text-green-600 hover:text-green-800 mr-4 transition-colors duration-200">Запустить</button>
+                        <a href="{% url 'assistant:dashboard_schedule_edit' schedule.pk %}" class="text-blue-600 hover:text-blue-800 mr-4 transition-colors duration-200">Редактировать</a>
+                        <button onclick="deleteSchedule({{ schedule.pk }})" class="text-red-600 hover:text-red-800 transition-colors duration-200">Удалить</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">Нет расписаний</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if schedules.has_other_pages %}
+    <div class="mt-6 flex justify-center">
+        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+            {% if schedules.has_previous %}
+            <a href="?page={{ schedules.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Назад</a>
+            {% endif %}
+            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">Страница {{ schedules.number }} из {{ schedules.paginator.num_pages }}</span>
+            {% if schedules.has_next %}
+            <a href="?page={{ schedules.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Вперед</a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function runSchedule(pk) {
+    if (!confirm('Запустить генерацию сейчас?')) return;
+    fetch(`/assistant/dashboard/schedules/${pk}/run/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) alert('Генерация запущена!');
+        else alert(data.error || 'Ошибка запуска');
+    });
+}
+
+function deleteSchedule(pk) {
+    if (!confirm('Удалить расписание?')) return;
+    fetch(`/assistant/dashboard/schedules/${pk}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) location.reload();
+        else alert(data.error || 'Ошибка удаления');
+    });
+}
+</script>
+{% endblock %}
+

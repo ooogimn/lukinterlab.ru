@@ -1,0 +1,179 @@
+{% extends 'moderation/base.html' %}
+
+{% block moderation_content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
+            Дашборд модерации
+        </h1>
+        <p class="text-gray-700 text-lg font-medium">Обзор системы контроля контента</p>
+    </div>
+
+    {% if stale_moderation_count %}
+    <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 text-sm">
+        <strong>Рассинхрон:</strong> у {{ stale_moderation_count }} опубликованных статей в базе ещё указан статус модерации «ожидает» или «доработка»
+        (публикация в блоге не обновляла эту запись раньше). Разово на сервере выполните:
+        <code class="bg-white/80 px-1 rounded">python manage.py sync_published_article_moderation</code>
+        либо откройте каждую запись и сохраните «Одобрено». Новые публикации синхронизируются автоматически.
+    </div>
+    {% endif %}
+    
+    <!-- Статистика -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Статьи на модерации -->
+        <div class="stat-card rounded-2xl shadow-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-yellow-100 rounded-lg">
+                    <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <span class="badge badge-pending">{{ pending_articles }}</span>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-1">{{ pending_articles }}</h3>
+            <p class="text-gray-600 text-sm">Черновиков без одобрения модерации</p>
+            <p class="text-gray-500 text-xs mt-1">Только статьи в статусе «черновик»; опубликованные сюда не попадают</p>
+            <a href="{% url 'moderation:article_list' %}?queue=1" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium mt-2 inline-block">
+                Очередь →
+            </a>
+        </div>
+        
+        <!-- Комментарии на модерации -->
+        <div class="stat-card rounded-2xl shadow-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-blue-100 rounded-lg">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                    </svg>
+                </div>
+                <span class="badge badge-pending">{{ pending_comments }}</span>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-1">{{ pending_comments }}</h3>
+            <p class="text-gray-600 text-sm">Комментариев на модерации</p>
+            <a href="{% url 'moderation:comment_list' %}?action=pending" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium mt-2 inline-block">
+                Посмотреть →
+            </a>
+        </div>
+        
+        <!-- Одобренные статьи -->
+        <div class="stat-card rounded-2xl shadow-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-green-100 rounded-lg">
+                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <span class="badge badge-approved">{{ articles_stats.approved }}</span>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-1">{{ articles_stats.approved }}</h3>
+            <p class="text-gray-600 text-sm">Одобренных статей</p>
+        </div>
+        
+        <!-- Отклоненные статьи -->
+        <div class="stat-card rounded-2xl shadow-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-red-100 rounded-lg">
+                    <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <span class="badge badge-rejected">{{ articles_stats.rejected }}</span>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-1">{{ articles_stats.rejected }}</h3>
+            <p class="text-gray-600 text-sm">Отклоненных статей</p>
+        </div>
+    </div>
+    
+    <!-- Последние статьи на модерации -->
+    <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-900">Очередь модерации (черновики)</h2>
+            <a href="{% url 'moderation:article_list' %}?queue=1" class="text-indigo-600 hover:text-indigo-800 font-medium">
+                Вся очередь →
+            </a>
+        </div>
+        
+        {% if recent_articles %}
+        <div class="space-y-4">
+            {% for moderation in recent_articles %}
+            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900 mb-1">
+                            <a href="{% url 'moderation:article_detail' moderation.id %}" class="hover:text-indigo-600">
+                                {{ moderation.post.title }}
+                            </a>
+                        </h3>
+                        <p class="text-sm text-gray-600 mb-2">
+                            Автор: {{ moderation.post.author.get_full_name|default:moderation.post.author.username }}
+                            • {{ moderation.submitted_at|date:"d.m.Y H:i" }}
+                        </p>
+                        <div class="flex items-center space-x-2">
+                            <span class="badge badge-{{ moderation.status }}">
+                                {{ moderation.get_status_display }}
+                            </span>
+                            {% if moderation.criteria_used %}
+                            <span class="text-xs text-gray-500">
+                                Критерии: {{ moderation.criteria_used.name }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <a href="{% url 'moderation:article_detail' moderation.id %}" 
+                       class="ml-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                        Модерировать
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-center py-8">Нет статей на модерации</p>
+        {% endif %}
+    </div>
+    
+    <!-- Последние комментарии на модерации -->
+    <div class="bg-white rounded-2xl shadow-xl p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-900">Последние комментарии на модерации</h2>
+            <a href="{% url 'moderation:comment_list' %}" class="text-indigo-600 hover:text-indigo-800 font-medium">
+                Все комментарии →
+            </a>
+        </div>
+        
+        {% if recent_comments %}
+        <div class="space-y-4">
+            {% for moderation in recent_comments %}
+            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <p class="text-gray-900 mb-2">{{ moderation.comment.content|truncatewords:20 }}</p>
+                        <p class="text-sm text-gray-600 mb-2">
+                            Автор: {{ moderation.comment.author_comment }}
+                            • Статья: <a href="{{ moderation.comment.post.get_absolute_url }}" class="text-indigo-600 hover:underline">{{ moderation.comment.post.title }}</a>
+                            • {{ moderation.checked_at|date:"d.m.Y H:i" }}
+                        </p>
+                        {% if moderation.action %}
+                        <span class="badge badge-{{ moderation.action }}">
+                            {{ moderation.get_action_display }}
+                        </span>
+                        {% else %}
+                        <span class="badge badge-pending">Ожидает проверки</span>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'moderation:comment_list' %}" 
+                       class="ml-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                        Проверить
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-center py-8">Нет комментариев на модерации</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

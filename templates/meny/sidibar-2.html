@@ -1,0 +1,44 @@
+{% load static %}
+
+<!--наюписьс верху СИДИБАРr-->
+<div class="header-mobile">
+    <a class="header-toggle"><i class="fas fa-bars"></i></a>
+    <a href="{% url 'home:home' %}"><h2>LukInterLab</h2></a>
+</div>
+<!--наюписьс верху СИДИБАРr-->
+
+<!--СИДИБАРr-->
+<div class="header-main" data-simplebar>
+    
+    <!--СИДИБАР ВЕРХ-->
+    <div class="image-container">
+        <a href="/admin"><h7>LukInterLab</h7></a>
+        <h4 class="header-name" >LukInterLab- {{ page_title }} -LukInterLab</h4>
+        <a href="{% url 'home:home' %}"><img src="{% static 'img/400-crug.png' %}" alt="profile-pic"></a>
+    </div>
+    <!--СИДИБАР ВЕРХ-->
+
+    <!--СИДИБАР Menus-->
+    {% include "meny/2.html"  %}
+    <!--СИДИБАР Menus-->
+
+    <!--Поиск-->
+    <!--Поиск-->
+
+    <!--СИДИБАР подвал-->
+    <div class="nav-footer">
+        <!--Social Links-->
+        <ul class="social">
+            <li><a href="#"><i class="fab fa-yandex"></i></a></li>
+            <li><a href="https://t.me/LukInterLab_News"><i class="fas fa-paper-plane"></i></a></li>
+            <li><a href="#"><i class="fab fa-whatsapp "></i></a></li>
+            <li><a href="#"><i class="fab fa-VK"></i></a></li>
+        </ul>
+        <!--Copyright Text-->
+        <div class="copy">
+            <p>2025 &copy; LukInterLab<br>Все права защищены.</p>
+        </div>
+    </div>
+    <!--СИДИБАР подвал-->
+</div>
+<!--СИДИБАРr-->

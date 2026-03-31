@@ -1,0 +1,237 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Опросный лист - Заказ {{ order.order_number }}{% endblock %}
+
+{% block meny %}
+{% include "meny/sidibar-1.html" %}
+{% endblock meny %}
+
+{% block straniza %}
+<!-- Questionnaire Section -->
+<section class="py-20 relative overflow-hidden section-background section-background-animate" 
+         style="{{ section_backgrounds.resume.background_style|default:'background: #f9fafb;' }}">
+    
+    <!-- Видео фон -->
+    {% if section_backgrounds.resume.type == 'video' and section_backgrounds.resume.video_url %}
+    <video class="section-video-background" autoplay muted loop playsinline>
+        <source src="{{ section_backgrounds.resume.video_url }}" type="video/mp4">
+    </video>
+    {% endif %}
+    
+    <!-- Наложение -->
+    {% if section_backgrounds.resume.has_overlay %}
+    <div class="section-overlay" style="{{ section_backgrounds.resume.overlay_style }}"></div>
+    {% endif %}
+    
+    <!-- Контент -->
+    <div class="section-content">
+        <div class="max-w-4xl mx-auto px-4">
+            <!-- Breadcrumb -->
+            <nav class="mb-8">
+                <ol class="flex items-center space-x-2 text-sm text-gray-600">
+                    <li><a href="{% url 'home:home' %}" class="hover:text-primary-600">Главная</a></li>
+                    <li><span class="mx-2">/</span></li>
+                    <li><a href="{% url 'home:checkout' %}" class="hover:text-primary-600">Оформление заказа</a></li>
+                    <li><span class="mx-2">/</span></li>
+                    <li class="text-primary-600">Опросный лист</li>
+                </ol>
+            </nav>
+            
+            <!-- Section Header -->
+            <div class="text-center mb-16">
+                <h1 class="text-4xl md:text-5xl font-bold text-primary-500 mb-4">
+                    Опросный лист
+                </h1>
+                <p class="text-xl text-green-500 max-w-3xl mx-auto">
+                    Заказ №{{ order.order_number }} - {{ order.customer_name }}
+                </p>
+            </div>
+            
+            <form method="post" enctype="multipart/form-data" class="space-y-8">
+                {% csrf_token %}
+                
+                <!-- Project Information -->
+                <div class="bg-white rounded-3xl p-8 shadow-lg">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Информация о проекте</h2>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="{{ questionnaire_form.project_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Название проекта
+                            </label>
+                            {{ questionnaire_form.project_name }}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ questionnaire_form.budget_range.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Диапазон бюджета
+                            </label>
+                            {{ questionnaire_form.budget_range }}
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <label for="{{ questionnaire_form.project_description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Описание проекта
+                        </label>
+                        {{ questionnaire_form.project_description }}
+                        <p class="text-sm text-gray-500 mt-1">Подробно опишите цели, задачи и концепцию вашего проекта</p>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-6 mt-6">
+                        <div>
+                            <label for="{{ questionnaire_form.target_audience.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Целевая аудитория
+                            </label>
+                            {{ questionnaire_form.target_audience }}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ questionnaire_form.competitors.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Конкуренты
+                            </label>
+                            {{ questionnaire_form.competitors }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Technical Requirements -->
+                <div class="bg-white rounded-3xl p-8 shadow-lg">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Технические требования</h2>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <label for="{{ questionnaire_form.technical_requirements.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Технические требования
+                            </label>
+                            {{ questionnaire_form.technical_requirements }}
+                            <p class="text-sm text-gray-500 mt-1">Укажите предпочтительные технологии, платформы, интеграции</p>
+                        </div>
+                        
+                        <div>
+                            <label for="{{ questionnaire_form.design_preferences.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Предпочтения по дизайну
+                            </label>
+                            {{ questionnaire_form.design_preferences }}
+                            <p class="text-sm text-gray-500 mt-1">Опишите стиль, цвета, примеры дизайна, которые вам нравятся</p>
+                        </div>
+                        
+                        <div>
+                            <label for="{{ questionnaire_form.functionality_requirements.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Требования к функциональности
+                            </label>
+                            {{ questionnaire_form.functionality_requirements }}
+                            <p class="text-sm text-gray-500 mt-1">Перечислите основные функции и возможности, которые должны быть реализованы</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Timeline and Additional Info -->
+                <div class="bg-white rounded-3xl p-8 shadow-lg">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Сроки и дополнительные требования</h2>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="{{ questionnaire_form.deadline.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Желаемый срок сдачи
+                            </label>
+                            {{ questionnaire_form.deadline }}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ questionnaire_form.preferred_contact_method.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Предпочтительный способ связи
+                            </label>
+                            {{ questionnaire_form.preferred_contact_method }}
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <label for="{{ questionnaire_form.additional_requirements.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Дополнительные требования и пожелания
+                        </label>
+                        {{ questionnaire_form.additional_requirements }}
+                        <p class="text-sm text-gray-500 mt-1">Любые дополнительные требования, особые условия или пожелания</p>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <label for="{{ questionnaire_form.additional_contacts.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Дополнительные контакты
+                        </label>
+                        {{ questionnaire_form.additional_contacts }}
+                        <p class="text-sm text-gray-500 mt-1">Дополнительные способы связи или контактные лица</p>
+                    </div>
+                </div>
+                
+                <!-- File Upload -->
+                <div class="bg-white rounded-3xl p-8 shadow-lg">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">
+                        Загрузка файлов 
+                        <span class="text-sm font-normal text-gray-500">(необязательно)</span>
+                    </h2>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <label for="{{ file_form.file.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Прикрепить файлы <span class="text-gray-500">(необязательно)</span>
+                            </label>
+                            {{ file_form.file }}
+                            <p class="text-sm text-gray-500 mt-1">
+                                Разрешены: PDF, DOC, DOCX, JPG, PNG, GIF, ZIP, RAR (максимум 10MB каждый)
+                            </p>
+                        </div>
+                        
+                        <div>
+                            <label for="{{ file_form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Описание файлов <span class="text-gray-500">(необязательно)</span>
+                            </label>
+                            {{ file_form.description }}
+                            <p class="text-sm text-gray-500 mt-1">Краткое описание загружаемых файлов</p>
+                        </div>
+                        
+                        <!-- Multiple file upload -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Дополнительные файлы <span class="text-gray-500">(необязательно)</span>
+                            </label>
+                            <input type="file" name="additional_files" multiple 
+                                   class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+                                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.zip,.rar">
+                            <p class="text-sm text-gray-500 mt-1">Можно выбрать несколько файлов</p>
+                        </div>
+                        
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <p class="text-sm text-blue-800">
+                                <strong>Примечание:</strong> Загрузка файлов не является обязательной. 
+                                Вы можете отправить заказ без прикрепления файлов, а затем связаться с нами 
+                                для передачи дополнительных материалов.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="text-center">
+                    <button type="submit" class="bg-gradient-to-r from-primary-600 to-secondary-600 text-white px-12 py-4 rounded-full font-semibold text-lg hover:from-primary-700 hover:to-secondary-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        Завершить оформление заказа
+                    </button>
+                    <p class="text-sm text-gray-600 mt-4">
+                        После отправки формы мы свяжемся с вами для уточнения деталей
+                    </p>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<style>
+.form-control {
+    @apply block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors;
+}
+
+.form-control:focus {
+    @apply ring-2 ring-primary-500 border-primary-500;
+}
+</style>
+{% endblock straniza %} 

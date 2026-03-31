@@ -1,0 +1,291 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block meny %}
+{% include "meny/sidibar-1.html" %}
+{% endblock meny %}
+
+{% block straniza %}
+<!-- CSRF Token for AJAX requests -->
+{% csrf_token %}
+
+<!-- Services List Section -->
+<section class="py-20 relative overflow-hidden section-background section-background-animate" 
+         style="{{ section_backgrounds.resume.background_style|default:'background: #f9fafb;' }}">
+    
+    <!-- Видео фон -->
+    {% if section_backgrounds.resume.type == 'video' and section_backgrounds.resume.video_url %}
+    <video class="section-video-background" autoplay muted loop playsinline>
+        <source src="{{ section_backgrounds.resume.video_url }}" type="video/mp4">
+    </video>
+    {% endif %}
+    
+    <!-- Наложение -->
+    {% if section_backgrounds.resume.has_overlay %}
+    <div class="section-overlay" style="{{ section_backgrounds.resume.overlay_style }}"></div>
+    {% endif %}
+    
+    <!-- Контент -->
+    <div class="section-content">
+        <div class="max-w-7xl mx-auto px-4">
+            <!-- Breadcrumb -->
+            <nav class="mb-8">
+                <ol class="flex items-center space-x-2 text-sm text-gray-600">
+                    <li><a href="{% url 'home:home' %}" class="hover:text-primary-600">Главная</a></li>
+                    <li><span class="mx-2">/</span></li>
+                    <li class="text-primary-600">Услуги</li>
+                </ol>
+            </nav>
+            
+            <!-- Section Header -->
+            <div class="text-center mb-16">
+                <h1 class="text-4xl md:text-5xl font-extrabold text-primary-600 mb-4 header-3d">
+                    Наши услуги
+                </h1>
+                <p class="text-xl text-green-600 max-w-3xl mx-auto font-medium mt-4">
+                    Специализируемся на LLM (Large Language Models), интеграции GigaChat API, GPT, Gemini, DeepSeek, Grok и других AI-моделей. Создаем саморекламирующие сайты, самопродающие интернет-магазины и внедряем искусственный интеллект в бизнес, торговлю и маркетинг.
+                </p>
+            </div>
+            
+            <!-- Services Grid -->
+            <div class="grid lg:grid-cols-2 xl:grid-cols-3 gap-8 mb-16">
+                {% for service in services %}
+                <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer" 
+                     onclick="window.location.href='{{ service.get_absolute_url }}'">
+                    <div class="flex flex-col items-center text-center space-y-6">
+                        <div class="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                            {% if service.icon %}
+                                <img src="{{ service.icon.url }}" alt="{{ service.title }}" class="w-10 h-10 object-cover">
+                            {% else %}
+                                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                </svg>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-2xl font-bold text-primary-500 mb-4">{{ service.title }}</h3>
+                            <p class="text-green-500 mb-6 leading-relaxed">{{ service.description|truncatewords:20 }}</p>
+                            {% if service.price %}
+                            <div class="text-2xl font-bold text-primary-600 mb-4">{{ service.price }}</div>
+                            {% endif %}
+                            
+                            <!-- Add to Cart Button -->
+                            <button onclick="event.stopPropagation(); addToCart('service', {{ service.id }})" 
+                                    class="inline-flex items-center bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-full font-semibold text-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 shadow-lg mb-4">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01"></path>
+                                </svg>
+                                Добавить в корзину
+                            </button>
+                            
+                            <div class="text-primary-600 font-semibold hover:text-primary-700 transition-colors">
+                                Подробнее →
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="flex justify-center mt-12">
+                <nav class="flex items-center space-x-2">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}" class="px-4 py-2 bg-white rounded-lg shadow hover:shadow-md transition-shadow">
+                            ← Назад
+                        </a>
+                    {% endif %}
+                    
+                    <span class="px-4 py-2 bg-primary-600 text-white rounded-lg">
+                        Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+                    </span>
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}" class="px-4 py-2 bg-white rounded-lg shadow hover:shadow-md transition-shadow">
+                            Вперед →
+                        </a>
+                    {% endif %}
+                </nav>
+            </div>
+            {% endif %}
+            
+            <!-- Additional Services -->
+            {% if standalone_extra_services %}
+            <div class="bg-white rounded-3xl p-12 shadow-lg mt-16">
+                <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold text-gray-900 mb-4 cursor-pointer hover:text-primary-600 transition-colors duration-200" 
+                        onclick="window.location.href='{% url 'home:extra-service-list' %}'">
+                        Дополнительные услуги
+                    </h3>
+                    <p class="text-lg text-gray-600">
+                        Поддержка, обслуживание и развитие ваших проектов
+                    </p>
+                </div>
+                
+                <div class="grid md:grid-cols-3 gap-8">
+                    {% for extra in standalone_extra_services %}
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-6 cursor-pointer hover:scale-110 transition-transform duration-200" 
+                             onclick="window.location.href='{{ extra.get_absolute_url }}'">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-900 mb-3">{{ extra.title }}</h4>
+                        <p class="text-gray-600 mb-4">{{ extra.description }}</p>
+                        {% if extra.price %}
+                        <div class="text-lg font-bold text-primary-600">{{ extra.price }}</div>
+                        {% endif %}
+                        
+                        <!-- Add to Cart Button -->
+                        <button onclick="event.stopPropagation(); addToCart('extra_service', {{ extra.id }})" 
+                                class="inline-flex items-center bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-full font-semibold text-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 shadow-lg mt-4">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01"></path>
+                            </svg>
+                            Добавить в корзину
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- CTA Section -->
+            <div class="text-center mt-16">
+                <h3 class="text-2xl font-bold text-primary-500 mb-4">
+                    Нужна консультация по услугам?
+                </h3>
+                <p class="text-lg text-green-500 mb-8">
+                    Свяжитесь с нами для получения персонального предложения
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="{% url 'home:home' %}" class="inline-flex bg-gradient-to-r from-gray-600 to-gray-700 text-white px-6 py-3 rounded-full font-semibold text-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        ← На главную
+                    </a>
+                    <a href="{% url 'home:home' %}#contact" class="inline-flex bg-gradient-to-r from-primary-600 to-secondary-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:from-primary-700 hover:to-secondary-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        Получить консультацию
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+function addToCart(serviceType, serviceId) {
+    // Показываем индикатор загрузки
+    const button = event.target.closest('button');
+    const originalText = button.innerHTML;
+    button.innerHTML = '<svg class="animate-spin w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Добавляем...';
+    button.disabled = true;
+    
+    // Отправляем запрос на добавление в корзину
+    fetch('{% url "home:add-to-cart" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: new URLSearchParams({
+            'service_type': serviceType,
+            'service_id': serviceId,
+            'quantity': 1
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Показываем уведомление об успехе
+            showNotification(data.message, 'success');
+            
+            // Обновляем счетчик корзины в меню
+            if (typeof updateCartCount === 'function') {
+                updateCartCount(data.cart_count);
+            }
+            
+            // Восстанавливаем кнопку
+            button.innerHTML = '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Добавлено!';
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }, 2000);
+        } else {
+            // Показываем ошибку
+            showNotification(data.message, 'error');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Произошла ошибка при добавлении в корзину', 'error');
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+function showNotification(message, type) {
+    // Создаем уведомление
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm transform transition-all duration-300 translate-x-full`;
+    
+    if (type === 'success') {
+        notification.className += ' bg-green-500 text-white';
+    } else {
+        notification.className += ' bg-red-500 text-white';
+    }
+    
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${type === 'success' ? 'M5 13l4 4L19 7' : 'M6 18L18 6M6 6l12 12'}"></path>
+            </svg>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Показываем уведомление
+    setTimeout(() => {
+        notification.classList.remove('translate-x-full');
+    }, 100);
+    
+    // Скрываем уведомление через 3 секунды
+    setTimeout(() => {
+        notification.classList.add('translate-x-full');
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 300);
+    }, 3000);
+}
+
+function updateCartCount(count) {
+    // Обновляем счетчик в десктопном меню
+    const desktopCounter = document.querySelector('.lg\\:flex .bg-red-500');
+    if (desktopCounter) {
+        desktopCounter.textContent = count;
+    } else if (count > 0) {
+        // Если счетчика нет, но есть товары, создаем его
+        const cartLink = document.querySelector('a[href*="cart"]');
+        if (cartLink) {
+            const counter = document.createElement('span');
+            counter.className = 'absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold';
+            counter.textContent = count;
+            cartLink.appendChild(counter);
+        }
+    }
+    
+    // Обновляем счетчик в мобильном меню
+    const mobileCounter = document.querySelector('#mobile-menu .bg-red-500');
+    if (mobileCounter) {
+        mobileCounter.textContent = count;
+    }
+}
+</script>
+
+{% endblock straniza %} 

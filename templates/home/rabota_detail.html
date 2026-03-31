@@ -1,0 +1,241 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block page_title %}{{ rabota.name }} | Портфолио LukInterLab{% endblock %}
+{% block description %}{{ rabota.body|truncatewords:25 }}{% endblock %}
+{% block keywords %}{{ rabota.technologies }}, {{ rabota.category }}, LukInterLab, портфолио, кейсы{% endblock %}
+
+{% block extra_head %}
+<!-- Swiper JS for Media Carousel -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+{% endblock %}
+
+
+{% block straniza %}
+<!-- Hero Section -->
+<div class="relative bg-gradient-to-br from-primary-900 via-gray-900 to-black text-white py-20 overflow-hidden mt-16">
+    <div class="absolute inset-0 opacity-20">
+        {% if rabota.image %}
+        <img src="{{ rabota.image.url }}" alt="Фон проекта" class="w-full h-full object-cover blur-md">
+        {% endif %}
+    </div>
+    <div class="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent"></div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
+        <nav class="mb-4 text-sm text-gray-400 font-medium tracking-wide">
+            <a href="/" class="hover:text-white transition-colors">Главная</a> <span class="mx-2">/</span>
+            <a href="/#portfolio" class="hover:text-white transition-colors">Портфолио</a> <span class="mx-2">/</span>
+            <span class="text-white">{{ rabota.name }}</span>
+        </nav>
+        <div class="md:w-2/3 mt-8">
+            <span class="inline-block py-1 px-3 rounded-full bg-primary-600/30 text-primary-300 border border-primary-500/50 text-xs font-bold uppercase tracking-widest mb-4">
+                {{ rabota.get_category_display_name }}
+            </span>
+            <h1 class="text-4xl md:text-6xl font-extrabold mb-6 leading-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
+                {{ rabota.name }}
+            </h1>
+            <p class="text-xl text-gray-300 font-light leading-relaxed mb-8">
+                {{ rabota.body }}
+            </p>
+            
+            <div class="flex flex-wrap gap-4 items-center">
+                {% if rabota.adres %}
+                <a href="{{ rabota.adres }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-primary-600 hover:bg-primary-500 hover:scale-105 transition-all duration-300">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    Посетить сайт
+                </a>
+                {% endif %}
+                <a href="#order" class="inline-flex items-center px-6 py-3 border border-gray-600 text-base font-medium rounded-lg shadow-sm text-white hover:bg-gray-800 hover:border-gray-400 transition-colors">
+                    Узнать стоимость
+                </a>
+            </div>
+            
+            <div class="mt-8 flex flex-wrap gap-2 items-center">
+                 {% if rabota.technologies %}
+                 <span class="text-sm text-gray-400 mr-2 font-medium">Стек:</span>
+                 <div class="flex flex-wrap gap-2">
+                     <span class="px-3 py-1 bg-gray-800/80 rounded-lg text-xs font-medium text-gray-300 border border-gray-700/50">{{ rabota.technologies }}</span>
+                 </div>
+                 {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <!-- Main Content Column -->
+        <div class="lg:col-span-2 space-y-12">
+            
+            {% if rabota.media_items.exists %}
+            <!-- Media Carousel -->
+            <div class="rounded-2xl overflow-hidden shadow-2xl border border-gray-200 relative swiper mediaSwiper bg-gray-900">
+                <style>
+                    .swiper-button-next::after, .swiper-button-prev::after { text-shadow: 0px 0px 4px rgba(0,0,0,0.8); }
+                    .swiper-pagination-bullet { background: white; opacity: 0.5; }
+                    .swiper-pagination-bullet-active { background: white; opacity: 1; }
+                </style>
+                <div class="swiper-wrapper">
+                    {% for media in rabota.media_items.all %}
+                    <div class="swiper-slide flex items-center justify-center h-[500px]">
+                        {% if media.is_video %}
+                        <video src="{{ media.file.url }}" autoplay loop muted playsinline class="w-full h-full object-contain cursor-pointer transition-opacity" onclick="this.muted = !this.muted; this.classList.toggle('opacity-90')" title="Кликните чтобы включить/выключить звук"></video>
+                        {% else %}
+                        <img src="{{ media.file.url }}" alt="{{ rabota.name }}" class="w-full h-full object-contain">
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="swiper-button-next text-white/70 hover:text-white drop-shadow-lg transition-colors"></div>
+                <div class="swiper-button-prev text-white/70 hover:text-white drop-shadow-lg transition-colors"></div>
+                <div class="swiper-pagination"></div>
+            </div>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const swiper = new Swiper('.mediaSwiper', {
+                        loop: true,
+                        navigation: {
+                            nextEl: '.swiper-button-next',
+                            prevEl: '.swiper-button-prev',
+                        },
+                        pagination: {
+                            el: '.swiper-pagination',
+                            clickable: true,
+                        },
+                        keyboard: {
+                            enabled: true,
+                        },
+                    });
+                });
+            </script>
+            {% elif rabota.image %}
+            <div class="rounded-2xl overflow-hidden shadow-2xl border border-gray-200 group">
+                <img src="{{ rabota.image.url }}" alt="{{ rabota.name }}" class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-700">
+            </div>
+            {% endif %}
+
+            {% if rabota.history_text %}
+            <section class="prose prose-lg prose-primary max-w-none prose-img:rounded-xl prose-a:text-primary-600">
+                <h2 class="text-3xl font-bold text-gray-900 flex items-center mb-6">
+                    <svg class="w-8 h-8 mr-3 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    История развития проекта
+                </h2>
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100/50">
+                    {{ rabota.history_text|safe }}
+                </div>
+            </section>
+            {% endif %}
+
+            {% if rabota.instructions_text %}
+            <section class="prose prose-lg prose-primary max-w-none prose-img:rounded-xl">
+                <h2 class="text-3xl font-bold text-gray-900 flex items-center mb-6">
+                    <svg class="w-8 h-8 mr-3 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Инструкции и руководства
+                </h2>
+                <div class="bg-primary-50 p-6 md:p-8 rounded-2xl border-l-4 border-primary-500 text-gray-800">
+                    {{ rabota.instructions_text|safe }}
+                </div>
+            </section>
+            {% endif %}
+
+            {% if rabota.parameters_text %}
+            <section class="prose prose-lg prose-primary max-w-none prose-img:rounded-xl">
+                <h2 class="text-3xl font-bold text-gray-900 flex items-center mb-6">
+                    <svg class="w-8 h-8 mr-3 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    Технические параметры
+                </h2>
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100/50 text-gray-800">
+                    {{ rabota.parameters_text|safe }}
+                </div>
+            </section>
+            {% endif %}
+
+        </div>
+
+        <!-- Sidebar / Details / Tariffs Column -->
+        <div class="lg:col-span-1 space-y-8">
+            
+            <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100 shadow-sm sticky top-28">
+                <h3 class="text-xl font-bold text-gray-900 mb-4 border-b border-gray-200 pb-2">Резюме проекта</h3>
+                <ul class="space-y-4 text-sm">
+                    <li class="flex justify-between items-center">
+                        <span class="text-gray-500">Статус:</span>
+                        <span class="font-medium text-gray-900 bg-gray-200/60 px-2 py-1 rounded">{{ rabota.get_status_display_name }}</span>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span class="text-gray-500">Запуск:</span>
+                        <span class="font-medium text-gray-900">{{ rabota.created|date:'d.m.Y' }}</span>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span class="text-gray-500">Категория:</span>
+                        <span class="font-medium text-gray-900">{{ rabota.get_category_display_name }}</span>
+                    </li>
+                </ul>
+
+                {% if rabota.resources_text %}
+                <div class="mt-6 pt-4 border-t border-gray-200">
+                    <h4 class="font-semibold text-gray-900 mb-2">Задействованные ресурсы:</h4>
+                    <div class="prose prose-sm text-gray-700">
+                        {{ rabota.resources_text|safe }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if rabota.tariffs_text %}
+            <div class="bg-gradient-to-br from-primary-600 to-indigo-700 rounded-2xl p-6 shadow-lg text-white">
+                <h3 class="text-2xl font-bold mb-4 flex items-center">
+                    <svg class="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Тарифы и стоимость
+                </h3>
+                <div class="prose prose-sm prose-invert prose-headings:text-white text-primary-50">
+                    {{ rabota.tariffs_text|safe }}
+                </div>
+                <a href="#order" class="mt-6 w-full text-center inline-block px-4 py-3 bg-white text-primary-700 font-bold rounded-lg shadow-md hover:bg-gray-50 hover:shadow-lg transition-all">
+                    Заказать подобный проект
+                </a>
+            </div>
+            {% endif %}
+            
+        </div>
+    </div>
+</div>
+
+<!-- CTA Воронки продаж -->
+<section id="order" class="bg-gray-900 text-white py-20 relative overflow-hidden mt-12">
+    <div class="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 rounded-full bg-primary-700 opacity-20 blur-3xl invisible md:visible"></div>
+    <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-indigo-600 opacity-20 blur-3xl invisible md:visible"></div>
+    
+    <div class="relative max-w-4xl mx-auto px-4 text-center z-10">
+        <h2 class="text-4xl md:text-5xl font-extrabold mb-6">Готовы масштабировать ваш бизнес?</h2>
+        <p class="text-xl text-gray-300 mb-10 leading-relaxed font-light">Мы разрабатываем решения, которые автоматизируют рутину и приносят реальную прибыль. Обсудим ваш будущий проект уже сегодня.</p>
+        
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="/contacts/" class="px-8 py-4 bg-primary-600 hover:bg-primary-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:shadow-[0_0_30px_rgba(37,99,235,0.6)] hover:-translate-y-1 transition-all">
+                Связаться с нами
+            </a>
+            <a href="/checkout/" class="px-8 py-4 bg-transparent border border-gray-600 hover:border-gray-400 text-white font-semibold rounded-xl hover:bg-gray-800 transition-all">
+                Смотреть все услуги
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Структурированные данные -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    "name": "{{ rabota.name }}",
+    "description": "{{ rabota.body|truncatewords:25 }}",
+    "image": "{{ rabota.image.url|default:'' }}",
+    "url": "https://lukinterlab.ru{{ rabota.get_absolute_url }}",
+    "datePublished": "{{ rabota.created|date:'Y-m-d' }}",
+    "author": {
+        "@type": "Organization",
+        "name": "LukInterLab"
+    },
+    "keywords": "{{ rabota.technologies }}"
+}
+</script>
+{% endblock %}

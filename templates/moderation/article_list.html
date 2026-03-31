@@ -1,0 +1,164 @@
+{% extends 'moderation/base.html' %}
+
+{% block moderation_content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
+            Модерация статей
+        </h1>
+        <p class="text-gray-700 text-lg font-medium">Управление модерацией статей блога</p>
+        <p class="text-gray-600 text-sm mt-2 max-w-3xl">
+            <strong>Статус публикации</strong> (черновик / опубликовано) задаётся в админке блога.
+            Здесь — отдельная запись <strong>решения модератора</strong> (одобрено, доработка, отклонено).
+            На дашборде считается очередь только по <strong>черновикам</strong> без одобрения.
+        </p>
+    </div>
+    
+    <!-- Фильтры -->
+    <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
+        <div class="flex flex-wrap gap-2">
+            <a href="{% url 'moderation:article_list' %}?queue=1" 
+               class="px-4 py-2 rounded-lg {% if queue_only %}bg-indigo-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors font-medium">
+                Очередь (черновики)
+            </a>
+            <a href="{% url 'moderation:article_list' %}" 
+               class="px-4 py-2 rounded-lg {% if status_filter == 'all' and not queue_only %}bg-indigo-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors">
+                Все
+            </a>
+            {% for status, label in status_choices %}
+            <a href="{% url 'moderation:article_list' %}?status={{ status }}" 
+               class="px-4 py-2 rounded-lg {% if status_filter == status and not queue_only %}bg-indigo-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors">
+                {{ label }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Список статей -->
+    <div class="bg-white rounded-2xl shadow-xl p-6">
+        {% if page_obj %}
+        <div class="space-y-4">
+            {% for moderation in page_obj %}
+            <div class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <h3 class="text-xl font-semibold text-gray-900">
+                                <a href="{% url 'moderation:article_detail' moderation.id %}" class="hover:text-indigo-600">
+                                    {{ moderation.post.title }}
+                                </a>
+                            </h3>
+                            <span class="badge badge-{{ moderation.status }}">
+                                {{ moderation.get_status_display }}
+                            </span>
+                            {% if moderation.post.status == 'published' %}
+                            <span class="px-2 py-0.5 rounded text-xs font-semibold bg-green-100 text-green-800">На сайте: опубликовано</span>
+                            {% else %}
+                            <span class="px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-700">На сайте: черновик</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
+                            <div>
+                                <span class="text-gray-600">Автор:</span>
+                                <span class="font-medium text-gray-900">{{ moderation.post.author.get_full_name|default:moderation.post.author.username }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Категория:</span>
+                                <span class="font-medium text-gray-900">{{ moderation.post.category.title }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Отправлено:</span>
+                                <span class="font-medium text-gray-900">{{ moderation.submitted_at|date:"d.m.Y H:i" }}</span>
+                            </div>
+                            {% if moderation.moderated_at %}
+                            <div>
+                                <span class="text-gray-600">Промодерировано:</span>
+                                <span class="font-medium text-gray-900">{{ moderation.moderated_at|date:"d.m.Y H:i" }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if moderation.moderator %}
+                        <div class="text-sm text-gray-600 mb-2">
+                            Модератор: <span class="font-medium">{{ moderation.moderator.get_full_name|default:moderation.moderator.username }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if moderation.moderator_comment %}
+                        <div class="bg-gray-50 rounded-lg p-3 mb-3">
+                            <p class="text-sm text-gray-700"><strong>Комментарий:</strong> {{ moderation.moderator_comment|truncatewords:30 }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if moderation.check_results.errors %}
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
+                            <p class="text-sm font-medium text-red-800 mb-1">Ошибки:</p>
+                            <ul class="text-sm text-red-700 list-disc list-inside">
+                                {% for error in moderation.check_results.errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                        
+                        {% if moderation.check_results.warnings %}
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                            <p class="text-sm font-medium text-yellow-800 mb-1">Предупреждения:</p>
+                            <ul class="text-sm text-yellow-700 list-disc list-inside">
+                                {% for warning in moderation.check_results.warnings %}
+                                <li>{{ warning }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="ml-6 flex flex-col space-y-2">
+                        <a href="{% url 'moderation:article_detail' moderation.id %}" 
+                           class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-center whitespace-nowrap">
+                            Модерировать
+                        </a>
+                        <a href="{{ moderation.post.get_absolute_url }}" 
+                           target="_blank"
+                           class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-center whitespace-nowrap">
+                            Просмотр
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Пагинация -->
+        {% if page_obj.has_other_pages %}
+        <div class="mt-6 flex justify-center">
+            <nav class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if queue_only %}&queue=1{% elif status_filter != 'all' %}&status={{ status_filter }}{% endif %}" 
+                   class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+                    Назад
+                </a>
+                {% endif %}
+                
+                <span class="px-4 py-2 bg-indigo-600 text-white rounded-lg">
+                    Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if queue_only %}&queue=1{% elif status_filter != 'all' %}&status={{ status_filter }}{% endif %}" 
+                   class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+                    Вперед
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+        {% else %}
+        <p class="text-gray-500 text-center py-12">Нет статей для отображения</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

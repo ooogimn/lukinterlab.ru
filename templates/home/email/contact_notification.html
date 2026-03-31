@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Новое сообщение с сайта</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+            text-align: center;
+        }
+        .content {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 0 0 8px 8px;
+        }
+        .message-box {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .info-row {
+            margin: 10px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .label {
+            font-weight: bold;
+            color: #666;
+            display: inline-block;
+            width: 80px;
+        }
+        .value {
+            color: #333;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+            font-size: 12px;
+        }
+        .btn {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔔 Новое сообщение с сайта</h1>
+        <p>LukInterLab</p>
+    </div>
+    
+    <div class="content">
+        <div class="info-row">
+            <span class="label">От:</span>
+            <span class="value">{{ message.name }} ({{ message.email }})</span>
+        </div>
+        
+        <div class="info-row">
+            <span class="label">Дата:</span>
+            <span class="value">{{ message.created|date:"d.m.Y H:i" }}</span>
+        </div>
+        
+        {% if message.ip_address %}
+        <div class="info-row">
+            <span class="label">IP:</span>
+            <span class="value">{{ message.ip_address }}</span>
+        </div>
+        {% endif %}
+        
+        {% if message.attachment %}
+        <div class="info-row">
+            <span class="label">Файл:</span>
+            <span class="value">{{ message.get_attachment_filename }}</span>
+        </div>
+        {% endif %}
+        
+        <div class="message-box">
+            <h3>Сообщение:</h3>
+            <p>{{ message.message|linebreaks }}</p>
+        </div>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <a href="{{ site_url }}/admin/home/contactmessage/{{ message.id }}/change/" class="btn">
+                📝 Открыть в админке
+            </a>
+            <a href="mailto:{{ message.email }}" class="btn">
+                📧 Ответить
+            </a>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>Это автоматическое уведомление с сайта <a href="{{ site_url }}">{{ site_url }}</a></p>
+        <p>Вы получили это письмо, потому что являетесь администратором сайта.</p>
+    </div>
+</body>
+</html> 

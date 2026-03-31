@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Virtualenv
+.venv/
+venv/
+ENV/
+
+# Django / локальные данные
+*.log
+qcluster.log
+logs/
+db.sqlite3
+db.sqlite3-*
+media/
+# Собранная статика (STATIC_ROOT); исходники — папка STATIC/
+static/
+
+# Кэши и runtime
+cache/
+qcache/
+tmp/
+*.sqlite3-shm
+*.sqlite3-wal
+
+# Секреты и окружение (ключи держите в env или в приватном репо)
+.env
+.env.*
+!.env.example
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+nul
+
+# Прочее
+.coverage
+htmlcov/
+.mypy_cache/
+.pytest_cache/

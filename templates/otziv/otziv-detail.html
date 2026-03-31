@@ -1,0 +1,594 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block reclama_1 %}
+{% include "reclama/1.html"  %}
+{% endblock reclama_1  %}
+
+{% block meny %}
+<!-- Mobile Header -->
+<div class="lg:hidden bg-white shadow-sm border-b">
+    <div class="flex items-center justify-between px-4 py-3">
+        <a href="{% url 'home:home' %}" class="flex items-center space-x-2">
+            <img src="{% static 'img/400x400-round.ico' %}" alt="LukInterLab" class="w-8 h-8 rounded-full">
+            <span class="text-xl font-bold text-gray-900">LukInterLab</span>
+        </a>
+        <button id="mobile-menu-btn" class="text-gray-600 hover:text-gray-900">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<!-- Desktop Navigation -->
+<nav class="hidden lg:block bg-white/95 backdrop-blur-md shadow-sm">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex items-center justify-between h-16">
+            <!-- Logo -->
+            <a href="{% url 'home:home' %}" class="flex items-center space-x-3">
+                <img src="{% static 'img/400x400-round.ico' %}" alt="LukInterLab" class="w-10 h-10 rounded-full">
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900">LukInterLab</h1>
+                    <p class="text-sm text-gray-600">IT решения под ключ</p>
+                </div>
+            </a>
+            
+            <!-- Navigation Links -->
+            <div class="hidden lg:flex items-center space-x-8">
+                <a href="{% url 'home:home' %}" class="text-gray-700 hover:text-primary-600 font-medium transition-colors duration-200">Главная</a>
+                <a href="{% url 'home:home' %}#about" class="text-gray-700 hover:text-primary-600 font-medium transition-colors duration-200">О нас</a>
+                <a href="{% url 'home:home' %}#resume" class="text-gray-700 hover:text-primary-600 font-medium transition-colors duration-200">Услуги</a>
+                <a href="{% url 'home:home' %}#portfolio" class="text-gray-700 hover:text-primary-600 font-medium transition-colors duration-200">Портфолио</a>
+                <a href="{% url 'home:otzivs' %}" class="text-primary-600 font-medium transition-colors duration-200">Отзывы</a>
+                <a href="{% url 'home:home' %}#blog" class="text-gray-700 hover:text-primary-600 font-medium transition-colors duration-200">Блог</a>
+                <a href="{% url 'home:home' %}#contact" class="text-gray-700 hover:text-primary-600 font-medium transition-colors duration-200">Контакты</a>
+            </div>
+            
+            <!-- CTA Button -->
+            <a href="{% url 'home:home' %}#contact" class="hidden lg:inline-flex bg-gradient-to-r from-primary-600 to-secondary-600 text-white px-6 py-2 rounded-full font-semibold hover:from-primary-700 hover:to-secondary-700 transition-all duration-300 transform hover:scale-105">
+                Получить консультацию
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- Mobile Menu Overlay -->
+<div id="mobile-menu" class="fixed inset-0 z-50 lg:hidden hidden">
+    <div class="fixed inset-0 bg-black/50" id="mobile-menu-backdrop"></div>
+    <div class="fixed right-0 top-0 h-full w-80 bg-white shadow-xl transform translate-x-full transition-transform duration-300" id="mobile-menu-content">
+        <div class="p-6">
+            <!-- Mobile Menu Header -->
+            <div class="flex items-center justify-between mb-8">
+                <a href="{% url 'home:home' %}" class="flex items-center space-x-3">
+                    <img src="{% static 'img/400x400-round.ico' %}" alt="LukInterLab" class="w-10 h-10 rounded-full">
+                    <span class="text-xl font-bold text-gray-900">LukInterLab</span>
+                </a>
+                <button id="mobile-menu-close" class="text-gray-600 hover:text-gray-900">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Mobile Navigation Links -->
+            <nav class="space-y-4">
+                <a href="{% url 'home:home' %}" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100">Главная</a>
+                <a href="{% url 'home:home' %}#about" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100">О нас</a>
+                <a href="{% url 'home:home' %}#resume" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100">Услуги</a>
+                <a href="{% url 'home:home' %}#portfolio" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100">Портфолио</a>
+                <a href="{% url 'home:otzivs' %}" class="block py-3 text-primary-600 font-medium border-b border-gray-100">Отзывы</a>
+                <a href="{% url 'home:home' %}#blog" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100">Блог</a>
+                <a href="{% url 'home:home' %}#contact" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100">Контакты</a>
+            </nav>
+            
+            <!-- Social Links -->
+            <div class="mt-8 pt-8 border-t border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-900 mb-4">Мы в соцсетях</h3>
+                <div class="flex space-x-4">
+                    <a href="#" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-primary-100 hover:text-primary-600 transition-colors duration-200">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.64-.203-.658-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.941z"/>
+                        </svg>
+                    </a>
+                    <a href="https://t.me/LukInterLab_News" class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 hover:bg-blue-200 transition-colors duration-200">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                        </svg>
+                    </a>
+                    <a href="#" class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600 hover:bg-green-200 transition-colors duration-200">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+                        </svg>
+                    </a>
+                    <a href="#" class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 hover:bg-blue-200 transition-colors duration-200">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M15.07 13.633c-.038-.903-.548-1.139-1.66-1.378-1.228-.269-.014-.276 1.097-.417 1.088-.14 1.462-.376 1.477-1.136.015-.76-.504-.889-.504-.889s.073-.08.201-.24c.128.16.434.52.595.802.161.282.161.52.069.52s-.314.019-.614.019c-.3 0-.78-.019-1.158-.019-.378 0-.409.019-.409.019-.092 0-.092.238.069.52.161.282.467.642.595.802.128.16.201.24.201.24s-.519.129-.504.889c.015.76.389.996 1.477 1.136 1.111.141 1.622.475 1.66 1.378.038.903-.548 1.139-1.66 1.378-1.228.269-.014.276 1.097.417 1.088.14 1.462.376 1.477 1.136.015.76-.504.889-.504.889s.073.08.201.24c.128.16.434.52.595.802.161.282.161.52.069.52s-.314-.019-.614-.019c-.3 0-.78.019-1.158.019-.378 0-.409-.019-.409-.019-.092 0-.092-.238.069-.52.161-.282.467-.642.595-.802.128-.16.201-.24.201-.24s-.519-.129-.504-.889c.015-.76.389-.996 1.477-1.136 1.111-.239 1.622-.475 1.66-1.378z"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Copyright -->
+            <div class="mt-8 pt-8 border-t border-gray-200 text-center">
+                <p class="text-sm text-gray-600">2025 &copy; LukInterLab<br>Все права защищены.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Mobile menu functionality
+const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+const mobileMenuClose = document.getElementById('mobile-menu-close');
+const mobileMenu = document.getElementById('mobile-menu');
+const mobileMenuContent = document.getElementById('mobile-menu-content');
+const mobileMenuBackdrop = document.getElementById('mobile-menu-backdrop');
+
+function openMobileMenu() {
+    mobileMenu.classList.remove('hidden');
+    setTimeout(() => {
+        mobileMenuContent.classList.remove('translate-x-full');
+    }, 10);
+}
+
+function closeMobileMenu() {
+    mobileMenuContent.classList.add('translate-x-full');
+    setTimeout(() => {
+        mobileMenu.classList.add('hidden');
+    }, 300);
+}
+
+mobileMenuBtn.addEventListener('click', openMobileMenu);
+mobileMenuClose.addEventListener('click', closeMobileMenu);
+mobileMenuBackdrop.addEventListener('click', closeMobileMenu);
+
+// Close mobile menu when clicking on navigation links
+document.querySelectorAll('#mobile-menu a[href^="#"]').forEach(link => {
+    link.addEventListener('click', closeMobileMenu);
+});
+</script>
+{% endblock meny %}
+
+{% block straniza %}
+<!-- Отзыв Section -->
+<section class="py-12 bg-gray-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Breadcrumb -->
+        <nav class="flex mb-8" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li class="inline-flex items-center">
+                    <a href="{% url 'home:home' %}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-primary-600">
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                        </svg>
+                        Главная
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        <a href="{% url 'home:otzivs' %}" class="ml-1 text-sm font-medium text-gray-700 hover:text-primary-600 md:ml-2">Отзывы</a>
+                    </div>
+                </li>
+                <li aria-current="page">
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Отзыв от {{ otziv.name }}</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Отзыв Card -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <!-- Рейтинг -->
+            <div class="flex items-center mb-6">
+                <div class="flex text-yellow-400">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <span class="ml-2 text-sm text-gray-500">5.0</span>
+            </div>
+
+            <!-- Текст отзыва -->
+            <blockquote class="text-gray-700 mb-8 text-lg italic leading-relaxed">
+                "{{ otziv.body }}"
+            </blockquote>
+
+            <!-- Информация о клиенте -->
+            <div class="flex items-center border-t border-gray-100 pt-6">
+                {% if otziv.foto %}
+                <div class="flex-shrink-0 mr-4">
+                    <img src="{{ otziv.foto.url }}" alt="{{ otziv.name }}" class="w-16 h-16 rounded-full object-cover">
+                </div>
+                {% else %}
+                <div class="flex-shrink-0 mr-4">
+                    <img src="{% static 'img/лого_.gif' %}" alt="{{ otziv.name }}" class="w-16 h-16 rounded-full object-cover">
+                </div>
+                {% endif %}
+                
+                <div class="flex-1">
+                    <h4 class="text-xl font-semibold text-gray-900">{{ otziv.name|default:"Анонимный клиент" }}</h4>
+                    {% if otziv.firma %}
+                    <p class="text-lg text-gray-600">{{ otziv.firma }}</p>
+                    {% endif %}
+                    <p class="text-sm text-gray-500">{{ otziv.created|date:"d.m.Y" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Комментарии Section -->
+        <div class="bg-white rounded-2xl shadow-lg p-8">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6">Комментарии ({{ comments.count }})</h3>
+            
+            <!-- Форма добавления комментария -->
+            <div class="mb-8 p-6 bg-gray-50 rounded-lg">
+                <h4 class="text-lg font-semibold text-gray-900 mb-4">Добавить комментарий</h4>
+                <form id="comment-form" method="post" action="{% url 'home:add-comment' otziv.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="parent_comment_id" id="parent-comment-id" value="">
+                    
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="{{ comment_form.author_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                {{ comment_form.author_name.label }}
+                            </label>
+                            {{ comment_form.author_name }}
+                        </div>
+                        <div>
+                            <label for="{{ comment_form.author_email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                {{ comment_form.author_email.label }}
+                            </label>
+                            {{ comment_form.author_email }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="{{ comment_form.author_company.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            {{ comment_form.author_company.label }}
+                        </label>
+                        {{ comment_form.author_company }}
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="{{ comment_form.content.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            {{ comment_form.content.label }}
+                        </label>
+                        {{ comment_form.content }}
+                    </div>
+                    
+                    <button type="submit" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200">
+                        <span class="submit-text">Отправить комментарий</span>
+                        <span class="loading-text hidden">Отправка...</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Список комментариев -->
+            <div id="comments-list" class="space-y-6">
+                {% for comment in comments %}
+                <div class="comment-item border-b border-gray-100 pb-6 last:border-b-0" data-comment-id="{{ comment.id }}">
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0">
+                            <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                                <span class="text-primary-600 font-semibold">{{ comment.author_name|first|upper }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <h5 class="font-semibold text-gray-900">{{ comment.author_name }}</h5>
+                                {% if comment.author_company %}
+                                <span class="text-sm text-gray-600">• {{ comment.author_company }}</span>
+                                {% endif %}
+                                {% if comment.is_admin_reply %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    Администратор
+                                </span>
+                                {% endif %}
+                            </div>
+                            
+                            <p class="text-gray-700 mb-3">{{ comment.content }}</p>
+                            
+                            <div class="flex items-center space-x-4 text-sm text-gray-500">
+                                <span>{{ comment.created|date:"d.m.Y H:i" }}</span>
+                                <button class="reply-btn hover:text-primary-600 transition-colors" data-comment-id="{{ comment.id }}">
+                                    Ответить
+                                </button>
+                            </div>
+                            
+                            <!-- Ответы на комментарий -->
+                            {% if comment.children.all %}
+                            <div class="mt-4 ml-8 space-y-4">
+                                {% for reply in comment.children.all %}
+                                {% if reply.active %}
+                                <div class="reply-item border-l-2 border-gray-200 pl-4">
+                                    <div class="flex items-start space-x-3">
+                                        <div class="flex-shrink-0">
+                                            <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                                <span class="text-gray-600 font-semibold text-sm">{{ reply.author_name|first|upper }}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="flex-1">
+                                            <div class="flex items-center space-x-2 mb-1">
+                                                <h6 class="font-semibold text-gray-900 text-sm">{{ reply.author_name }}</h6>
+                                                {% if reply.author_company %}
+                                                <span class="text-xs text-gray-600">• {{ reply.author_company }}</span>
+                                                {% endif %}
+                                                {% if reply.is_admin_reply %}
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                    <svg class="w-2.5 h-2.5 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                                    </svg>
+                                                    Админ
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <p class="text-gray-700 text-sm mb-2">{{ reply.content }}</p>
+                                            
+                                            <div class="text-xs text-gray-500">
+                                                {{ reply.created|date:"d.m.Y H:i" }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-8">
+                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-2">Комментариев пока нет</h4>
+                    <p class="text-gray-600">Будьте первым, кто оставит комментарий к этому отзыву</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+// Обработка ответов на комментарии и AJAX-отправка
+document.addEventListener('DOMContentLoaded', function() {
+    const replyButtons = document.querySelectorAll('.reply-btn');
+    const commentForm = document.getElementById('comment-form');
+    const parentCommentId = document.getElementById('parent-comment-id');
+    const contentField = document.getElementById('{{ comment_form.content.id_for_label }}');
+    const submitButton = commentForm.querySelector('button[type="submit"]');
+    const submitText = submitButton.querySelector('.submit-text');
+    const loadingText = submitButton.querySelector('.loading-text');
+    
+    // Функция для создания HTML комментария
+    function createCommentHTML(commentData, isReply = false) {
+        const adminBadge = commentData.is_admin_reply ? `
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                <svg class="w-2.5 h-2.5 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                Админ
+            </span>
+        ` : '';
+        
+        if (isReply) {
+            return `
+                <div class="reply-item border-l-2 border-gray-200 pl-4" data-comment-id="${commentData.id}">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                            <span class="text-gray-600 font-semibold text-sm">${commentData.author_name.charAt(0).toUpperCase()}</span>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-1">
+                                <h6 class="font-semibold text-gray-900 text-sm">${commentData.author_name}</h6>
+                                ${adminBadge}
+                            </div>
+                            <p class="text-gray-700 text-sm mb-2">${commentData.content}</p>
+                            <div class="text-xs text-gray-500">${commentData.created}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            return `
+                <div class="comment-item bg-gray-50 rounded-lg p-6" data-comment-id="${commentData.id}">
+                    <div class="flex items-start space-x-4">
+                        <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                            <span class="text-primary-600 font-semibold">${commentData.author_name.charAt(0).toUpperCase()}</span>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <h5 class="font-semibold text-gray-900">${commentData.author_name}</h5>
+                                ${commentData.author_company ? `<span class="text-sm text-gray-600">• ${commentData.author_company}</span>` : ''}
+                                ${commentData.is_admin_reply ? `
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        Администратор
+                                    </span>
+                                ` : ''}
+                            </div>
+                            <p class="text-gray-700 mb-3">${commentData.content}</p>
+                            <div class="flex items-center space-x-4 text-sm text-gray-500">
+                                <span>${commentData.created}</span>
+                                <button class="reply-btn hover:text-primary-600 transition-colors" data-comment-id="${commentData.id}">
+                                    Ответить
+                                </button>
+                            </div>
+                            <div class="mt-4 ml-8 space-y-4"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    // Функция для показа уведомления
+    function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg text-white font-semibold transition-all duration-300 transform translate-x-full ${
+            type === 'success' ? 'bg-green-500' : 'bg-red-500'
+        }`;
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        // Анимация появления
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 100);
+        
+        // Автоматическое скрытие
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+    
+    // Обработка ответов на комментарии
+    replyButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const commentId = this.getAttribute('data-comment-id');
+            const commentItem = this.closest('.comment-item');
+            const authorName = commentItem.querySelector('h5').textContent;
+            
+            // Устанавливаем ID родительского комментария
+            parentCommentId.value = commentId;
+            
+            // Изменяем placeholder
+            contentField.placeholder = `Ответ на комментарий от ${authorName}...`;
+            
+            // Прокручиваем к форме
+            commentForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            contentField.focus();
+            
+            // Добавляем визуальное выделение
+            commentForm.classList.add('ring-2', 'ring-primary-500');
+            setTimeout(() => {
+                commentForm.classList.remove('ring-2', 'ring-primary-500');
+            }, 2000);
+        });
+    });
+    
+    // AJAX-отправка формы
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Показываем состояние загрузки
+        submitText.classList.add('hidden');
+        loadingText.classList.remove('hidden');
+        submitButton.disabled = true;
+        
+        const formData = new FormData(this);
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Очищаем форму
+                this.reset();
+                parentCommentId.value = '';
+                contentField.placeholder = 'Ваш комментарий...';
+                
+                // Добавляем новый комментарий на страницу
+                const commentsList = document.getElementById('comments-list');
+                
+                if (data.comment.is_reply) {
+                    // Это ответ на комментарий
+                    const parentComment = document.querySelector(`[data-comment-id="${data.comment.parent_id}"]`);
+                    if (parentComment) {
+                        const repliesContainer = parentComment.querySelector('.mt-4.ml-8');
+                        if (repliesContainer) {
+                            repliesContainer.insertAdjacentHTML('beforeend', createCommentHTML(data.comment, true));
+                        }
+                    }
+                } else {
+                    // Это новый комментарий
+                    if (commentsList.children.length === 0 || commentsList.querySelector('.text-center')) {
+                        // Если нет комментариев, очищаем и добавляем новый
+                        commentsList.innerHTML = createCommentHTML(data.comment);
+                    } else {
+                        // Добавляем в начало списка
+                        commentsList.insertAdjacentHTML('afterbegin', createCommentHTML(data.comment));
+                    }
+                }
+                
+                // Показываем уведомление об успехе
+                showNotification(data.message, 'success');
+                
+                // Обновляем счетчик комментариев
+                const commentCount = document.querySelector('h3 span');
+                if (commentCount) {
+                    const currentCount = parseInt(commentCount.textContent.match(/\d+/)[0]) || 0;
+                    commentCount.textContent = `(${currentCount + 1})`;
+                }
+                
+                // Добавляем обработчики для новых кнопок ответа
+                const newReplyButtons = document.querySelectorAll('.reply-btn:not([data-initialized])');
+                newReplyButtons.forEach(button => {
+                    button.setAttribute('data-initialized', 'true');
+                    button.addEventListener('click', function() {
+                        const commentId = this.getAttribute('data-comment-id');
+                        const commentItem = this.closest('.comment-item');
+                        const authorName = commentItem.querySelector('h5').textContent;
+                        
+                        parentCommentId.value = commentId;
+                        contentField.placeholder = `Ответ на комментарий от ${authorName}...`;
+                        commentForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        contentField.focus();
+                    });
+                });
+                
+            } else {
+                // Показываем ошибки
+                showNotification('Ошибка при отправке комментария', 'error');
+                console.error('Form errors:', data.errors);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Произошла ошибка при отправке комментария', 'error');
+        })
+        .finally(() => {
+            // Восстанавливаем состояние кнопки
+            submitText.classList.remove('hidden');
+            loadingText.classList.add('hidden');
+            submitButton.disabled = false;
+        });
+    });
+    
+    // Инициализация обработчиков для существующих кнопок ответа
+    document.querySelectorAll('.reply-btn').forEach(button => {
+        button.setAttribute('data-initialized', 'true');
+    });
+});
+</script>
+{% endblock straniza %} 

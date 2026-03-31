@@ -1,0 +1,25 @@
+{% load static %}
+
+<!--СПИСОК РАБОТ-->
+<div class="owl-carousel owl-theme">
+    {% for rab in rabotas %}
+        <div class="client-logo">
+            <a href="{{ rab.adres }}">
+                {{ rab.name }}
+                {% if rab.image %}
+                <img src="{{ rab.image.url }}" alt="">
+                {% endif %}
+            </a>
+        </div>
+
+        <!--Client Logo--
+        <div class="client-logo">
+            <a href="http://couture-artemeva.ru/">
+                <img src="{% static 'img/clients/saite-01.png' %}" alt="">
+            </a>
+        </div>
+        --Client Logo-->
+    
+    {% endfor %}
+</div>
+<!--СПИСОК РАБОТ-->

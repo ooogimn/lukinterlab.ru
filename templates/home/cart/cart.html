@@ -1,0 +1,311 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Корзина заказов{% endblock %}
+
+{% block meny %}
+{% include "meny/sidibar-1.html" %}
+{% endblock meny %}
+
+{% block straniza %}
+<!-- Cart Section -->
+<section class="py-20 relative overflow-hidden section-background section-background-animate" 
+         style="{{ section_backgrounds.resume.background_style|default:'background: #f9fafb;' }}">
+    
+    <!-- Видео фон -->
+    {% if section_backgrounds.resume.type == 'video' and section_backgrounds.resume.video_url %}
+    <video class="section-video-background" autoplay muted loop playsinline>
+        <source src="{{ section_backgrounds.resume.video_url }}" type="video/mp4">
+    </video>
+    {% endif %}
+    
+    <!-- Наложение -->
+    {% if section_backgrounds.resume.has_overlay %}
+    <div class="section-overlay" style="{{ section_backgrounds.resume.overlay_style }}"></div>
+    {% endif %}
+    
+    <!-- Контент -->
+    <div class="section-content">
+        <div class="max-w-7xl mx-auto px-4">
+            <!-- Breadcrumb -->
+            <nav class="mb-8">
+                <ol class="flex items-center space-x-2 text-sm text-gray-600">
+                    <li><a href="{% url 'home:home' %}" class="hover:text-primary-600">Главная</a></li>
+                    <li><span class="mx-2">/</span></li>
+                    <li class="text-primary-600">Корзина</li>
+                </ol>
+            </nav>
+            
+            <!-- Section Header -->
+            <div class="text-center mb-16">
+                <h1 class="text-4xl md:text-5xl font-bold text-primary-500 mb-4">
+                    Корзина заказов
+                </h1>
+                <p class="text-xl text-green-500 max-w-3xl mx-auto">
+                    Просмотрите выбранные услуги и оформите заказ
+                </p>
+            </div>
+            
+            {% if cart_items %}
+            <!-- Cart Items -->
+            <div class="bg-white rounded-3xl p-8 shadow-lg mb-8">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="text-left py-4 px-4 font-semibold text-gray-900">Услуга</th>
+                                <th class="text-center py-4 px-4 font-semibold text-gray-900">Количество</th>
+                                <th class="text-center py-4 px-4 font-semibold text-gray-900">Цена</th>
+                                <th class="text-center py-4 px-4 font-semibold text-gray-900">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in cart_items %}
+                            <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors" data-item-id="{{ item.id }}">
+                                <td class="py-6 px-4">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="w-12 h-12 bg-gradient-to-r {% if item.service_type == 'service' %}from-blue-500 to-blue-600{% else %}from-orange-500 to-red-500{% endif %} rounded-xl flex items-center justify-center">
+                                            {% if item.service_type == 'service' %}
+                                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                            </svg>
+                                            {% else %}
+                                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                            </svg>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <h3 class="text-lg font-semibold text-gray-900">{{ item.title }}</h3>
+                                            <p class="text-sm text-gray-600">
+                                                {% if item.service_type == 'service' %}Основная услуга{% else %}Дополнительная услуга{% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-6 px-4 text-center">
+                                    <div class="flex items-center justify-center space-x-2">
+                                        <button class="quantity-btn w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors" 
+                                                onclick="updateQuantity({{ item.id }}, -1)">
+                                            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                                            </svg>
+                                        </button>
+                                        <span class="quantity-display w-12 text-center font-semibold">{{ item.quantity }}</span>
+                                        <button class="quantity-btn w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors" 
+                                                onclick="updateQuantity({{ item.id }}, 1)">
+                                            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td class="py-6 px-4 text-center">
+                                    <div class="text-lg font-bold text-primary-600">{{ item.price }}</div>
+                                </td>
+                                <td class="py-6 px-4 text-center">
+                                    <button class="remove-btn text-red-600 hover:text-red-800 transition-colors" 
+                                            onclick="removeItem({{ item.id }})">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Cart Summary -->
+            <div class="bg-white rounded-3xl p-8 shadow-lg mb-8">
+                <div class="flex flex-col lg:flex-row justify-between items-center space-y-4 lg:space-y-0">
+                    <div class="text-center lg:text-left">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Итого к оплате</h3>
+                        <p class="text-3xl font-bold text-primary-600">{{ total_price|floatformat:0 }} ₽</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <a href="{% url 'home:home' %}" class="inline-flex bg-gray-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-gray-700 transition-colors">
+                            ← Продолжить покупки
+                        </a>
+                        <a href="{% url 'home:checkout' %}" class="inline-flex bg-gradient-to-r from-primary-600 to-secondary-600 text-white px-8 py-3 rounded-full font-semibold hover:from-primary-700 hover:to-secondary-700 transition-all duration-300 transform hover:scale-105">
+                            Оформить заказ →
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- Empty Cart -->
+            <div class="bg-white rounded-3xl p-12 shadow-lg text-center">
+                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">Ваша корзина пуста</h3>
+                <p class="text-gray-600 mb-8">Добавьте услуги в корзину, чтобы оформить заказ</p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="{% url 'home:service-list' %}" class="inline-flex bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-3 rounded-full font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-300 transform hover:scale-105">
+                        Основные услуги
+                    </a>
+                    <a href="{% url 'home:extra-service-list' %}" class="inline-flex bg-gradient-to-r from-orange-600 to-red-600 text-white px-8 py-3 rounded-full font-semibold hover:from-orange-700 hover:to-red-700 transition-all duration-300 transform hover:scale-105">
+                        Дополнительные услуги
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<script>
+// Функция для обновления счетчика корзины в меню (с ожиданием загрузки функции из меню)
+function updateCartCountInMenu(cartCount) {
+    // Пытаемся вызвать глобальную функцию из меню
+    if (typeof window.updateCartCount === 'function') {
+        window.updateCartCount(cartCount);
+        return;
+    }
+    
+    // Если функция еще не загружена, ждем и пытаемся снова
+    let attempts = 0;
+    const maxAttempts = 10;
+    const checkInterval = setInterval(() => {
+        attempts++;
+        if (typeof window.updateCartCount === 'function') {
+            window.updateCartCount(cartCount);
+            clearInterval(checkInterval);
+        } else if (attempts >= maxAttempts) {
+            // Если функция так и не загрузилась, обновляем напрямую через DOM
+            const cartCountDesktop = document.getElementById('cart-count-desktop');
+            const cartButtonDesktop = document.getElementById('cart-button-desktop');
+            const cartCountMobile = document.getElementById('cart-count-mobile');
+            const cartButtonMobile = document.getElementById('cart-button-mobile');
+            
+            if (cartCountDesktop) cartCountDesktop.textContent = cartCount;
+            if (cartCountMobile) cartCountMobile.textContent = cartCount;
+            
+            if (cartButtonDesktop) {
+                if (cartCount > 0) {
+                    cartButtonDesktop.classList.remove('hidden');
+                    cartButtonDesktop.classList.add('lg:flex');
+                } else {
+                    cartButtonDesktop.classList.remove('lg:flex');
+                    cartButtonDesktop.classList.add('hidden');
+                }
+            }
+            
+            if (cartButtonMobile) {
+                if (cartCount > 0) {
+                    cartButtonMobile.classList.remove('hidden');
+                    cartButtonMobile.classList.add('block');
+                } else {
+                    cartButtonMobile.classList.remove('block');
+                    cartButtonMobile.classList.add('hidden');
+                }
+            }
+            
+            clearInterval(checkInterval);
+        }
+    }, 100);
+}
+
+function updateQuantity(itemId, change) {
+    const quantityDisplay = document.querySelector(`[data-item-id="${itemId}"] .quantity-display`);
+    const currentQuantity = parseInt(quantityDisplay.textContent);
+    const newQuantity = Math.max(1, currentQuantity + change);
+    
+    fetch(`/cart/update/${itemId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `quantity=${newQuantity}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            quantityDisplay.textContent = newQuantity;
+            updateCartTotal(data.total_price);
+            
+            // Обновляем счетчик корзины в меню
+            updateCartCountInMenu(data.cart_count);
+            
+            if (newQuantity <= 0) {
+                document.querySelector(`[data-item-id="${itemId}"]`).remove();
+                if (document.querySelectorAll('[data-item-id]').length === 0) {
+                    // Обновляем счетчик перед перезагрузкой
+                    updateCartCountInMenu(0);
+                    location.reload(); // Перезагружаем страницу, если корзина пуста
+                }
+            }
+        } else {
+            alert('Ошибка обновления корзины: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Произошла ошибка при обновлении корзины');
+    });
+}
+
+function removeItem(itemId) {
+    if (!confirm('Вы уверены, что хотите удалить эту услугу из корзины?')) {
+        return;
+    }
+    
+    fetch(`/cart/remove/${itemId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.querySelector(`[data-item-id="${itemId}"]`).remove();
+            updateCartTotal(data.total_price);
+            
+            // Обновляем счетчик корзины в меню
+            updateCartCountInMenu(data.cart_count);
+            
+            if (document.querySelectorAll('[data-item-id]').length === 0) {
+                // Обновляем счетчик перед перезагрузкой
+                updateCartCountInMenu(0);
+                location.reload(); // Перезагружаем страницу, если корзина пуста
+            }
+        } else {
+            alert('Ошибка удаления: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Произошла ошибка при удалении услуги');
+    });
+}
+
+function updateCartTotal(totalPrice) {
+    const totalElement = document.querySelector('.text-3xl.font-bold.text-primary-600');
+    if (totalElement) {
+        totalElement.textContent = totalPrice + ' ₽';
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock straniza %} 

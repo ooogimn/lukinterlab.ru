@@ -1,0 +1,252 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/contact-form-alerts.css' %}">{# Стили для красивых уведомлений #}
+<style>
+    /* Улучшенная контрастность для полей формы */
+    #contact-form input::placeholder,
+    #contact-form textarea::placeholder {
+        color: #6b7280 !important;
+        opacity: 1 !important;
+        font-weight: 500;
+    }
+    
+    #contact-form input,
+    #contact-form textarea {
+        color: #111827 !important;
+        font-weight: 500;
+    }
+    
+    #contact-form input:focus,
+    #contact-form textarea:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+    }
+    
+    #contact-form label {
+        color: #1f2937 !important;
+    }
+    
+    /* Стили для ошибок валидации */
+    #contact-form .cf-error {
+        border-color: #ef4444 !important;
+        border-width: 2px !important;
+        background-color: #fef2f2 !important;
+    }
+    
+    /* 3D эффект для заголовка секции контактов */
+    .contact-header-3d {
+        text-shadow: 
+            3px 3px 0px #1e40af,
+            6px 6px 0px #1e3a8a,
+            9px 9px 0px #1e3a8a,
+            12px 12px 20px rgba(0, 0, 0, 0.3);
+        transform: perspective(500px) rotateX(5deg);
+        display: inline-block;
+        transition: transform 0.3s ease;
+    }
+    
+    .contact-header-3d:hover {
+        transform: perspective(500px) rotateX(0deg) scale(1.05);
+        text-shadow: 
+            3px 3px 0px #1e40af,
+            6px 6px 0px #1e3a8a,
+            9px 9px 0px #1e3a8a,
+            12px 12px 30px rgba(59, 130, 246, 0.5);
+    }
+    
+    /* Анимация появления */
+    @keyframes slideIn3D {
+        from {
+            opacity: 0;
+            transform: perspective(500px) rotateX(-10deg) translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: perspective(500px) rotateX(5deg) translateY(0);
+        }
+    }
+    
+    .contact-header-3d {
+        animation: slideIn3D 0.8s ease-out;
+    }
+</style>
+
+<!-- Контакты Section -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Заголовок секции -->
+    <div class="text-center mb-16">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-6 shadow-lg">
+            <i class="fas fa-envelope text-2xl text-primary-600"></i>
+        </div>
+        <h2 class="text-4xl md:text-5xl font-extrabold text-primary-600 mb-4 contact-header-3d">
+            Наши контакты
+        </h2>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-12 mb-16">
+        <!-- Форма обратной связи -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+            <div class="text-center mb-8">
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">Давайте поговорим</h3>
+                <p class="text-gray-700 font-medium">Расскажите о вашем проекте, и мы свяжемся с вами в ближайшее время</p>
+            </div>
+            
+            <form id="contact-form" method="post" action="{% url 'home:contact-form' %}" class="space-y-6" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Имя -->
+                    <div class="relative">
+                        <label for="cf-name" class="block text-sm font-semibold text-gray-800 mb-2">Ваше имя *</label>
+                        <input 
+                            class="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-white text-gray-900 placeholder-gray-500 font-medium cf-validate"
+                            type="text" 
+                            id="cf-name" 
+                            name="name" 
+                            placeholder="Введите ваше имя"
+                            required
+                        />
+                    </div>
+                    
+                    <!-- Email -->
+                    <div class="relative">
+                        <label for="cf-email" class="block text-sm font-semibold text-gray-800 mb-2">Ваш email *</label>
+                        <input 
+                            class="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-white text-gray-900 placeholder-gray-500 font-medium cf-validate"
+                            type="email" 
+                            id="cf-email" 
+                            name="email" 
+                            placeholder="example@mail.com"
+                            required
+                        />
+                    </div>
+                </div>
+                
+                <!-- Сообщение -->
+                <div class="relative">
+                    <label for="cf-message" class="block text-sm font-semibold text-gray-800 mb-2">Ваше сообщение *</label>
+                    <textarea 
+                        class="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-white resize-none text-gray-900 placeholder-gray-500 font-medium cf-validate"
+                        id="cf-message" 
+                        name="message" 
+                        rows="5" 
+                        placeholder="Расскажите о вашем проекте..."
+                        required
+                    ></textarea>
+                </div>
+                
+                <!-- Файловое вложение -->
+                <div class="relative">
+                    <label for="attachment" class="block text-sm font-semibold text-gray-800 mb-2">
+                        Вложение (опционально)
+                    </label>
+                    <input 
+                        type="file" 
+                        id="attachment" 
+                        name="attachment" 
+                        class="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-white text-gray-900 font-medium"
+                        accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
+                    />
+                    <p class="text-xs text-gray-700 font-medium mt-2">
+                        Поддерживаемые форматы: PDF, DOC, DOCX, TXT, JPG, PNG, GIF (макс. 5MB)
+                    </p>
+                </div>
+                
+                <!-- Honeypot для защиты от спама (скрытое поле) -->
+                <div style="display: none;">
+                    <input type="text" name="website" id="website" tabindex="-1" autocomplete="off" />
+                </div>
+                
+                <!-- Контейнер для уведомлений -->
+                <div class="alert-container"></div>
+                
+                <!-- Кнопка отправки -->
+                <div class="text-center">
+                    <button 
+                        id="cf-submit" 
+                        type="submit"
+                        class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-primary-600 to-secondary-600 text-white font-semibold rounded-lg hover:from-primary-700 hover:to-secondary-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                    >
+                        <i class="fas fa-paper-plane mr-2"></i>
+                        Отправить сообщение
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Контактная информация -->
+        <div class="space-y-8">
+            <!-- Email -->
+            <div class="bg-gradient-to-r from-primary-50 to-secondary-50 rounded-2xl p-8 border border-primary-100">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-envelope text-primary-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-bold text-gray-900">Email</h4>
+                        <p class="text-gray-700 font-medium">Напишите нам</p>
+                    </div>
+                </div>
+                <a href="mailto:{{ legal_info.email|default:'Ya@LukyanovSY.ru' }}" class="text-primary-700 hover:text-primary-800 font-bold text-lg transition-colors duration-200">
+                    {{ legal_info.email|default:"Ya@LukyanovSY.ru" }}
+                </a>
+            </div>
+
+            <!-- Адрес -->
+            <div class="bg-gradient-to-r from-primary-50 to-secondary-50 rounded-2xl p-8 border border-primary-100">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-map-marker-alt text-primary-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-bold text-gray-900">Адрес</h4>
+                        <p class="text-gray-700 font-medium">Наш офис</p>
+                    </div>
+                </div>
+                <p class="text-gray-900 font-bold text-lg">
+                    {{ legal_info.legal_address|default:"г. Москва, ул. Ярославская, д. 9" }}
+                </p>
+            </div>
+
+            <!-- Телефон -->
+            <div class="bg-gradient-to-r from-primary-50 to-secondary-50 rounded-2xl p-8 border border-primary-100">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-phone text-primary-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-bold text-gray-900">Телефон</h4>
+                        <p class="text-gray-700 font-medium">Позвоните нам</p>
+                    </div>
+                </div>
+                <a href="tel:{{ phone_for_link|default:'79058560282' }}" class="text-primary-700 hover:text-primary-800 font-bold text-lg transition-colors duration-200">
+                    {{ legal_info.phone|default:"+7 (905) 856 02 82" }}
+                </a>
+            </div>
+
+            <!-- Время работы -->
+            <div class="bg-gradient-to-r from-primary-50 to-secondary-50 rounded-2xl p-8 border border-primary-100">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-clock text-primary-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-bold text-gray-900">Время работы</h4>
+                        <p class="text-gray-700 font-medium">Когда мы доступны</p>
+                    </div>
+                </div>
+                <p class="text-gray-900 font-bold">
+                    Пн-Пт: 9:00 - 18:00<br>
+                    Сб-Вс: По договоренности
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+

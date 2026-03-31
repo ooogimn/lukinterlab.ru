@@ -1,0 +1,225 @@
+{% load static %}
+
+<!-- Hero Section -->
+<section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <!-- Background Video -->
+    <div class="absolute inset-0 z-0">
+        <!-- Градиентный фон как fallback (показывается пока видео не загрузилось) -->
+        <div class="absolute inset-0 video-fallback" style="background: linear-gradient(135deg, #1e3a8a 0%, #581c87 50%, #312e81 100%); z-index: 1;"></div>
+        
+        <!-- Video (основной фон) -->
+        <video 
+            class="w-full h-full object-cover video-background"
+            src="{% static 'img/123.mp4' %}"
+            autoplay 
+            muted 
+            loop 
+            playsinline
+            preload="auto"
+            style="z-index: 2; position: relative;">
+        </video>
+        
+        <!-- Overlay -->
+        <div class="absolute inset-0 bg-black/50" style="z-index: 3;"></div>
+    </div>
+    
+    <!-- Скрипт для гарантированного запуска видео и скрытия fallback -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const video = document.querySelector('.video-background');
+            const fallback = document.querySelector('.video-fallback');
+            
+            if (video) {
+                // Скрываем fallback когда видео начинает играть
+                video.addEventListener('playing', function() {
+                    if (fallback) {
+                        fallback.style.opacity = '0';
+                        fallback.style.transition = 'opacity 0.5s ease-out';
+                    }
+                });
+                
+                // Пытаемся запустить видео сразу
+                video.play().catch(function(error) {
+                    console.log('Автовоспроизведение заблокировано, пробуем еще раз:', error);
+                    // Повторная попытка через небольшую задержку
+                    setTimeout(function() {
+                        video.play().catch(function(err) {
+                            console.log('Не удалось запустить видео:', err);
+                        });
+                    }, 500);
+                });
+                
+                // Дополнительная проверка - запускаем если видео остановилось
+                video.addEventListener('pause', function() {
+                    if (!video.ended) {
+                        video.play().catch(function(error) {
+                            console.log('Видео остановилось, перезапуск:', error);
+                        });
+                    }
+                });
+                
+                // Если видео уже играет при загрузке
+                if (video.readyState >= 3 && !video.paused) {
+                    if (fallback) {
+                        fallback.style.opacity = '0';
+                        fallback.style.transition = 'opacity 0.5s ease-out';
+                    }
+                }
+            }
+        });
+    </script>
+    
+    <!-- Content -->
+    <div class="relative z-10 text-center text-white px-4 max-w-6xl mx-auto">
+        <!-- Logo/Brand -->
+        <div class="mb-8 animate-fade-in">
+            <img src="{% static 'img/400x400-round.ico' %}" 
+                 alt="LukInterLab" 
+                 class="w-24 h-24 mx-auto mb-6 rounded-full shadow-2xl"
+                 loading="eager"
+                 fetchpriority="high">
+        </div>
+        
+        <!-- Main Heading -->
+        <h1 class="text-5xl md:text-7xl font-bold mb-6 animate-slide-up">
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600 header-3d-gradient">
+                LukInterLab
+            </span>
+            <br>
+            <span class="text-2xl md:text-3xl font-bold text-gray-200">
+                Цифровая Интернет Лаборатория
+            </span>
+        </h1>
+        
+        <!-- Animated Services Text -->
+        <div class="mb-8 animate-slide-up">
+            <p class="text-xl md:text-2xl text-gray-200 mb-4">
+                Разработаем, продвинем, внедрим и поддержим ваш проект с использованием искусственного интеллекта.
+            </p>
+            <div class="text-3xl md:text-4xl font-semibold text-white min-h-[3rem] flex items-center justify-center">
+                <span id="animated-text" class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
+                    Интеллектуальные сайты с ИИ под ключ
+                </span>
+            </div>
+        </div>
+        
+        <!-- CTA Buttons -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up">
+            <a href="#contact" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                Получить консультацию
+            </a>
+            <a href="#portfolio" class="border-2 border-white text-white hover:bg-white hover:text-gray-900 px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 transform hover:scale-105">
+                Посмотреть работы
+            </a>
+        </div>
+        
+        <!-- Scroll Indicator -->
+        <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce-slow">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+            </svg>
+        </div>
+    </div>
+</section>
+
+<!-- Services Preview -->
+<section class="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl md:text-5xl font-extrabold text-primary-600 mb-4 header-3d">
+                Наши услуги
+            </h2>
+            <p class="text-xl text-green-600 max-w-3xl mx-auto font-medium">
+                LukInterLab — цифровые решения с искусственным интеллектом. Специализируемся на LLM (Large Language Models), интеграции GigaChat API, GPT, Gemini, DeepSeek, Grok и других AI-моделей. Создаем саморекламирующие сайты, самопродающие интернет-магазины и внедряем ИИ в бизнес, торговлю и маркетинг.
+            </p>
+        </div>
+        
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <!-- AI Integration -->
+            <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+                <div class="w-16 h-16 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center mb-6">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-primary-500 mb-3">Интеграция ИИ и LLM</h3>
+                <p class="text-green-600">GigaChat, GPT, Gemini, DeepSeek, Grok — внедряем любые AI-модели в ваши проекты для автоматизации и интеллектуализации бизнес-процессов.</p>
+            </div>
+            
+            <!-- AI Websites -->
+            <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+                <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-6">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-primary-500 mb-3">Саморекламирующие сайты</h3>
+                <p class="text-green-600">Интеллектуальные сайты с ИИ, которые автоматически продвигают себя, генерируют контент и привлекают клиентов.</p>
+            </div>
+            
+            <!-- AI E-commerce -->
+            <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+                <div class="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center mb-6">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-primary-500 mb-3">Самопродающие магазины</h3>
+                <p class="text-green-600">ИИ-магазины с умными рекомендациями, персонализацией и автоматической оптимизацией конверсий через искусственный интеллект.</p>
+            </div>
+            
+            <!-- AI Marketing -->
+            <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+                <div class="w-16 h-16 bg-gradient-to-r from-pink-500 to-rose-500 rounded-xl flex items-center justify-center mb-6">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-primary-500 mb-3">ИИ-маркетинг</h3>
+                <p class="text-green-600">Автоматизация маркетинга с ИИ: таргетинг, генерация контента, анализ аудитории и оптимизация рекламных кампаний.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+// Animated text functionality
+const services = [
+    '🤖 ИИ-сайты с LLM — саморекламирующие и самопродающие решения с GigaChat, GPT, Gemini, DeepSeek, Grok',
+    '🧠 Интеграция AI моделей — GigaChat API, GPT-4, Gemini, DeepSeek, Grok для автоматизации бизнеса',
+    '💼 ИИ для бизнеса — внедрение искусственного интеллекта в бизнес-процессы, аналитику и принятие решений',
+    '🛒 ИИ-магазины — самопродающие интернет-магазины с умными рекомендациями и персонализацией',
+    '📊 ИИ-маркетинг — автоматизация маркетинга, таргетинг, генерация контента и оптимизация конверсий',
+    '💬 ИИ-боты — интеллектуальные помощники на базе LLM для ваших клиентов 24/7'
+];
+
+let currentIndex = 0;
+const animatedText = document.getElementById('animated-text');
+
+function updateText() {
+    animatedText.style.opacity = '0';
+    setTimeout(() => {
+        animatedText.textContent = services[currentIndex];
+        animatedText.style.opacity = '1';
+        currentIndex = (currentIndex + 1) % services.length;
+    }, 300);
+}
+
+// Update text every 3 seconds
+setInterval(updateText, 3000);
+
+// Smooth scroll for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    });
+});
+</script>
+

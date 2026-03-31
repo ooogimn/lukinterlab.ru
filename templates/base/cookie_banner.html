@@ -1,0 +1,158 @@
+{% load static %}
+{% if not request.COOKIES.cookie_consent %}
+<div id="cookieBanner" class="fixed bottom-0 left-0 right-0 bg-gray-900 text-white p-4 shadow-lg z-50 transform transition-transform duration-300" style="z-index: 9999;">
+    <div class="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex-1">
+            <p class="text-sm">
+                Мы используем cookie-файлы для улучшения функционала нашего сайта и предоставления вам наилучшего опыта взаимодействия. 
+                Продолжая пользоваться нашим сайтом, вы соглашаетесь с нашей 
+                <a href="{% url 'home:privacy_policy' %}" class="underline hover:text-blue-400">Политикой использования cookie</a>.
+            </p>
+        </div>
+        <div class="flex gap-2 flex-shrink-0">
+            <button id="cookieSettings" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded transition">
+                Настроить
+            </button>
+            <button id="cookieAcceptAll" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded transition">
+                Принять все
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно настроек cookie -->
+<div id="cookieModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style="z-index: 10000;">
+    <div class="bg-white rounded-lg max-w-2xl w-full p-6 text-gray-800">
+        <h2 class="text-2xl font-bold mb-4">Настройки cookie</h2>
+        
+        <div class="space-y-4 mb-6">
+            <div class="flex items-start">
+                <input type="checkbox" id="essential" checked disabled class="mt-1 mr-3">
+                <div>
+                    <label for="essential" class="font-semibold">Обязательные cookie</label>
+                    <p class="text-sm text-gray-600">Необходимы для работы сайта. Всегда включены.</p>
+                </div>
+            </div>
+            
+            <div class="flex items-start">
+                <input type="checkbox" id="analytics" class="mt-1 mr-3">
+                <div>
+                    <label for="analytics" class="font-semibold">Аналитические cookie</label>
+                    <p class="text-sm text-gray-600">Помогают нам улучшать сайт, анализируя поведение пользователей.</p>
+                </div>
+            </div>
+            
+            <div class="flex items-start">
+                <input type="checkbox" id="marketing" class="mt-1 mr-3">
+                <div>
+                    <label for="marketing" class="font-semibold">Маркетинговые cookie</label>
+                    <p class="text-sm text-gray-600">Используются для показа персонализированной рекламы.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex gap-2 justify-end">
+            <button id="cookieReject" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded transition">
+                Только обязательные
+            </button>
+            <button id="cookieSave" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded transition">
+                Сохранить настройки
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const banner = document.getElementById('cookieBanner');
+    const modal = document.getElementById('cookieModal');
+    const settingsBtn = document.getElementById('cookieSettings');
+    const acceptAllBtn = document.getElementById('cookieAcceptAll');
+    const saveBtn = document.getElementById('cookieSave');
+    const rejectBtn = document.getElementById('cookieReject');
+    
+    // Показать модальное окно настроек
+    settingsBtn?.addEventListener('click', () => {
+        modal.classList.remove('hidden');
+    });
+    
+    // Принять все cookie
+    acceptAllBtn?.addEventListener('click', () => {
+        saveCookieConsent(true, true);
+    });
+    
+    // Сохранить выбранные настройки
+    saveBtn?.addEventListener('click', () => {
+        const analytics = document.getElementById('analytics').checked;
+        const marketing = document.getElementById('marketing').checked;
+        saveCookieConsent(analytics, marketing);
+    });
+    
+    // Отклонить все кроме обязательных
+    rejectBtn?.addEventListener('click', () => {
+        saveCookieConsent(false, false);
+    });
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    function saveCookieConsent(analytics, marketing) {
+        // Получаем CSRF токен из cookie
+        const csrfToken = getCookie('csrftoken');
+        
+        console.log('Saving cookie consent...', {analytics, marketing, csrfToken});
+        
+        fetch('{% url "home:cookie-consent" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': csrfToken
+            },
+            body: `analytics=${analytics}&marketing=${marketing}`
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            if (data.status === 'success') {
+                // Скрываем баннер
+                if (banner) {
+                    banner.style.transform = 'translateY(100%)';
+                }
+                // Скрываем модальное окно
+                if (modal) {
+                    modal.classList.add('hidden');
+                }
+                // Удаляем баннер через 300мс
+                setTimeout(() => {
+                    if (banner) banner.remove();
+                    if (modal) modal.remove();
+                }, 300);
+            } else {
+                console.error('Failed to save cookie consent');
+                alert('Ошибка сохранения настроек cookie');
+            }
+        })
+        .catch(error => {
+            console.error('Error saving cookie consent:', error);
+            alert('Ошибка при сохранении настроек cookie');
+        });
+    }
+});
+</script>
+{% endif %}
+

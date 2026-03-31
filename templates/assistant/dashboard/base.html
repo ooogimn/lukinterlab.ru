@@ -1,0 +1,169 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Дашборд автопостинга{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-sidebar {
+        min-height: calc(100vh - 80px);
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+        border-right: 1px solid #e2e8f0;
+    }
+    .dashboard-nav-link {
+        transition: all 0.3s ease;
+        color: #1f2937 !important;
+        font-weight: 500;
+    }
+    .dashboard-nav-link:hover {
+        background: rgba(99, 102, 241, 0.1) !important;
+        transform: translateX(8px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+        color: #4f46e5 !important;
+    }
+    .dashboard-nav-link.active {
+        background: rgba(99, 102, 241, 0.15) !important;
+        border-left: 4px solid #6366f1;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+        color: #4f46e5 !important;
+    }
+    .dashboard-nav-link svg {
+        color: #4b5563 !important;
+    }
+    .dashboard-nav-link:hover svg,
+    .dashboard-nav-link.active svg {
+        color: #6366f1 !important;
+    }
+    .stat-card {
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid #e2e8f0;
+    }
+    .stat-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        border-color: #c7d2fe;
+    }
+    .dashboard-section-title {
+        color: #1f2937 !important;
+        font-weight: 700;
+    }
+    .dashboard-subtitle {
+        color: #6b7280 !important;
+        font-weight: 500;
+    }
+    .dashboard-sidebar a {
+        color: #1f2937 !important;
+    }
+    .dashboard-sidebar .text-gray-200,
+    .dashboard-sidebar .text-gray-300 {
+        color: #6b7280 !important;
+    }
+    .dashboard-sidebar .border-gray-300 {
+        border-color: #e5e7eb !important;
+    }
+</style>
+{% endblock %}
+
+{% block meny %}
+{% include "meny/sidibar-1.html" %}
+{% endblock %}
+
+{% block straniza %}
+<div class="flex min-h-screen bg-gray-50">
+    <!-- Sidebar -->
+    <aside class="dashboard-sidebar w-64 p-6">
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold mb-2 dashboard-section-title">🤖 Автопостинг</h2>
+            <p class="text-sm dashboard-subtitle">Управление AI генерацией</p>
+        </div>
+        
+        <nav class="space-y-2">
+            <a href="{% url 'assistant:dashboard_main' %}" 
+               class="dashboard-nav-link flex items-center px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'dashboard_main' %}active{% endif %}">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                </svg>
+                Главная
+            </a>
+            
+            <div class="px-4 py-2 text-xs font-semibold dashboard-subtitle uppercase tracking-wider">Управление</div>
+            
+            <a href="{% url 'assistant:dashboard_templates' %}" 
+               class="dashboard-nav-link flex items-center px-4 py-3 rounded-lg {% if 'template' in request.resolver_match.url_name %}active{% endif %}">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Шаблоны промптов
+            </a>
+            
+            {% if 'template' in request.resolver_match.url_name %}
+            <div class="ml-4 space-y-1">
+                <a href="{% url 'assistant:dashboard_template_create' %}" 
+                   class="dashboard-nav-link flex items-center px-4 py-2 rounded-lg text-sm {% if request.resolver_match.url_name == 'dashboard_template_create' %}active{% endif %}">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Создать шаблон
+                </a>
+            </div>
+            {% endif %}
+            
+            <a href="{% url 'assistant:dashboard_schedules' %}" 
+               class="dashboard-nav-link flex items-center px-4 py-3 rounded-lg {% if 'schedule' in request.resolver_match.url_name %}active{% endif %}">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Расписания
+            </a>
+            
+            {% if 'schedule' in request.resolver_match.url_name %}
+            <div class="ml-4 space-y-1">
+                <a href="{% url 'assistant:dashboard_schedule_create' %}" 
+                   class="dashboard-nav-link flex items-center px-4 py-2 rounded-lg text-sm {% if request.resolver_match.url_name == 'dashboard_schedule_create' %}active{% endif %}">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Создать расписание
+                </a>
+            </div>
+            {% endif %}
+            
+            <div class="px-4 py-2 text-xs font-semibold dashboard-subtitle uppercase tracking-wider mt-4">Аналитика</div>
+            
+            <a href="{% url 'assistant:dashboard_history' %}" 
+               class="dashboard-nav-link flex items-center px-4 py-3 rounded-lg {% if 'history' in request.resolver_match.url_name %}active{% endif %}">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                История генерации
+            </a>
+            
+            <a href="{% url 'assistant:dashboard_monitoring' %}" 
+               class="dashboard-nav-link flex items-center px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'dashboard_monitoring' %}active{% endif %}">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                Мониторинг
+            </a>
+        </nav>
+        
+        <div class="mt-8 pt-8 border-t border-gray-200">
+            <a href="{% url 'home:customer_dashboard' %}" class="flex items-center px-4 py-2 text-sm dashboard-subtitle hover:text-indigo-600 transition-colors duration-200 rounded-lg hover:bg-indigo-50">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Вернуться в кабинет
+            </a>
+        </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="flex-1 p-8 bg-gradient-to-br from-gray-50 to-blue-50">
+        {% block dashboard_content %}{% endblock %}
+    </main>
+</div>
+{% endblock %}
+

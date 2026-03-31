@@ -1,0 +1,200 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Редактирование профиля{% endblock %}
+
+{% block meny %}
+{% include "meny/sidibar-1.html" %}
+{% endblock meny %}
+
+{% block straniza %}
+<section class="py-20 relative overflow-hidden" style="background: #f9fafb;">
+    <div class="max-w-4xl mx-auto px-4">
+        <!-- Breadcrumb -->
+        <nav class="mb-8">
+            <ol class="flex items-center space-x-2 text-sm text-gray-600">
+                <li><a href="{% url 'home:home' %}" class="hover:text-primary-600">Главная</a></li>
+                <li><span class="mx-2">/</span></li>
+                <li><a href="{% url 'home:customer_profile' %}" class="hover:text-primary-600">Личный кабинет</a></li>
+                <li><span class="mx-2">/</span></li>
+                <li class="text-primary-600">Редактирование профиля</li>
+            </ol>
+        </nav>
+        
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">Редактирование профиля</h1>
+            <p class="text-xl text-gray-600">Обновите вашу личную информацию</p>
+        </div>
+        
+        <!-- Form Card -->
+        <div class="bg-white rounded-2xl shadow-lg p-8">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                        {% for error in form.non_field_errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Имя -->
+                    <div>
+                        <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Имя *
+                        </label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                            <p class="mt-1 text-sm text-red-600">
+                                {% for error in form.first_name.errors %}{{ error }}{% endfor %}
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Фамилия -->
+                    <div>
+                        <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Фамилия *
+                        </label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                            <p class="mt-1 text-sm text-red-600">
+                                {% for error in form.last_name.errors %}{{ error }}{% endfor %}
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Email -->
+                    <div>
+                        <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Email *
+                        </label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <p class="mt-1 text-sm text-red-600">
+                                {% for error in form.email.errors %}{{ error }}{% endfor %}
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Телефон -->
+                    <div>
+                        <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Телефон *
+                        </label>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}
+                            <p class="mt-1 text-sm text-red-600">
+                                {% for error in form.phone.errors %}{{ error }}{% endfor %}
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Компания -->
+                    <div>
+                        <label for="{{ form.company.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Компания
+                        </label>
+                        {{ form.company }}
+                        {% if form.company.errors %}
+                            <p class="mt-1 text-sm text-red-600">
+                                {% for error in form.company.errors %}{{ error }}{% endfor %}
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Должность -->
+                    <div>
+                        <label for="{{ form.position.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Должность
+                        </label>
+                        {{ form.position }}
+                        {% if form.position.errors %}
+                            <p class="mt-1 text-sm text-red-600">
+                                {% for error in form.position.errors %}{{ error }}{% endfor %}
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Адрес -->
+                <div>
+                    <label for="{{ form.address.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Адрес
+                    </label>
+                    {{ form.address }}
+                    {% if form.address.errors %}
+                        <p class="mt-1 text-sm text-red-600">
+                            {% for error in form.address.errors %}{{ error }}{% endfor %}
+                        </p>
+                    {% endif %}
+                </div>
+                
+                <!-- Buttons -->
+                <div class="flex items-center justify-end space-x-4 pt-6 border-t">
+                    <a href="{% url 'home:customer_profile' %}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                        Отмена
+                    </a>
+                    <button type="submit" class="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                        Сохранить изменения
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<style>
+    /* Дополнительные стили для формы */
+    input[type="text"],
+    input[type="email"],
+    textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        transition: border-color 0.15s ease-in-out;
+    }
+    
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+    
+    .bg-primary-600 {
+        background-color: #3b82f6;
+    }
+    
+    .bg-primary-700 {
+        background-color: #2563eb;
+    }
+    
+    .text-primary-600 {
+        color: #3b82f6;
+    }
+    
+    .hover\:text-primary-600:hover {
+        color: #3b82f6;
+    }
+</style>
+{% endblock straniza %} 

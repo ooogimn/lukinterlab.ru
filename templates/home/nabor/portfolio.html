@@ -1,0 +1,353 @@
+{% load static %}
+
+<!-- Portfolio Content -->
+<div class="max-w-7xl mx-auto px-4">
+        <!-- Section Header -->
+        <div class="text-center mb-16">
+            <h2 class="text-4xl md:text-5xl font-extrabold text-primary-600 mb-4 header-3d">
+                Наши работы
+            </h2>
+        </div>
+        
+        <!-- Portfolio Filter -->
+        <div class="flex flex-wrap justify-center gap-4 mb-12">
+            <button class="portfolio-filter-btn active px-6 py-3 rounded-full bg-primary-600 text-white font-semibold transition-all duration-300 hover:bg-primary-700" data-filter="all">
+                Все работы
+            </button>
+            <button class="portfolio-filter-btn px-6 py-3 rounded-full bg-gray-100 text-gray-700 font-semibold transition-all duration-300 hover:bg-primary-100 hover:text-primary-600" data-filter="website">
+                Сайты
+            </button>
+            <button class="portfolio-filter-btn px-6 py-3 rounded-full bg-gray-100 text-gray-700 font-semibold transition-all duration-300 hover:bg-primary-100 hover:text-primary-600" data-filter="bot">
+                Боты
+            </button>
+            <button class="portfolio-filter-btn px-6 py-3 rounded-full bg-gray-100 text-gray-700 font-semibold transition-all duration-300 hover:bg-primary-100 hover:text-primary-600" data-filter="app">
+                Приложения
+            </button>
+            <button class="portfolio-filter-btn px-6 py-3 rounded-full bg-gray-100 text-gray-700 font-semibold transition-all duration-300 hover:bg-primary-100 hover:text-primary-600" data-filter="shop">
+                Магазины
+            </button>
+        </div>
+        
+        <!-- Portfolio Grid -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8" id="portfolio-grid">
+            {% for rabota in rabotas %}
+            <div class="portfolio-item group" data-category="{{ rabota.category }}">
+                <div class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden">
+                    <!-- Project Image -->
+                    <div class="relative overflow-hidden">
+                        {% with first_media=rabota.media_items.first %}
+                        {% if first_media %}
+                            {% if first_media.is_video %}
+                                <video src="{{ first_media.file.url }}" autoplay loop muted playsinline class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110 pointer-events-none"></video>
+                            {% else %}
+                                <img src="{{ first_media.file.url }}" alt="{{ rabota.name }}" loading="lazy" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110">
+                            {% endif %}
+                        {% elif rabota.image %}
+                            {% if rabota.thumbnail_webp %}
+                                <picture>
+                                    <source srcset="{{ rabota.get_thumbnail_webp_url_with_version }}" type="image/webp">
+                                    <img src="{{ rabota.get_image_url_with_version }}" alt="{{ rabota.name }}" loading="lazy" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110">
+                                </picture>
+                            {% else %}
+                                <img src="{{ rabota.get_image_url_with_version }}" alt="{{ rabota.name }}" loading="lazy" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110">
+                            {% endif %}
+                        {% else %}
+                            <div class="w-full h-64 bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center">
+                                <svg class="w-16 h-16 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
+                        {% endif %}
+                        {% endwith %}
+                        
+                        <!-- Overlay -->
+                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-70 transition-all duration-300 flex items-center justify-center">
+                            <div class="opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
+                                <div class="flex space-x-4">
+                                    <a href="{{ rabota.get_absolute_url }}" class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-900 hover:bg-primary-600 hover:text-white transition-all duration-300 shadow-md" title="Подробнее о проекте">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                    </a>
+                                    {% if rabota.adres %}
+                                    <a href="{{ rabota.adres }}" target="_blank" class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-900 hover:bg-primary-600 hover:text-white transition-all duration-300 shadow-md" title="Перейти на внешний ресурс">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                        </svg>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Category Badge -->
+                        <div class="absolute top-4 left-4">
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full 
+                                {% if rabota.category == 'bot' %}bg-blue-100 text-blue-800
+                                {% elif rabota.category == 'app' %}bg-purple-100 text-purple-800
+                                {% elif rabota.category == 'shop' %}bg-green-100 text-green-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ rabota.get_category_display_name }}
+                            </span>
+                        </div>
+                        
+                        <!-- Featured Badge -->
+                        {% if rabota.featured %}
+                        <div class="absolute top-4 right-4">
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                ★ Рекомендуемый
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Project Info -->
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-primary-500 mb-2 group-hover:text-primary-600 transition-colors duration-300">
+                            {{ rabota.name }}
+                        </h3>
+                        <p class="text-green-600 text-sm mb-4 line-clamp-2">
+                            {{ rabota.body|truncatewords:15 }}
+                        </p>
+                        
+                        <!-- Technologies -->
+                        {% if rabota.technologies_list %}
+                        <div class="mb-4">
+                            <p class="text-xl font-bold text-primary-500 mb-2 group-hover:text-primary-600 transition-colors duration-300">Технологии:</p>
+                            <div class="flex flex-wrap gap-1">
+                                {% for tech in rabota.technologies_list|slice:":2" %}
+                                <span class="px-2 py-1 text-xs bg-gray-100 text-green-600 rounded-full">
+                                    {{ tech|truncatewords:7 }}
+                                </span>
+                                {% endfor %}
+                                {% if rabota.technologies_list|length > 3 %}
+                                <span class="px-2 py-1 text-xs bg-gray-100 text-green-600 rounded-full">
+                                    +{{ rabota.technologies_list|truncatewords:7 }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Project URL -->
+                        {% if rabota.adres %}
+                        <div class="flex items-center space-x-2">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                            </svg>
+                            <a href="{{ rabota.get_absolute_url }}" class="text-primary-600 hover:text-primary-700 text-sm font-medium truncate shrink-0 max-w-full">
+                                Подробнее о проекте
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <!-- Empty State -->
+            <div class="col-span-full text-center py-12">
+                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-primary-500 mb-2">Портфолио пусто</h3>
+                <p class="text-gray-600">Добавьте работы через админ-панель для отображения в портфолио</p>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Load More Button - убрано, показываем все работы -->
+    </div>
+</div>
+
+<!-- Portfolio Modal -->
+<div id="portfolio-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black bg-opacity-50" onclick="closePortfolioModal()"></div>
+    <div class="relative min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between mb-6">
+                    <h3 id="modal-title" class="text-2xl font-bold text-gray-900"></h3>
+                    <button onclick="closePortfolioModal()" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Modal Content -->
+                <div class="grid lg:grid-cols-2 gap-8">
+                    <!-- Project Image -->
+                    <div id="modal-image" class="rounded-xl overflow-hidden">
+                        <img src="" alt="" class="w-full h-64 object-cover">
+                    </div>
+                    
+                    <!-- Project Details -->
+                    <div>
+                        <div id="modal-description" class="text-green-600 mb-6"></div>
+                        <div id="modal-technologies" class="mb-6 hidden">
+                            <h4 class="font-semibold text-gray-900 mb-2">Использованные технологии:</h4>
+                            <div id="modal-tech-list" class="flex flex-wrap gap-2"></div>
+                        </div>
+                        <div id="modal-link" class="hidden">
+                            <a href="" target="_blank" class="inline-flex items-center space-x-2 bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors duration-300">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                </svg>
+                                <span>Посмотреть проект</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Portfolio filtering
+document.addEventListener('DOMContentLoaded', function() {
+    const filterButtons = document.querySelectorAll('.portfolio-filter-btn');
+    const portfolioItems = Array.from(document.querySelectorAll('.portfolio-item'));
+    
+    // Функция для перемешивания массива (Fisher-Yates shuffle)
+    function shuffleArray(array) {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    }
+    
+    // При загрузке страницы показываем 9 случайных карточек (кнопка "Все работы" активна)
+    function showRandomItems(count = 9) {
+        // Сначала скрываем все
+        portfolioItems.forEach(item => {
+            item.style.display = 'none';
+        });
+        
+        // Перемешиваем и показываем первые count
+        const shuffled = shuffleArray(portfolioItems);
+        const itemsToShow = shuffled.slice(0, count);
+        
+        itemsToShow.forEach(item => {
+            item.style.display = 'block';
+            item.style.animation = 'fadeInUp 0.6s ease-out';
+        });
+    }
+    
+    // Показываем 9 случайных карточек при загрузке
+    showRandomItems(9);
+    
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const filter = this.getAttribute('data-filter');
+            
+            // Update active button
+            filterButtons.forEach(btn => {
+                btn.classList.remove('active', 'bg-primary-600', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-700');
+            });
+            this.classList.add('active', 'bg-primary-600', 'text-white');
+            this.classList.remove('bg-gray-100', 'text-gray-700');
+            
+            if (filter === 'all') {
+                // Для "Все работы" - показываем только 9 случайных карточек
+                showRandomItems(9);
+            } else {
+                // Для конкретных категорий - показываем все работы этой категории
+                portfolioItems.forEach(item => {
+                    const category = item.getAttribute('data-category');
+                    if (category === filter) {
+                        item.style.display = 'block';
+                        item.style.animation = 'fadeInUp 0.6s ease-out';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            }
+        });
+    });
+});
+
+// Portfolio modal functions
+function openPortfolioModal(title, description, imageUrl, projectUrl, technologies) {
+    const modal = document.getElementById('portfolio-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalDescription = document.getElementById('modal-description');
+    const modalImage = document.getElementById('modal-image');
+    const modalLink = document.getElementById('modal-link');
+    const modalTechnologies = document.getElementById('modal-technologies');
+    const modalTechList = document.getElementById('modal-tech-list');
+    
+    modalTitle.textContent = title;
+    modalDescription.textContent = description;
+    
+    if (imageUrl) {
+        modalImage.innerHTML = `<img src="${imageUrl}" alt="${title}" class="w-full h-64 object-cover">`;
+    } else {
+        modalImage.innerHTML = `
+            <div class="w-full h-64 bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center">
+                <svg class="w-16 h-16 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+            </div>
+        `;
+    }
+    
+    if (technologies && technologies.trim()) {
+        modalTechnologies.classList.remove('hidden');
+        const techArray = technologies.split(',').map(tech => tech.trim());
+        modalTechList.innerHTML = techArray.map(tech => 
+            `<span class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-full">${tech}</span>`
+        ).join('');
+    } else {
+        modalTechnologies.classList.add('hidden');
+    }
+    
+    if (projectUrl) {
+        modalLink.classList.remove('hidden');
+        modalLink.querySelector('a').href = projectUrl;
+    } else {
+        modalLink.classList.add('hidden');
+    }
+    
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closePortfolioModal() {
+    const modal = document.getElementById('portfolio-modal');
+    modal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+// Close modal on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closePortfolioModal();
+    }
+});
+
+// Add fadeInUp animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+`;
+document.head.appendChild(style);
+</script>
+
+

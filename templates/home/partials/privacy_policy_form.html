@@ -1,0 +1,43 @@
+{% load static %}
+<form id="privacy-policy-form" method="post" enctype="multipart/form-data" class="space-y-6">
+    {% csrf_token %}
+    
+    <div class="bg-gray-50 p-4 rounded-lg">
+        <h3 class="text-lg font-semibold mb-4">Политика конфиденциальности</h3>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Текст политики конфиденциальности</label>
+            <textarea name="privacy_policy" id="id_privacy_policy" rows="20" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm">{{ legal_info.privacy_policy|default:'' }}</textarea>
+            <p class="text-xs text-gray-500 mt-2">Вы можете использовать HTML-разметку для форматирования текста</p>
+        </div>
+    </div>
+    
+    <!-- Скрытые поля для сохранения остальных данных -->
+    <input type="hidden" name="company_name" value="{{ legal_info.company_name|default:'' }}">
+    <input type="hidden" name="company_full_name" value="{{ legal_info.company_full_name|default:'' }}">
+    <input type="hidden" name="inn" value="{{ legal_info.inn|default:'' }}">
+    <input type="hidden" name="kpp" value="{{ legal_info.kpp|default:'' }}">
+    <input type="hidden" name="ogrn" value="{{ legal_info.ogrn|default:'' }}">
+    <input type="hidden" name="legal_address" value="{{ legal_info.legal_address|default:'' }}">
+    <input type="hidden" name="actual_address" value="{{ legal_info.actual_address|default:'' }}">
+    <input type="hidden" name="phone" value="{{ legal_info.phone|default:'' }}">
+    <input type="hidden" name="email" value="{{ legal_info.email|default:'' }}">
+    <input type="hidden" name="website" value="{{ legal_info.website|default:'' }}">
+    <input type="hidden" name="bank_name" value="{{ legal_info.bank_name|default:'' }}">
+    <input type="hidden" name="bank_account" value="{{ legal_info.bank_account|default:'' }}">
+    <input type="hidden" name="correspondent_account" value="{{ legal_info.correspondent_account|default:'' }}">
+    <input type="hidden" name="bik" value="{{ legal_info.bik|default:'' }}">
+    <input type="hidden" name="about_site" value="{{ legal_info.about_site|default:'' }}">
+    <input type="hidden" name="about_company" value="{{ legal_info.about_company|default:'' }}">
+    <input type="hidden" name="terms_of_use" value="{{ legal_info.terms_of_use|default:'' }}">
+    
+    <!-- Кнопки -->
+    <div class="flex justify-end gap-4 pt-4 border-t">
+        <button type="button" id="cancel-edit-privacy-btn" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+            Отмена
+        </button>
+        <button type="submit" class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
+            Сохранить
+        </button>
+    </div>
+</form>
+

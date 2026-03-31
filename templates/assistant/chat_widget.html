@@ -1,0 +1,836 @@
+{% load static %}
+<!-- AI Assistant Chat Widget -->
+<div id="assistant-widget" class="assistant-widget">
+    <!-- Chat Button -->
+    <div id="assistant-toggle" class="assistant-toggle">
+        <div class="assistant-icon">
+            <img src="{% static 'img/400-crug.png' %}" alt="LukInterLab" class="assistant-logo" />
+        </div>
+        <div class="assistant-pulse"></div>
+    </div>
+
+    <!-- Chat Window -->
+    <div id="assistant-chat" class="assistant-chat">
+        <!-- Header -->
+        <div class="assistant-header">
+            <div class="assistant-avatar">
+                <img src="{% static 'img/400-crug.png' %}" alt="AI Assistant" />
+            </div>
+            <div class="assistant-info">
+                <h4>AI Ассистент</h4>
+                <span class="assistant-status">Онлайн</span>
+            </div>
+            <button id="assistant-close" class="assistant-close">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Messages Container -->
+        <div id="assistant-messages" class="assistant-messages">
+            <!-- Messages will be loaded here -->
+        </div>
+
+        <!-- Typing Indicator -->
+        <div id="assistant-typing" class="assistant-typing" style="display: none;">
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <span class="typing-text">AI печатает...</span>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="assistant-quick-actions" id="assistant-quick-actions">
+            <button class="quick-action-btn" data-action="contacts" title="Контакты">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <span>Контакты</span>
+            </button>
+            <button class="quick-action-btn" data-action="cart" title="Корзина">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="9" cy="21" r="1"></circle>
+                    <circle cx="20" cy="21" r="1"></circle>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+                <span>Корзина</span>
+            </button>
+            <button class="quick-action-btn" data-action="services" title="Услуги">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="9" y1="3" x2="9" y2="21"></line>
+                </svg>
+                <span>Услуги</span>
+            </button>
+            <button class="quick-action-btn" data-action="order" title="Оформить заказ">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <span>Заказ</span>
+            </button>
+        </div>
+
+        <!-- Input Area -->
+        <div class="assistant-input-area">
+            <div class="assistant-input-container">
+                <input type="text" id="assistant-input" placeholder="Введите ваш вопрос..." maxlength="500">
+                <button id="assistant-send" class="assistant-send">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M18 2L9 11l9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="assistant-footer">
+                <small>AI ассистент • Powered by LukInterLab</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSS Styles -->
+<style>
+.assistant-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 80px;
+    z-index: 9999;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    display: none; /* Скрыт по умолчанию, показывается после загрузки настроек */
+}
+
+.assistant-toggle {
+    width: 60px;
+    height: 60px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    position: relative;
+    color: white;
+    overflow: hidden;
+    padding: 4px;
+    border: 2px solid rgba(102, 126, 234, 0.3);
+}
+
+.assistant-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    position: relative;
+    z-index: 1;
+}
+
+.assistant-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
+}
+
+.assistant-pulse {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: rgba(102, 126, 234, 0.3);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.4);
+        opacity: 0;
+    }
+}
+
+.assistant-chat {
+    position: absolute;
+    bottom: 80px;
+    right: 0;
+    width: 350px;
+    height: 500px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.assistant-chat.active {
+    display: flex;
+}
+
+.assistant-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.assistant-avatar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.assistant-info h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.assistant-status {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.assistant-close {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 5px;
+    margin-left: auto;
+    border-radius: 50%;
+    transition: background 0.2s ease;
+}
+
+.assistant-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.assistant-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.assistant-message {
+    max-width: 80%;
+    padding: 12px 16px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.4;
+    animation: messageSlide 0.3s ease;
+}
+
+@keyframes messageSlide {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.assistant-message.user {
+    background: #667eea;
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+}
+
+.assistant-message.assistant {
+    background: #f1f3f4;
+    color: #333;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+}
+
+.assistant-typing {
+    padding: 0 20px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.typing-dots {
+    display: flex;
+    gap: 4px;
+}
+
+.typing-dots span {
+    width: 8px;
+    height: 8px;
+    background: #667eea;
+    border-radius: 50%;
+    animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing {
+    0%, 80%, 100% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.typing-text {
+    font-size: 12px;
+    color: #666;
+}
+
+.assistant-quick-actions {
+    border-top: 1px solid #e0e0e0;
+    padding: 10px 15px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    background: #f9fafb;
+}
+
+.quick-action-btn {
+    flex: 1;
+    min-width: 70px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 6px;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 11px;
+    color: #667eea;
+}
+
+.quick-action-btn:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.quick-action-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.quick-action-btn span {
+    font-weight: 500;
+}
+
+.assistant-input-area {
+    border-top: 1px solid #e0e0e0;
+    padding: 15px 20px;
+}
+
+.assistant-input-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+#assistant-input {
+    flex: 1;
+    border: 1px solid #e0e0e0;
+    border-radius: 25px;
+    padding: 12px 16px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+#assistant-input:focus {
+    border-color: #667eea;
+}
+
+.assistant-send {
+    width: 40px;
+    height: 40px;
+    background: #667eea;
+    border: none;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+}
+
+.assistant-send:hover {
+    background: #5a6fd8;
+}
+
+.assistant-send:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.assistant-footer {
+    text-align: center;
+    margin-top: 8px;
+}
+
+.assistant-footer small {
+    color: #999;
+    font-size: 11px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .assistant-chat {
+        width: calc(100vw - 40px);
+        height: calc(100vh - 120px);
+        bottom: 80px;
+        right: 20px;
+        left: 20px;
+    }
+    
+    .assistant-widget {
+        right: 80px;
+        bottom: 20px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .assistant-chat {
+        background: #1a1a1a;
+        color: #fff;
+    }
+    
+    .assistant-message.assistant {
+        background: #2d2d2d;
+        color: #fff;
+    }
+    
+    #assistant-input {
+        background: #2d2d2d;
+        border-color: #444;
+        color: #fff;
+    }
+    
+    .assistant-input-area {
+        border-color: #444;
+    }
+}
+</style>
+
+<!-- JavaScript -->
+<script>
+class AssistantWidget {
+    constructor() {
+        this.sessionId = null;
+        this.isOpen = false;
+        this.isTyping = false;
+        this.messages = [];
+        this.settings = null;
+        this.init();
+    }
+
+    init() {
+        this.bindEvents();
+        this.loadSettings();
+    }
+
+    bindEvents() {
+        const toggle = document.getElementById('assistant-toggle');
+        const close = document.getElementById('assistant-close');
+        const send = document.getElementById('assistant-send');
+        const input = document.getElementById('assistant-input');
+
+        toggle.addEventListener('click', () => this.toggleChat());
+        close.addEventListener('click', () => this.closeChat());
+        send.addEventListener('click', () => this.sendMessage());
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.sendMessage();
+        });
+
+        // Auto-resize input
+        input.addEventListener('input', () => {
+            input.style.height = 'auto';
+            input.style.height = input.scrollHeight + 'px';
+        });
+
+        // Quick actions buttons
+        const quickActions = document.querySelectorAll('.quick-action-btn');
+        quickActions.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const action = e.currentTarget.dataset.action;
+                this.handleQuickAction(action);
+            });
+        });
+    }
+
+    handleQuickAction(action) {
+        const actions = {
+            'contacts': {
+                url: '/#contact',
+                message: 'Вот ссылка на наши контакты: https://lukinterlab.ru/#contact\n\n📞 Телефон: +7-905-856-02-82\n✉️ Email: Ya@LukyanovSY.ru\n📱 Telegram: @LukInterLab_News\n🌐 VK: vk.com/lukinterlab\n\nМожете также заполнить форму обратной связи на странице контактов!'
+            },
+            'cart': {
+                url: '/cart/',
+                message: 'Откройте корзину для просмотра выбранных услуг: https://lukinterlab.ru/cart/\n\nВ корзине вы можете:\n- Просмотреть выбранные услуги\n- Изменить количество\n- Оформить заказ\n\nНужна помощь с выбором услуг? Спросите меня!'
+            },
+            'services': {
+                url: '/services/',
+                message: 'Посмотрите наш каталог AI и IT услуг: https://lukinterlab.ru/services/\n\nМы предлагаем:\n🤖 Интеграция ИИ и LLM (GigaChat, GPT, Gemini, DeepSeek, Grok)\n🌐 Саморекламирующие сайты с ИИ\n🛒 Самопродающие интернет-магазины\n📊 ИИ-маркетинг и автоматизация\n💬 ИИ-боты и ассистенты\n💼 Внедрение ИИ в бизнес-процессы\n\nХотите узнать больше о какой-то услуге?'
+            },
+            'order': {
+                url: '/checkout/',
+                message: 'Для оформления заказа:\n1. Добавьте услуги в корзину: https://lukinterlab.ru/services/\n2. Перейдите в корзину: https://lukinterlab.ru/cart/\n3. Оформите заказ: https://lukinterlab.ru/checkout/\n\nИли свяжитесь с нами напрямую для консультации:\n📞 +7-905-856-02-82\n✉️ Ya@LukyanovSY.ru\n\nПомогу выбрать подходящие услуги для вашего бизнеса!'
+            }
+        };
+
+        const actionData = actions[action];
+        if (actionData) {
+            // Добавляем сообщение от ассистента
+            this.addMessage(actionData.message, 'assistant');
+            
+            // Открываем ссылку в новой вкладке через небольшую задержку
+            setTimeout(() => {
+                window.open(actionData.url, '_blank');
+            }, 500);
+        }
+    }
+
+    loadSettings() {
+        // Загружаем настройки ассистента
+        fetch('/assistant/api/settings/')
+            .then(response => {
+                if (!response.ok) {
+                    console.error('Assistant API error:', response.status, response.statusText);
+                    return null;
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data) {
+                    console.warn('Assistant: Settings not loaded (empty response)');
+                    return;
+                }
+                
+                console.log('Assistant settings loaded:', data);
+                
+                if (data.is_enabled) {
+                    this.showWidget();
+                    console.log('Assistant widget enabled and shown');
+                    
+                    // Сохраняем настройки для автозапуска
+                    this.settings = data;
+                    
+                    // Проверяем, показывался ли уже чат-бот
+                    const hasShownBefore = localStorage.getItem('assistant_widget_shown');
+                    
+                    // Автозапуск только если еще не показывался
+                    if (data.auto_start && !hasShownBefore) {
+                        // Задержка 3 минуты (180 секунд) для приветствия
+                        const delay = 180 * 1000; // 3 минуты в миллисекундах
+                        console.log('Ассистент откроется через 3 минуты после входа на сайт...');
+                        
+                        setTimeout(() => {
+                            if (!this.isOpen) {
+                                console.log('Автозапуск ассистента (первый раз)...');
+                                this.openChat();
+                                // Сохраняем флаг, что чат-бот уже показывался
+                                localStorage.setItem('assistant_widget_shown', 'true');
+                            }
+                        }, delay);
+                    } else if (hasShownBefore) {
+                        console.log('Ассистент уже показывался ранее. Автозапуск отключен.');
+                    }
+                } else {
+                    console.warn('Assistant widget disabled (is_enabled = false)');
+                }
+            })
+            .catch(error => {
+                console.error('Assistant: Settings not loaded:', error);
+                console.error('Check if /assistant/api/settings/ endpoint is accessible');
+            });
+    }
+
+    showWidget() {
+        document.getElementById('assistant-widget').style.display = 'block';
+    }
+
+    toggleChat() {
+        if (this.isOpen) {
+            this.closeChat();
+        } else {
+            this.openChat();
+        }
+    }
+
+    openChat() {
+        const chat = document.getElementById('assistant-chat');
+        chat.classList.add('active');
+        this.isOpen = true;
+        
+        // Загружаем историю или создаем новую сессию
+        if (!this.sessionId) {
+            this.createNewSession();
+        }
+    }
+    
+    async createNewSession() {
+        // Показываем локальное приветствие (будет заменено при первом сообщении)
+        let welcomeMessage = this.settings?.welcome_message_template || 
+                            this.settings?.welcome_message ||
+                            'Доброго дня! Чем можем быть полезны? Я готов ответить на Ваши вопросы.';
+        
+        // Заменяем плейсхолдеры
+        if (this.settings?.assistant_name) {
+            welcomeMessage = welcomeMessage.replace('{name}', this.settings.assistant_name);
+        }
+        // Убираем {username} если пользователь не авторизован
+        welcomeMessage = welcomeMessage.replace('{username}', '').replace(/\s+/g, ' ').trim();
+        
+        this.addMessage(welcomeMessage, 'assistant', true);
+    }
+
+    closeChat() {
+        const chat = document.getElementById('assistant-chat');
+        chat.classList.remove('active');
+        this.isOpen = false;
+    }
+
+    async loadChatHistory() {
+        if (this.sessionId) {
+            try {
+                const response = await fetch(`/assistant/api/chat/?session_id=${this.sessionId}`);
+                const data = await response.json();
+                
+                if (data.messages && data.messages.length > 0) {
+                    // Очищаем контейнер перед загрузкой
+                    const messagesContainer = document.getElementById('assistant-messages');
+                    messagesContainer.innerHTML = '';
+                    this.messages = [];
+                    
+                    // Загружаем все сообщения
+                    data.messages.forEach(msg => {
+                        this.addMessage(msg.content, msg.type, false);
+                    });
+                } else {
+                    // Если нет истории, показываем приветствие
+                    this.showWelcomeMessage();
+                }
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+                this.showWelcomeMessage();
+            }
+        } else {
+            // Новая сессия - показываем приветствие
+            this.showWelcomeMessage();
+        }
+    }
+    
+    showWelcomeMessage() {
+        // Показываем приветственное сообщение из настроек
+        const welcomeMessage = this.settings?.welcome_message || 
+                              this.settings?.welcome_message_template?.replace('{name}', this.settings?.assistant_name || 'Ассистент') ||
+                              'Привет! Я виртуальный ассистент LukInterLab. Чем могу помочь?';
+        this.addMessage(welcomeMessage, 'assistant', true);
+    }
+
+    // Проверка новых сообщений от администратора
+    async checkNewMessages() {
+        if (!this.sessionId) return;
+        
+        try {
+            const response = await fetch(`/assistant/api/messages/?session_id=${this.sessionId}`);
+            const data = await response.json();
+            
+            if (data.messages && data.messages.length > this.messages.length) {
+                // Добавляем только новые сообщения
+                const currentCount = this.messages.length;
+                const newMessages = data.messages.slice(currentCount);
+                
+                newMessages.forEach(msg => {
+                    this.addMessage(msg.content, msg.type, false);
+                });
+                
+                // Показываем уведомление если диалог перехвачен администратором
+                if (data.is_admin_controlled) {
+                    this.showNotification('Диалог перехвачен администратором');
+                }
+            }
+        } catch (error) {
+            console.error('Error checking new messages:', error);
+        }
+    }
+
+    showNotification(message) {
+        // Простое уведомление
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            z-index: 10000;
+            font-size: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (document.body.contains(notification)) {
+                document.body.removeChild(notification);
+            }
+        }, 3000);
+    }
+
+    async sendMessage() {
+        const input = document.getElementById('assistant-input');
+        const message = input.value.trim();
+        
+        if (!message || this.isTyping) return;
+
+        // Добавляем сообщение пользователя
+        this.addMessage(message, 'user');
+        input.value = '';
+        input.style.height = 'auto';
+
+        // Показываем индикатор печати
+        this.showTyping();
+        
+        const isFirstMessage = !this.sessionId;
+
+        try {
+            const response = await fetch('/assistant/api/chat/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                },
+                body: JSON.stringify({
+                    message: message,
+                    session_id: this.sessionId,
+                    page_url: window.location.href
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.error) {
+                this.addMessage('Извините, произошла ошибка. Попробуйте еще раз.', 'assistant');
+            } else {
+                this.sessionId = data.session_id;
+                
+                // Если это первое сообщение, загружаем всю историю (включая приветствие)
+                if (isFirstMessage) {
+                    // Очищаем локальное приветствие
+                    const messagesContainer = document.getElementById('assistant-messages');
+                    const userMsg = messagesContainer.lastChild; // Сохраняем сообщение пользователя
+                    messagesContainer.innerHTML = '';
+                    this.messages = [];
+                    
+                    // Загружаем историю с бэкенда
+                    await this.loadChatHistory();
+                } else {
+                    // Просто добавляем ответ
+                    this.addMessage(data.content, 'assistant');
+                }
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
+            this.addMessage('Извините, произошла ошибка соединения.', 'assistant');
+        } finally {
+            this.hideTyping();
+        }
+    }
+
+    addMessage(content, type, animate = true) {
+        const messagesContainer = document.getElementById('assistant-messages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `assistant-message ${type}`;
+        messageDiv.textContent = content;
+        
+        if (animate) {
+            messageDiv.style.opacity = '0';
+            messageDiv.style.transform = 'translateY(10px)';
+        }
+        
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        // Добавляем сообщение в массив для отслеживания
+        this.messages.push({ content, type });
+
+        if (animate) {
+            setTimeout(() => {
+                messageDiv.style.transition = 'all 0.3s ease';
+                messageDiv.style.opacity = '1';
+                messageDiv.style.transform = 'translateY(0)';
+            }, 10);
+        }
+    }
+
+    showTyping() {
+        this.isTyping = true;
+        document.getElementById('assistant-typing').style.display = 'flex';
+        document.getElementById('assistant-send').disabled = true;
+    }
+
+    hideTyping() {
+        this.isTyping = false;
+        document.getElementById('assistant-typing').style.display = 'none';
+        document.getElementById('assistant-send').disabled = false;
+    }
+
+    getCSRFToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+               document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+    }
+}
+
+// Инициализация виджета
+document.addEventListener('DOMContentLoaded', () => {
+    const widget = new AssistantWidget();
+    
+    // Периодическая проверка новых сообщений от администратора
+    setInterval(() => {
+        if (widget.isOpen && widget.sessionId) {
+            widget.checkNewMessages();
+        }
+    }, 3000); // Проверяем каждые 3 секунды
+});
+</script>

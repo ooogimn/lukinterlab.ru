@@ -1,0 +1,229 @@
+{% extends 'moderation/base.html' %}
+
+{% block moderation_content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <nav class="mb-4" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2 text-sm">
+                <li><a href="{% url 'moderation:dashboard' %}" class="text-gray-500 hover:text-gray-700">Дашборд</a></li>
+                <li><span class="text-gray-400">/</span></li>
+                <li><a href="{% url 'moderation:comment_list' %}" class="text-gray-500 hover:text-gray-700">Комментарии</a></li>
+                <li><span class="text-gray-400">/</span></li>
+                <li class="text-gray-900 font-medium">{{ title }}</li>
+            </ol>
+        </nav>
+        <h1 class="text-4xl font-bold text-gray-900 mb-2">{{ title }}</h1>
+    </div>
+    
+    <!-- Сообщения -->
+    {% if messages %}
+    <div class="mb-6">
+        {% for message in messages %}
+        <div class="mb-4 p-4 rounded-lg {% if message.tags == 'error' %}bg-red-50 border border-red-200 text-red-700{% elif message.tags == 'success' %}bg-green-50 border border-green-200 text-green-700{% else %}bg-blue-50 border border-blue-200 text-blue-700{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Форма -->
+    <form method="post" class="bg-white rounded-2xl shadow-xl p-8">
+        {% csrf_token %}
+        
+        <!-- Общие ошибки формы -->
+        {% if form.non_field_errors %}
+        <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <ul class="list-disc list-inside text-sm text-red-600">
+                {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        <!-- Отладочная информация (временно) -->
+        {% if form.errors %}
+        <div class="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p class="text-sm font-medium text-yellow-800 mb-2">Ошибки валидации:</p>
+            <ul class="list-disc list-inside text-sm text-yellow-700">
+                {% for field, errors in form.errors.items %}
+                <li><strong>{{ field }}:</strong> {{ errors|join:", " }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        <!-- Основная информация -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Основная информация</h2>
+            
+            <div class="space-y-6">
+                <div>
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Название критерия *
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Описание
+                    </label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label class="flex items-center">
+                        {{ form.is_active }}
+                        <span class="ml-2 text-sm text-gray-700">Активен</span>
+                    </label>
+                    <p class="mt-1 text-xs text-gray-500">Только активные критерии используются для автоматической модерации</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Критерии проверки -->
+        <div class="mb-8 border-t border-gray-200 pt-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Критерии проверки</h2>
+            
+            <div class="space-y-6">
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.min_length.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Минимальная длина
+                        </label>
+                        {{ form.min_length }}
+                        {% if form.min_length.help_text %}
+                        <p class="mt-1 text-xs text-gray-500">{{ form.min_length.help_text }}</p>
+                        {% endif %}
+                        {% if form.min_length.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.min_length.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.max_length.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Максимальная длина
+                        </label>
+                        {{ form.max_length }}
+                        {% if form.max_length.help_text %}
+                        <p class="mt-1 text-xs text-gray-500">{{ form.max_length.help_text }}</p>
+                        {% endif %}
+                        {% if form.max_length.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.max_length.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="{{ form.forbidden_words.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Запрещенные слова
+                    </label>
+                    {{ form.forbidden_words }}
+                    {% if form.forbidden_words.help_text %}
+                    <p class="mt-1 text-xs text-gray-500">{{ form.forbidden_words.help_text }}</p>
+                    {% endif %}
+                    {% if form.forbidden_words.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.forbidden_words.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.spam_patterns.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Паттерны спама
+                    </label>
+                    {{ form.spam_patterns }}
+                    {% if form.spam_patterns.help_text %}
+                    <p class="mt-1 text-xs text-gray-500">{{ form.spam_patterns.help_text }}</p>
+                    {% endif %}
+                    {% if form.spam_patterns.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.spam_patterns.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.tone_rules.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Правила тона
+                    </label>
+                    {{ form.tone_rules }}
+                    {% if form.tone_rules.help_text %}
+                    <p class="mt-1 text-xs text-gray-500">{{ form.tone_rules.help_text }}</p>
+                    {% endif %}
+                    {% if form.tone_rules.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.tone_rules.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Действия при нарушении -->
+        <div class="mb-8 border-t border-gray-200 pt-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Действия при нарушении</h2>
+            
+            <div class="space-y-4">
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        {{ form.action_delete }}
+                    </div>
+                    <div class="ml-3">
+                        <label for="{{ form.action_delete.id_for_label }}" class="text-sm font-medium text-gray-700">
+                            {{ form.action_delete.label }}
+                        </label>
+                        {% if form.action_delete.help_text %}
+                        <p class="text-xs text-gray-500">{{ form.action_delete.help_text }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        {{ form.action_correct }}
+                    </div>
+                    <div class="ml-3">
+                        <label for="{{ form.action_correct.id_for_label }}" class="text-sm font-medium text-gray-700">
+                            {{ form.action_correct.label }}
+                        </label>
+                        {% if form.action_correct.help_text %}
+                        <p class="text-xs text-gray-500">{{ form.action_correct.help_text }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        {{ form.action_reply }}
+                    </div>
+                    <div class="ml-3">
+                        <label for="{{ form.action_reply.id_for_label }}" class="text-sm font-medium text-gray-700">
+                            {{ form.action_reply.label }}
+                        </label>
+                        {% if form.action_reply.help_text %}
+                        <p class="text-xs text-gray-500">{{ form.action_reply.help_text }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Кнопки -->
+        <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+            <a href="{% url 'moderation:comment_list' %}" 
+               class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                Отмена
+            </a>
+            <button type="submit" 
+                    class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                Сохранить
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

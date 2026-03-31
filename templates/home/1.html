@@ -1,0 +1,212 @@
+{% load static %}
+
+<!-- Главная Section -->
+<section id="home" class="pt-0 pb-20 relative overflow-hidden section-background section-background-animate" 
+         style="{{ section_backgrounds.home.background_style|default:'background: linear-gradient(to-br, #eff6ff, #e0e7ff);' }}">
+    
+    <!-- Видео фон -->
+    {% if section_backgrounds.home.type == 'video' and section_backgrounds.home.video_url %}
+    <video class="section-video-background" autoplay muted loop playsinline poster="{% static 'img/400-crug.png' %}">
+        <source src="{{ section_backgrounds.home.video_url }}" type="video/mp4">
+    </video>
+    {% endif %}
+    
+    <!-- Наложение 1 секции Видео фон -->
+    {% if section_backgrounds.home.has_overlay %}
+    <div class="section-overlay" style="{{ section_backgrounds.home.overlay_style }}"></div>
+    {% endif %}
+    
+    <!-- Контент -->
+    <div class="section-content">
+        {% if seo_h1 %}
+            <h1 class="sr-only">{{ seo_h1 }}</h1>
+        {% else %}
+            <h1 class="sr-only">LukInterLab - Искусственный интеллект, интеллектуальные сайты, продвинутые боты и удобные приложения.</h1>
+        {% endif %}
+        {% include "home/nabor/home.html" %}
+    </div>
+</section>
+
+<!-- О нас Section -->
+<section id="about" class="py-20 relative overflow-hidden section-background section-background-animate" 
+         style="{{ section_backgrounds.about.background_style|default:'background: white;' }}">
+    
+    <!-- Наложение О нас секции Видео фон -->
+    {% if section_backgrounds.about.type == 'video' and section_backgrounds.about.video_url %}
+    <video class="section-video-background" autoplay muted loop playsinline poster="{% static 'img/400-crug.png' %}">
+        <source src="{{ section_backgrounds.about.video_url }}" type="video/mp4">
+    </video>
+    {% endif %}
+    
+    <!-- Наложение -->
+    {% if section_backgrounds.about.has_overlay %}
+    <div class="section-overlay" style="{{ section_backgrounds.about.overlay_style }}"></div>
+    {% endif %}
+    
+    <!-- Контент -->
+    <div class="section-content">
+        <h2 class="sr-only">О компании LukInterLab</h2>
+        {% include "home/nabor/about.html" %}
+    </div>
+</section>
+
+<!-- Услуги Section -->
+<section id="resume" class="py-20 relative overflow-hidden section-background section-background-animate" 
+         style="{{ section_backgrounds.resume.background_style|default:'background: #f9fafb;' }}">
+    
+    <!-- Видео фон -->
+    {% if section_backgrounds.resume.type == 'video' and section_backgrounds.resume.video_url %}
+    <video class="section-video-background" autoplay muted loop playsinline poster="{% static 'img/400-crug.png' %}">
+        <source src="{{ section_backgrounds.resume.video_url }}" type="video/mp4">
+    </video>
+    {% endif %}
+    
+    <!-- Наложение -->
+    {% if section_backgrounds.resume.has_overlay %}
+    <div class="section-overlay" style="{{ section_backgrounds.resume.overlay_style }}"></div>
+    {% endif %}
+    
+    <!-- Контент -->
+    <div class="section-content">
+        <h2 class="sr-only">Наши услуги: разработка сайтов, ботов, приложений</h2>
+        {% include "home/nabor/resume.html" %}
+    </div>
+</section>
+
+<!-- Портфолио Section -->
+<section id="portfolio" class="py-20 relative overflow-hidden section-background section-background-animate" 
+         style="{{ section_backgrounds.portfolio.background_style|default:'background: white;' }}">
+    
+    <!-- Видео фон -->
+    {% if section_backgrounds.portfolio.type == 'video' and section_backgrounds.portfolio.video_url %}
+    <video class="section-video-background" autoplay muted loop playsinline poster="{% static 'img/400-crug.png' %}">
+        <source src="{{ section_backgrounds.portfolio.video_url }}" type="video/mp4">
+    </video>
+    {% endif %}
+    
+    <!-- Наложение -->
+    {% if section_backgrounds.portfolio.has_overlay %}
+    <div class="section-overlay" style="{{ section_backgrounds.portfolio.overlay_style }}"></div>
+    {% endif %}
+    
+    <!-- Контент -->
+    <div class="section-content">
+        <h2 class="sr-only">Портфолио работ LukInterLab</h2>
+        {% include "home/nabor/portfolio.html" %}
+    </div>
+</section>
+
+<!-- Отзывы Section -->
+<section id="testimonials" class="py-20 relative overflow-hidden section-background section-background-animate" 
+         style="{{ section_backgrounds.testimonials.background_style|default:'background: #f9fafb;' }}">
+    
+    <!-- Видео фон -->
+    {% if section_backgrounds.testimonials.type == 'video' and section_backgrounds.testimonials.video_url %}
+    <video class="section-video-background" autoplay muted loop playsinline poster="{% static 'img/400-crug.png' %}">
+        <source src="{{ section_backgrounds.testimonials.video_url }}" type="video/mp4">
+    </video>
+    {% endif %}
+    
+    <!-- Наложение -->
+    {% if section_backgrounds.testimonials.has_overlay %}
+    <div class="section-overlay" style="{{ section_backgrounds.testimonials.overlay_style }}"></div>
+    {% endif %}
+    
+    <!-- Контент -->
+    <div class="section-content">
+        <h2 class="sr-only">Отзывы клиентов LukInterLab</h2>
+        {% include "home/nabor/testimonials.html" %}
+    </div>
+</section>
+
+<!-- Блог Section -->
+<section id="blog" class="py-20 relative overflow-hidden section-background section-background-animate" 
+         style="{{ section_backgrounds.blog.background_style|default:'background: white;' }}">
+    
+    <!-- Видео фон -->
+    {% if section_backgrounds.blog.type == 'video' and section_backgrounds.blog.video_url %}
+    <video class="section-video-background" autoplay muted loop playsinline poster="{% static 'img/400-crug.png' %}">
+        <source src="{{ section_backgrounds.blog.video_url }}" type="video/mp4">
+    </video>
+    {% endif %}
+    
+    <!-- Наложение -->
+    {% if section_backgrounds.blog.has_overlay %}
+    <div class="section-overlay" style="{{ section_backgrounds.blog.overlay_style }}"></div>
+    {% endif %}
+    
+    <!-- Контент -->
+    <div class="section-content">
+        <h2 class="sr-only">Блог LukInterLab - статьи о разработке</h2>
+        {% include "home/nabor/blog.html" %}
+    </div>
+</section>
+
+<!-- Контакты Section -->
+<section id="contact" class="py-20 relative overflow-hidden section-background section-background-animate" 
+         style="{{ section_backgrounds.contact.background_style|default:'background: white;' }}">
+    
+    <!-- Видео фон -->
+    {% if section_backgrounds.contact.type == 'video' and section_backgrounds.contact.video_url %}
+    <video class="section-video-background" autoplay muted loop playsinline poster="{% static 'img/400-crug.png' %}">
+        <source src="{{ section_backgrounds.contact.video_url }}" type="video/mp4">
+    </video>
+    {% endif %}
+    
+    <!-- Наложение -->
+    {% if section_backgrounds.contact.has_overlay %}
+    <div class="section-overlay" style="{{ section_backgrounds.contact.overlay_style }}"></div>
+    {% endif %}
+    
+    <!-- Контент -->
+    <div class="section-content">
+        <h2 class="sr-only">Контакты LukInterLab</h2>
+        {% include "home/nabor/contact.html" %}
+    </div>
+</section>
+
+<!-- Structured Data for Homepage -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "LukInterLab - AI и IT решения под ключ",
+    "description": "Создаем сайты, боты, приложения и интернет-магазины с искусственным интеллектом. Специализируемся на LLM, интеграции GigaChat, GPT, Gemini, DeepSeek, Grok. Саморекламирующие сайты, самопродающие магазины, внедрение ИИ в бизнес.",
+    "url": "https://lukinterlab.ru",
+    "mainEntity": {
+        "@type": "Organization",
+        "name": "LukInterLab",
+        "url": "https://lukinterlab.ru",
+        "logo": "https://lukinterlab.ru/static/img/400-crug.png",
+        "description": "AI и IT компания, специализирующаяся на разработке решений с искусственным интеллектом, интеграции LLM (GigaChat, GPT, Gemini, DeepSeek, Grok), создании саморекламирующих сайтов и самопродающих интернет-магазинов, внедрении ИИ в бизнес, торговлю и маркетинг",
+        "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "ул. Ярославская, д. 9",
+            "addressLocality": "Москва",
+            "addressCountry": "RU"
+        },
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": "+7-905-856-02-82",
+            "contactType": "customer service",
+            "email": "Ya@LukyanovSY.ru"
+        },
+        "sameAs": [
+            "https://t.me/LukInterLab_News",
+            "https://vk.com/lukinterlab"
+        ]
+    },
+    "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Главная",
+                "item": "https://lukinterlab.ru"
+            }
+        ]
+    }
+}
+</script>
+

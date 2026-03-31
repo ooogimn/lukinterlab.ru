@@ -1,0 +1,259 @@
+<nav class="nav-menu">
+    <ul>
+        <li>
+            <a href="{% url 'home:home' %}" class="pt-link">
+                <span class="nav-menu-icon"><i class="lnr lnr-home"></i></span>Главная
+            </a>
+        </li>
+        <li {% if not category %}class="selected"{% endif %}>
+            <a href="{% url 'Blog:post_list' %}" class="pt-link active">
+                <span class="nav-menu-icon"><i class="lnr lnr-book"></i></span>
+                Блог ({{ count_post }})
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'Blog:post_search' %}" class="pt-link">
+                <span class="nav-menu-icon"><i class="lnr lnr-magnifier"></i></span>
+                Поиск
+            </a>
+        </li>
+        {% for c in categories %}
+            {% if c.parent is None %}
+                <li {% if category.slug == c.slug %}class="selected"{% endif %}>
+                    <a href="{{ c.get_absolute_url }}" class="pt-link parent-category" data-category-id="{{ c.id }}">
+                       
+                        {% if c.kartinka_cat %}
+                            <img src="{{ c.kartinka_cat.url }}" alt='{{ c.title|slice:":1"}}' class="category-image">
+                        {% else %}
+                            <div class="category-image-placeholder">{{ c.title|slice:":1" }}</div>
+                        {% endif %}
+                        <span class="post-count">{{ c.title|slice:":9"}}</span>
+                    </a>
+                    {% if c.get_children %}
+                        <div class="child-categories" style="display: none;">
+                            {% for child in c.get_children %}
+                                {% if child.posts.count > 0 %}
+                                    <a href="{{ child.get_absolute_url }}" class="pt-link child-category">
+                                        {{ child.title }} 
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        
+                    {% endif %}
+                </li>
+            {% endif %}
+        {% endfor %}
+       
+    </ul>
+    
+</nav>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const parentCategories = document.querySelectorAll('.parent-category');
+    
+    parentCategories.forEach(parent => {
+        parent.addEventListener('click', function(e) {
+            e.preventDefault();
+            const categoryId = this.dataset.categoryId;
+            const childCategories = this.nextElementSibling;
+            const postsContainer = childCategories.nextElementSibling;
+            
+            // Toggle child categories
+            if (childCategories && childCategories.classList.contains('child-categories')) {
+                if (childCategories.style.display === 'none') {
+                    childCategories.style.display = 'block';
+                    // Fetch and show posts
+                    fetchPosts(categoryId, postsContainer);
+                } else {
+                    childCategories.style.display = 'none';
+                    if (postsContainer) {
+                        postsContainer.style.display = 'none';
+                    }
+                }
+            }
+        });
+    });
+    
+    function fetchPosts(categoryId, container) {
+        fetch(`/api/category/${categoryId}/posts/`)
+            .then(response => response.json())
+            .then(data => {
+                const postsList = container.querySelector('.posts-list');
+                postsList.innerHTML = '';
+                
+                data.posts.forEach(post => {
+                    const postElement = document.createElement('div');
+                    postElement.className = 'post-item';
+                    postElement.innerHTML = `
+                        <a href="${post.url}" class="post-link">
+                            <h5>${post.title}</h5>
+                            <p class="post-date">${post.created_at}</p>
+                        </a>
+                    `;
+                    postsList.appendChild(postElement);
+                });
+                
+                container.style.display = 'block';
+            })
+            .catch(error => console.error('Error fetching posts:', error));
+    }
+});
+</script>
+
+<style>
+.child-categories {
+    margin-left: 20px;
+    padding: 5px 0;
+}
+
+.child-category {
+    display: block;
+    padding: 5px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.parent-category {
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: block;
+    text-decoration: none;
+    position: relative;
+}
+
+.category-image {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 50%;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+.category-image-placeholder {
+    width: 40px;
+    height: 40px;
+    background-color: #e0e0e0;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #666;
+    margin-right: 5px;
+}
+
+.post-count {
+    font-size: 0.9em;
+    color: #666;
+    margin-left: 5px;
+}
+
+.category-posts {
+    margin: 10px 0 10px 20px;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 5px;
+}
+
+.post-item {
+    margin: 10px 0;
+    padding: 5px;
+    border-bottom: 1px solid #eee;
+}
+
+.post-link {
+    text-decoration: none;
+    color: #333;
+}
+
+.post-link:hover {
+    color: #007bff;
+}
+
+.post-date {
+    font-size: 0.8em;
+    color: #666;
+    margin: 5px 0;
+}
+
+.nav-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-menu li {
+    margin: 5px 0;
+}
+
+.parent-category:hover .category-image,
+.parent-category:hover .category-image-placeholder {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+}
+.category-section {
+    margin-bottom: 20px;
+    padding: 10px;
+    background: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.category-name {
+    color: #333;
+    margin: 0 0 10px 0;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #007bff;
+}
+
+.category-posts-list {
+    margin-left: 10px;
+}
+
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+.error {
+    color: #dc3545;
+    text-align: center;
+    padding: 20px;
+}
+
+.post-item {
+    margin: 8px 0;
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+    transition: background-color 0.2s ease;
+}
+
+.post-item:hover {
+    background-color: #f8f9fa;
+}
+
+.post-link {
+    text-decoration: none;
+    color: #333;
+}
+
+.post-link:hover {
+    color: #007bff;
+}
+
+.post-date {
+    font-size: 0.8em;
+    color: #666;
+    margin: 5px 0;
+}
+</style>

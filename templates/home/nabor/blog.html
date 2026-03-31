@@ -1,0 +1,219 @@
+{% load static %}
+
+<!-- Blog Content -->
+<div class="max-w-7xl mx-auto px-4">
+        <!-- Section Header -->
+        <div class="text-center mb-16">
+            <div class="flex items-center justify-center mb-4">
+                <a href="{% url 'Blog:post_list' %}" class="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-full font-semibold hover:bg-primary-700 transition-all duration-300 transform hover:scale-105">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                    Перейти в блог
+                </a>
+            </div>
+            <a href="{% url 'Blog:post_list' %}" class="inline-block">
+                <h2 class="text-4xl md:text-5xl font-extrabold text-primary-600 mb-4 blog-header-3d cursor-pointer hover:text-primary-700 transition-colors duration-200">
+                    Последние статьи
+                </h2>
+            </a>
+        </div>
+
+        <!-- Blog Grid -->
+        {% if posts %}
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for post in posts|slice:":6" %}
+            {% if post.slug %}
+            <article class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden group">
+                <!-- Post Image -->
+                <a href="{{ post.get_absolute_url }}" class="block relative overflow-hidden">
+                    {% if post.kartinka %}
+                        {% if post.thumbnail_webp %}
+                            <picture>
+                                <source srcset="{{ post.thumbnail_webp.url }}" type="image/webp">
+                                <img src="{{ post.kartinka.url }}" alt="{{ post.title }}" loading="lazy" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110 cursor-pointer">
+                            </picture>
+                        {% else %}
+                            <img src="{{ post.kartinka.url }}" alt="{{ post.title }}" loading="lazy" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110 cursor-pointer">
+                        {% endif %}
+                    {% elif post.video %}
+                        <div class="w-full h-64 bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center cursor-pointer hover:from-primary-200 hover:to-secondary-200 transition-colors">
+                            <div class="text-center">
+                                <svg class="w-16 h-16 text-primary-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <p class="text-primary-600 font-semibold">Видео контент</p>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center cursor-pointer hover:from-gray-200 hover:to-gray-300 transition-colors">
+                            <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Category Badge -->
+                    <div class="absolute top-4 right-4 z-10">
+                        <a href="{% url 'Blog:post_list' %}?category={{ post.category.id }}" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-200 inline-block">
+                            {{ post.category.title }}
+                        </a>
+                    </div>
+                    
+                    <!-- Featured Badge -->
+                    {% if post.fixed %}
+                    <div class="absolute top-4 left-4 z-10 pointer-events-none">
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                            ★ Важное
+                        </span>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Tags on Image -->
+                    {% if post.tags.all %}
+                    <div class="absolute top-1/2 left-4 right-4 z-10 transform -translate-y-1/2">
+                        <div class="flex flex-wrap gap-2 justify-center">
+                            {% for tag in post.tags.all|slice:":5" %}
+                            <a href="{% url 'Blog:post_list_by_tag' tag_slug=tag.name %}" class="px-2 py-1 text-xs font-semibold rounded bg-red-600 text-white hover:bg-red-700 transition-colors duration-200">
+                                #{{ tag.name }}
+                            </a>
+                            {% endfor %}
+                            {% if post.tags.all|length > 5 %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded bg-red-600 text-white">
+                                +{{ post.tags.all|length|add:"-5" }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </a>
+
+                <!-- Post Content -->
+                <div class="p-6">
+                    <div class="flex items-center text-sm text-gray-500 mb-3">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        {{ post.created|date:"d.m.Y" }}
+                        {% if post.views %}
+                        <span class="ml-4 flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            {{ post.views }}
+                        </span>
+                        {% endif %}
+                        {% if post.likes_count %}
+                        <span class="ml-4 flex items-center text-red-500">
+                            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                            </svg>
+                            {{ post.likes_count }}
+                        </span>
+                        {% endif %}
+                        {% if post.comments_count %}
+                        <a href="{{ post.get_absolute_url }}#comments" class="ml-4 flex items-center hover:text-primary-600 transition-colors">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                            </svg>
+                            {{ post.comments_count }}
+                        </a>
+                        {% endif %}
+                    </div>
+
+                    <h3 class="text-xl font-bold text-primary-500 mb-3 group-hover:text-primary-600 transition-colors duration-300 line-clamp-2">
+                        {{ post.title }}
+                    </h3>
+
+                    {# Описание не отображается на сайте - используется только для Telegram #}
+
+                    <!-- Read More Button -->
+                    <a href="{{ post.get_absolute_url }}" class="inline-flex items-center text-primary-600 hover:text-primary-700 font-semibold transition-colors duration-300">
+                        Читать далее
+                        <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </a>
+                </div>
+            </article>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- View All Button -->
+        <div class="text-center mt-12">
+            <a href="{% url 'Blog:post_list' %}" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-full font-semibold hover:from-primary-700 hover:to-secondary-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                </svg>
+                Все статьи
+            </a>
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-12">
+            <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-primary-500 mb-2">Статей пока нет</h3>
+            <p class="text-green-600">Добавьте статьи через админ-панель для отображения в блоге</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* 3D эффект для заголовка "Последние статьи" */
+.blog-header-3d {
+    text-shadow: 
+        3px 3px 0px #1e40af,
+        6px 6px 0px #1e3a8a,
+        9px 9px 0px #1e3a8a,
+        12px 12px 20px rgba(0, 0, 0, 0.3);
+    transform: perspective(500px) rotateX(5deg);
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.blog-header-3d:hover {
+    transform: perspective(500px) rotateX(0deg) scale(1.05);
+    text-shadow: 
+        3px 3px 0px #1e40af,
+        6px 6px 0px #1e3a8a,
+        9px 9px 0px #1e3a8a,
+        12px 12px 30px rgba(59, 130, 246, 0.5);
+}
+
+/* Анимация появления */
+@keyframes slideIn3D {
+    from {
+        opacity: 0;
+        transform: perspective(500px) rotateX(-10deg) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: perspective(500px) rotateX(5deg) translateY(0);
+    }
+}
+
+.blog-header-3d {
+    animation: slideIn3D 0.8s ease-out;
+}
+</style>

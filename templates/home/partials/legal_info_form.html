@@ -1,0 +1,152 @@
+{% load static %}
+<form id="legal-info-form" method="post" enctype="multipart/form-data" class="space-y-6">
+    {% csrf_token %}
+    
+    <!-- Основная информация о компании -->
+    <div class="bg-gray-50 p-4 rounded-lg">
+        <h3 class="text-lg font-semibold mb-4">Основная информация о компании</h3>
+        <div class="grid md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Название компании</label>
+                {{ form.company_name }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Полное наименование</label>
+                {{ form.company_full_name }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">ИНН</label>
+                {{ form.inn }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">КПП</label>
+                {{ form.kpp }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">ОГРН</label>
+                {{ form.ogrn }}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Адреса -->
+    <div class="bg-gray-50 p-4 rounded-lg">
+        <h3 class="text-lg font-semibold mb-4">Адреса</h3>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Юридический адрес</label>
+                {{ form.legal_address }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Фактический адрес</label>
+                {{ form.actual_address }}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Контакты -->
+    <div class="bg-gray-50 p-4 rounded-lg">
+        <h3 class="text-lg font-semibold mb-4">Контакты</h3>
+        <div class="grid md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Телефон</label>
+                {{ form.phone }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                {{ form.email }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Сайт</label>
+                {{ form.website }}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Банковские реквизиты -->
+    <div class="bg-gray-50 p-4 rounded-lg">
+        <h3 class="text-lg font-semibold mb-4">Банковские реквизиты</h3>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Название банка</label>
+                {{ form.bank_name }}
+            </div>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Расчётный счёт</label>
+                    {{ form.bank_account }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Корреспондентский счёт</label>
+                    {{ form.correspondent_account }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">БИК</label>
+                    {{ form.bik }}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Документы -->
+    <div class="bg-gray-50 p-4 rounded-lg">
+        <h3 class="text-lg font-semibold mb-4">Документы</h3>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Договор</label>
+                {{ form.contract_file }}
+                {% if legal_info.contract_file %}
+                <p class="text-xs text-gray-500 mt-1">Текущий файл: <a href="{{ legal_info.contract_file.url }}" target="_blank" class="text-primary-600">Просмотр</a></p>
+                {% endif %}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Выписка из ЕГРЮЛ</label>
+                {{ form.extract_file }}
+                {% if legal_info.extract_file %}
+                <p class="text-xs text-gray-500 mt-1">Текущий файл: <a href="{{ legal_info.extract_file.url }}" target="_blank" class="text-primary-600">Просмотр</a></p>
+                {% endif %}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Сертификат Минцифры</label>
+                {{ form.certificate_file }}
+                {% if legal_info.certificate_file %}
+                <p class="text-xs text-gray-500 mt-1">Текущий файл: <a href="{{ legal_info.certificate_file.url }}" target="_blank" class="text-primary-600">Просмотр</a></p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Текстовая информация -->
+    <div class="bg-gray-50 p-4 rounded-lg">
+        <h3 class="text-lg font-semibold mb-4">Текстовая информация</h3>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">О сайте</label>
+                {{ form.about_site }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">О компании</label>
+                {{ form.about_company }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Условия использования</label>
+                {{ form.terms_of_use }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Политика конфиденциальности</label>
+                {{ form.privacy_policy }}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Кнопки -->
+    <div class="flex justify-end gap-4 pt-4 border-t">
+        <button type="button" id="cancel-edit-btn" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+            Отмена
+        </button>
+        <button type="submit" class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
+            Сохранить
+        </button>
+    </div>
+</form>
+
