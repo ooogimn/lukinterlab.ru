@@ -3,6 +3,7 @@
 """
 import logging
 from django.utils import timezone
+from django.db.models import Q
 from Blog.models import Post, Comment
 from .models import (
     ArticleModeration, CommentModeration,
@@ -25,9 +26,10 @@ def moderate_articles_task():
         service = ArticleModerationService()
         notification_service = NotificationService()
         
-        # Получаем статьи, ожидающие модерации
+        # Черновики: пересчёт по критериям для pending и needs_revision (после правок автора снова уйдёт в approved/pending)
         pending_moderations = ArticleModeration.objects.filter(
-            status='pending'
+            Q(status='pending') | Q(status='needs_revision'),
+            post__status='draft',
         ).select_related('post', 'criteria_used')
         
         # Получаем активные критерии
@@ -40,13 +42,14 @@ def moderate_articles_task():
         moderated_count = 0
         for moderation in pending_moderations:
             try:
+                previous_status = moderation.status
                 result = service.moderate_article(moderation.post, criteria)
-                if result.get('moderation'):
+                mod = result.get('moderation')
+                if mod:
                     moderated_count += 1
-                    # Отправляем уведомление если статус изменился
-                    if result.get('status') != 'pending':
-                        notification_service.notify_article_pending(result['moderation'])
-                    logger.info(f"Статья {moderation.post.id} промодерирована: {result.get('status')}")
+                    if mod.status != previous_status:
+                        notification_service.notify_article_after_auto_check(mod, previous_status)
+                    logger.info(f"Статья {moderation.post.id} промодерирована: {mod.status} (было: {previous_status})")
             except Exception as e:
                 logger.error(f"Ошибка модерации статьи {moderation.post.id}: {str(e)}")
         

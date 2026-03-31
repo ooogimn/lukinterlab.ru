@@ -45,6 +45,18 @@
                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                       placeholder="Добавьте комментарий для автора...">{{ moderation.moderator_comment }}</textarea>
         </div>
+
+        {% if post.status == 'draft' %}
+        <div class="mb-6 rounded-lg border border-indigo-100 bg-indigo-50/80 p-4">
+            <label class="flex cursor-pointer items-start gap-3">
+                <input type="checkbox" name="publish_after_approve" value="1" class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" id="publish_after_approve">
+                <span>
+                    <span class="font-medium text-gray-900">Опубликовать на сайте при выборе «Одобрено»</span>
+                    <span class="block text-sm text-gray-600">Установите статус «Одобрено» и отметьте галочку — пост станет «Опубликовано» без отдельного захода в админку блога.</span>
+                </span>
+            </label>
+        </div>
+        {% endif %}
         
         <div class="flex space-x-4">
             <button type="submit" class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium">

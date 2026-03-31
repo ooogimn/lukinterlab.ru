@@ -916,6 +916,49 @@ class NotificationService:
                 message=f'Статья от {moderation.post.author.get_full_name() or moderation.post.author.username} требует проверки.',
                 article_moderation=moderation
             )
+
+    def notify_article_after_auto_check(self, moderation: ArticleModeration, previous_status: str) -> None:
+        """
+        Уведомление после фоновой автопроверки — только если статус изменился.
+        Тип и текст соответствуют новому статусу (не везде «ожидает модерации»).
+        """
+        if previous_status == moderation.status:
+            return
+        author = moderation.post.author.get_full_name() or moderation.post.author.username
+        title = moderation.post.title
+        moderators = User.objects.filter(is_staff=True)
+
+        if moderation.status == 'approved':
+            for moderator in moderators:
+                ModerationNotification.objects.create(
+                    recipient=moderator,
+                    notification_type='article_approved',
+                    title=f'Автопроверка: «{title}» одобрена',
+                    message=f'Статья от {author} прошла критерии без блокирующих замечаний. При необходимости проверьте вручную.',
+                    article_moderation=moderation,
+                )
+            return
+
+        if moderation.status == 'needs_revision':
+            for moderator in moderators:
+                ModerationNotification.objects.create(
+                    recipient=moderator,
+                    notification_type='article_pending',
+                    title=f'Автопроверка: «{title}» — требуется доработка',
+                    message=f'Статья от {author}: не выполнены обязательные пункты критериев. Откройте модерацию статей.',
+                    article_moderation=moderation,
+                )
+            return
+
+        if moderation.status == 'pending':
+            for moderator in moderators:
+                ModerationNotification.objects.create(
+                    recipient=moderator,
+                    notification_type='article_pending',
+                    title=f'Автопроверка: «{title}» — нужна ручная проверка',
+                    message=f'Статья от {author}: критерии пройдены, но есть предупреждения.',
+                    article_moderation=moderation,
+                )
     
     def notify_comment_pending(self, moderation: CommentModeration):
         """Уведомление о комментарии на модерации"""

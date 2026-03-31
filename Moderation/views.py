@@ -125,15 +125,29 @@ def article_moderation_detail(request, moderation_id):
     
     if request.method == 'POST':
         status = request.POST.get('status')
+        valid_statuses = {k for k, _ in ArticleModeration.STATUS_CHOICES}
+        if status not in valid_statuses:
+            messages.error(request, 'Некорректный статус модерации.')
+            return redirect('moderation:article_detail', moderation_id=moderation_id)
         comment = request.POST.get('moderator_comment', '')
-        
-        moderation.status = status
-        moderation.moderator_comment = comment
-        moderation.moderator = request.user
-        moderation.moderated_at = timezone.now()
-        moderation.save()
-        
-        messages.success(request, 'Статус модерации обновлен!')
+        publish_after = request.POST.get('publish_after_approve') == '1'
+
+        with transaction.atomic():
+            moderation.status = status
+            moderation.moderator_comment = comment
+            moderation.moderator = request.user
+            moderation.moderated_at = timezone.now()
+            moderation.save()
+
+            post = moderation.post
+            if publish_after and status == 'approved' and post.status == 'draft':
+                post.status = 'published'
+                post.save(update_fields=['status'])
+
+        msg = 'Статус модерации обновлен.'
+        if publish_after and status == 'approved':
+            msg += ' Статья опубликована на сайте.'
+        messages.success(request, msg)
         return redirect('moderation:article_list')
     
     context = {
