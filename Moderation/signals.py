@@ -3,14 +3,15 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
 from Blog.models import Post, Comment
-from .models import ArticleModeration, CommentModeration
-from .services import NotificationService, CommentModerationService
+from .models import ArticleModeration, CommentModeration, ModerationCriteria
+from .services import NotificationService, CommentModerationService, ArticleModerationService
 import logging
 
 logger = logging.getLogger(__name__)
 
 notification_service = NotificationService()
 comment_moderation_service = CommentModerationService()
+article_moderation_service = ArticleModerationService()
 
 
 @receiver(post_save, sender=Post)
@@ -31,6 +32,35 @@ def create_article_moderation(sender, instance, created, **kwargs):
         )
         if created_mod:
             notification_service.notify_article_pending(moderation)
+
+
+@receiver(pre_save, sender=Post)
+def gate_draft_to_published_article_moderation(sender, instance, **kwargs):
+    """
+    Черновик → опубликовано: автопроверка по критериям статей (как фоновая задача).
+    Без активных критериев ворот нет (обратная совместимость).
+    Если итог не «approved» — публикация отменяется, пост остаётся черновиком; правки и снова «Опубликовать».
+    SEO-анализ после успешной публикации по-прежнему в post_save Blog (analyze_post_seo).
+    """
+    prev = getattr(instance, '_post_prev_status', None)
+    if prev != 'draft' or instance.status != 'published':
+        return
+    criteria = ModerationCriteria.objects.filter(is_active=True).first()
+    if not criteria:
+        return
+    try:
+        result = article_moderation_service.moderate_article(instance, criteria)
+        st = result.get('status')
+        if st != 'approved':
+            instance.status = 'draft'
+            logger.warning(
+                '[MODERATION] Публикация отменена автопроверкой (post_id=%s): статус модерации «%s»',
+                instance.pk,
+                st,
+            )
+    except Exception:
+        logger.exception('[MODERATION] Ошибка автопроверки при публикации post_id=%s', instance.pk)
+        instance.status = 'draft'
 
 
 @receiver(post_save, sender=Post)

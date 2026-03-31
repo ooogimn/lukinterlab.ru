@@ -13,6 +13,29 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+@receiver(pre_save, sender=Post)
+def cache_post_previous_status(sender, instance, **kwargs):
+    """Предыдущий статус поста в БД — для модерации при публикации и для published_at."""
+    if instance.pk:
+        try:
+            instance._post_prev_status = Post.objects.only('status').values_list('status', flat=True).get(
+                pk=instance.pk
+            )
+        except Post.DoesNotExist:
+            instance._post_prev_status = None
+    else:
+        instance._post_prev_status = None
+
+
+@receiver(post_save, sender=Post)
+def set_post_published_at(sender, instance, **kwargs):
+    """Фиксируем дату выхода на сайт (переход с не-published на published)."""
+    prev = getattr(instance, '_post_prev_status', None)
+    if instance.status != 'published' or prev == 'published':
+        return
+    Post.objects.filter(pk=instance.pk).update(published_at=timezone.now())
+
+
 def _compute_meta_keywords_for_post(instance):
     """Теги + ключевые слова из контента и заголовка (до 10 фраз)."""
     keywords_list = []

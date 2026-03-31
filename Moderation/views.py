@@ -92,26 +92,40 @@ def moderation_dashboard(request):
 @login_required
 @user_passes_test(is_moderator)
 def article_moderation_list(request):
-    """Список статей на модерации"""
-    status_filter = request.GET.get('status', 'all')
+    """Список статей на модерации.
+
+    По умолчанию — «рабочий» список: без уже опубликованных и одобренных (не дублируем старый архив).
+    ?archive=1 — полный архив. ?queue=1 — очередь черновиков без одобрения.
+    """
+    status_param = request.GET.get('status')
     queue_only = request.GET.get('queue') == '1'
+    archive = request.GET.get('archive') == '1'
+
+    base = ArticleModeration.objects.select_related(
+        'post', 'post__category', 'moderator', 'criteria_used',
+    )
 
     if queue_only:
         articles = _articles_moderation_queue_qs()
-    elif status_filter == 'all':
-        articles = ArticleModeration.objects.all().select_related('post', 'moderator', 'criteria_used')
+    elif status_param:
+        articles = base.filter(status=status_param)
+        if not archive:
+            articles = articles.exclude(post__status='published', status='approved')
+    elif archive:
+        articles = base.all()
     else:
-        articles = ArticleModeration.objects.filter(status=status_filter).select_related('post', 'moderator', 'criteria_used')
-    
-    # Пагинация
+        articles = base.exclude(post__status='published', status='approved')
+
     paginator = Paginator(articles, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
+
     context = {
         'page_obj': page_obj,
-        'status_filter': status_filter,
+        'status_filter': status_param or '',
         'queue_only': queue_only,
+        'archive': archive,
+        'default_work_mode': not queue_only and not archive and not status_param,
         'status_choices': ArticleModeration.STATUS_CHOICES,
     }
     return render(request, 'moderation/article_list.html', context)
@@ -146,8 +160,19 @@ def article_moderation_detail(request, moderation_id):
 
         msg = 'Статус модерации обновлен.'
         if publish_after and status == 'approved':
-            msg += ' Статья опубликована на сайте.'
-        messages.success(request, msg)
+            published_now = Post.objects.filter(pk=moderation.post_id, status='published').exists()
+            if published_now:
+                msg += ' Статья опубликована на сайте.'
+                messages.success(request, msg)
+            else:
+                messages.success(request, msg)
+                messages.warning(
+                    request,
+                    'Публикация не выполнена: автопроверка по критериям статей оставила пост в черновиках. '
+                    'Доработайте заголовок, текст или SEO по блоку проверки ниже и снова отметьте «Опубликовать».',
+                )
+        else:
+            messages.success(request, msg)
         return redirect('moderation:article_list')
     
     context = {

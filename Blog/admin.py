@@ -101,7 +101,7 @@ class PostAdmin(admin.ModelAdmin):
     
     form = PostAdminForm
 
-    list_display = ['title', 'post_photo', 'category', 'status', 'seo_score', 'fixed', 'author', 'created', 'telegram_posted_at', 'vk_posted_at']
+    list_display = ['title', 'post_photo', 'category', 'status', 'seo_score', 'fixed', 'author', 'created', 'published_at', 'telegram_posted_at', 'vk_posted_at']
     list_display_links = ['title', 'post_photo', 'category']
     list_filter = ['status', 'category', 'author', 'seo_score']
     search_fields = ['title', 'author', 'meta_title', 'focus_keyword']
@@ -110,7 +110,7 @@ class PostAdmin(admin.ModelAdmin):
     date_hierarchy = 'created'
     ordering = ['category', 'created']
     save_on_top = True
-    readonly_fields = ['post_photo', 'seo_score']
+    readonly_fields = ['post_photo', 'seo_score', 'published_at']
     list_editable = ['status', 'fixed']
     actions = ['publish_selected', 'unpublish_selected', 'mark_as_fixed', 'mark_as_unfixed']
     
@@ -118,7 +118,8 @@ class PostAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Основная информация', {
-            'fields': ('title', 'slug', 'category', 'author', 'status', 'fixed')
+            'fields': ('title', 'slug', 'category', 'author', 'status', 'fixed', 'published_at'),
+            'description': '«Дата публикации» проставляется при переходе черновик → опубликовано (не равна дате создания).',
         }),
         ('Содержание', {
             'fields': ('content', 'video'),
@@ -151,13 +152,32 @@ class PostAdmin(admin.ModelAdmin):
 
     @admin.action(description="Опубликовать выбранные статьи")
     def publish_selected(self, request, queryset):
-        """Массовое изменение статуса на 'опубликовано'"""
-        updated = queryset.update(status='published', updated=timezone.now())
-        self.message_user(
-            request,
-            f'Успешно опубликовано {updated} статей.',
-            messages.SUCCESS
-        )
+        """Публикация через save() — срабатывают автопроверка модерации и сигналы."""
+        n_ok = 0
+        n_skipped = 0
+        for post in queryset.select_related():
+            if post.status == 'published':
+                continue
+            post.status = 'published'
+            try:
+                post.save()
+            except Exception as e:
+                self.message_user(request, f'Ошибка для «{post.title}»: {e}', messages.ERROR)
+                n_skipped += 1
+                continue
+            post.refresh_from_db()
+            if post.status == 'published':
+                n_ok += 1
+            else:
+                n_skipped += 1
+        if n_ok:
+            self.message_user(request, f'Опубликовано (после автопроверки): {n_ok}.', messages.SUCCESS)
+        if n_skipped:
+            self.message_user(
+                request,
+                f'Не опубликовано (черновик после критериев или ошибка): {n_skipped}.',
+                messages.WARNING,
+            )
     publish_selected.short_description = "Опубликовать выбранные статьи"
 
     @admin.action(description="Перевести в черновик")

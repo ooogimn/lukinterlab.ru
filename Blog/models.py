@@ -72,6 +72,12 @@ class Post(models.Model):
     video = RichTextUploadingField(config_name='vstavka', verbose_name='Видео', blank=True, null=True, )
     status = models.CharField(choices=STATUS_OPTIONS, default='draft', verbose_name='Статус поста', max_length=10)
     created = models.DateTimeField(auto_now_add=True, verbose_name='Время добавления')
+    published_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Дата публикации',
+        help_text='Заполняется при каждом переходе из черновика в «Опубликовано» (последний выход на сайт). Не путать с датой создания черновика и датой решения модератора.',
+    )
     updated = models.DateTimeField(auto_now=True, verbose_name='Время обновления')
     author = models.ForeignKey(User, verbose_name='Автор', on_delete=models.CASCADE, related_name='author_posts',
                                default=1)

@@ -9,26 +9,31 @@
         </h1>
         <p class="text-gray-700 text-lg font-medium">Управление модерацией статей блога</p>
         <p class="text-gray-600 text-sm mt-2 max-w-3xl">
-            <strong>Статус публикации</strong> (черновик / опубликовано) задаётся в админке блога.
-            Здесь — отдельная запись <strong>решения модератора</strong> (одобрено, доработка, отклонено).
-            На дашборде считается очередь только по <strong>черновикам</strong> без одобрения.
+            Три разных момента времени: <strong>создание поста</strong> (поле в блоге),
+            <strong>дата публикации</strong> (выход на сайт), <strong>решение модерации</strong> (запись в этой панели).
+            По умолчанию скрыт архив «уже на сайте и одобрено» — откройте <strong>Архив</strong>, чтобы увидеть всё.
+            Публикация из черновика проходит <strong>автопроверку по критериям</strong>; при сбое пост остаётся черновиком — правки и снова «Опубликовать».
         </p>
     </div>
     
     <!-- Фильтры -->
     <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
         <div class="flex flex-wrap gap-2">
+            <a href="{% url 'moderation:article_list' %}" 
+               class="px-4 py-2 rounded-lg {% if default_work_mode %}bg-indigo-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors font-medium">
+                Работа (без архива)
+            </a>
             <a href="{% url 'moderation:article_list' %}?queue=1" 
                class="px-4 py-2 rounded-lg {% if queue_only %}bg-indigo-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors font-medium">
                 Очередь (черновики)
             </a>
-            <a href="{% url 'moderation:article_list' %}" 
-               class="px-4 py-2 rounded-lg {% if status_filter == 'all' and not queue_only %}bg-indigo-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors">
-                Все
+            <a href="{% url 'moderation:article_list' %}?archive=1" 
+               class="px-4 py-2 rounded-lg {% if archive and not queue_only and not status_filter %}bg-indigo-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors">
+                Архив (все записи)
             </a>
             {% for status, label in status_choices %}
-            <a href="{% url 'moderation:article_list' %}?status={{ status }}" 
-               class="px-4 py-2 rounded-lg {% if status_filter == status and not queue_only %}bg-indigo-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors">
+            <a href="{% url 'moderation:article_list' %}?status={{ status }}{% if archive %}&archive=1{% endif %}" 
+               class="px-4 py-2 rounded-lg {% if status_filter == status %}bg-indigo-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors">
                 {{ label }}
             </a>
             {% endfor %}
@@ -59,7 +64,7 @@
                             {% endif %}
                         </div>
                         
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4 text-sm">
                             <div>
                                 <span class="text-gray-600">Автор:</span>
                                 <span class="font-medium text-gray-900">{{ moderation.post.author.get_full_name|default:moderation.post.author.username }}</span>
@@ -69,12 +74,20 @@
                                 <span class="font-medium text-gray-900">{% if moderation.post.category %}{{ moderation.post.category.title }}{% else %}—{% endif %}</span>
                             </div>
                             <div>
-                                <span class="text-gray-600">Отправлено:</span>
+                                <span class="text-gray-600 block text-xs text-gray-500">Создание поста</span>
+                                <span class="font-medium text-gray-900">{{ moderation.post.created|date:"d.m.Y H:i" }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600 block text-xs text-gray-500">Дата публикации (на сайте)</span>
+                                <span class="font-medium text-gray-900">{% if moderation.post.published_at %}{{ moderation.post.published_at|date:"d.m.Y H:i" }}{% else %}—{% endif %}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600 block text-xs text-gray-500">Карточка модерации создана</span>
                                 <span class="font-medium text-gray-900">{{ moderation.submitted_at|date:"d.m.Y H:i" }}</span>
                             </div>
                             {% if moderation.moderated_at %}
                             <div>
-                                <span class="text-gray-600">Промодерировано:</span>
+                                <span class="text-gray-600 block text-xs text-gray-500">Последнее решение модератора</span>
                                 <span class="font-medium text-gray-900">{{ moderation.moderated_at|date:"d.m.Y H:i" }}</span>
                             </div>
                             {% endif %}
@@ -136,7 +149,7 @@
         <div class="mt-6 flex justify-center">
             <nav class="flex space-x-2">
                 {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}{% if queue_only %}&queue=1{% elif status_filter != 'all' %}&status={{ status_filter }}{% endif %}" 
+                <a href="?page={{ page_obj.previous_page_number }}{% if queue_only %}&queue=1{% endif %}{% if archive %}&archive=1{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
                     Назад
                 </a>
@@ -147,7 +160,7 @@
                 </span>
                 
                 {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}{% if queue_only %}&queue=1{% elif status_filter != 'all' %}&status={{ status_filter }}{% endif %}" 
+                <a href="?page={{ page_obj.next_page_number }}{% if queue_only %}&queue=1{% endif %}{% if archive %}&archive=1{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
                     Вперед
                 </a>

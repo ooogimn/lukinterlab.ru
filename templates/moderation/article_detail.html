@@ -14,7 +14,13 @@
             </ol>
         </nav>
         <h1 class="text-4xl font-bold text-gray-900 mb-2">{{ post.title }}</h1>
-        <p class="text-gray-600">Автор: {{ post.author.get_full_name|default:post.author.username }} • {{ moderation.submitted_at|date:"d.m.Y H:i" }}</p>
+        <p class="text-gray-600">Автор: {{ post.author.get_full_name|default:post.author.username }}</p>
+        <ul class="mt-2 text-sm text-gray-600 space-y-1 list-disc list-inside max-w-2xl">
+            <li><strong>Создание поста:</strong> {{ post.created|date:"d.m.Y H:i" }}</li>
+            <li><strong>Дата публикации на сайте:</strong> {% if post.published_at %}{{ post.published_at|date:"d.m.Y H:i" }}{% else %}—{% endif %}</li>
+            <li><strong>Карточка модерации создана:</strong> {{ moderation.submitted_at|date:"d.m.Y H:i" }}</li>
+            {% if moderation.moderated_at %}<li><strong>Последнее решение модератора:</strong> {{ moderation.moderated_at|date:"d.m.Y H:i" }}</li>{% endif %}
+        </ul>
         <p class="text-sm text-gray-600 mt-3 max-w-2xl">
             Здесь вы фиксируете <strong>решение модератора</strong> по записи (одобрено / доработка / отклонено).
             Видимость статьи на сайте задаётся в админке блога полем «Статус поста».
