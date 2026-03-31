@@ -10,6 +10,7 @@ from home.sitemaps import (
     OtzivSitemap, RabotaSitemap
 )
 from Blog.feeds import LatestPostsFeed, LatestPostsRSSFeed
+from Blog.vk_callback import vk_group_callback
 
 # Sitemap configuration
 sitemaps = {
@@ -21,6 +22,9 @@ sitemaps = {
 }
 
 urlpatterns = [
+    # Без финального / — как в кабинете VK; иначе POST для confirm уходит в редирект и ломается.
+    path('callback/<str:slug>', vk_group_callback, name='vk_group_callback'),
+    path('callback/<str:slug>/', vk_group_callback, name='vk_group_callback_slash'),
     path('ckeditor/', include('ckeditor_uploader.urls')),
     path('admin/', admin.site.urls),
     path('', include('home.urls')),

@@ -40,12 +40,24 @@ ALLOWED_HOSTS = split_hosts(
 TELEGRAM_BOT_TOKEN = env_str("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHANNEL_ID = env_str("TELEGRAM_CHANNEL_ID", "-1002200401634")
 
-# VK сообщество: автопостинг статей (см. Blog/vk_utils). Токен — только из окружения.
-VK_ACCESS_TOKEN = env_str("VK_ACCESS_TOKEN")
+# VK API — автопостинг статей на стену сообщества (Blog.models.publish_to_social → send_to_vk).
+# VK_ACCESS_TOKEN — ключ СООБЩЕСТВА (Работа с API → создать ключ): для wall.post достаточно прав «Стена».
+# Ключ сообщества НЕ может вызывать photos.getWallUploadServer (ошибка API 27) — превью не прикрепится.
+# VK_USER_ACCESS_TOKEN — пользовательский access_token администратора сообщества (OAuth приложения VK),
+# для загрузки превью достаточно scope: photos (+ offline для бессрочного токена). Не добавляйте groups/wall
+# без необходимости — иначе oauth.vk.com может вернуть invalid_scope (groups часто требует отдельных доступов в кабинете приложения).
+_VK_TOKEN_FALLBACK = ""
+VK_ACCESS_TOKEN = env_str("VK_ACCESS_TOKEN") or _VK_TOKEN_FALLBACK
+VK_USER_ACCESS_TOKEN = env_str("VK_USER_ACCESS_TOKEN")
 VK_GROUP_ID = env_str("VK_GROUP_ID", "231035215")
 VK_AUTO_POST = env_bool("VK_AUTO_POST", True)
 
-# VK ID (OAuth личного кабинета). Значения — из окружения.
+# VK Callback API: URL вида {SITE_URL}/callback/{VK_CALLBACK_PATH_SLUG}/ (метод POST, JSON).
+VK_CALLBACK_PATH_SLUG = env_str("VK_CALLBACK_PATH_SLUG", "")
+VK_CALLBACK_CONFIRMATION = env_str("VK_CALLBACK_CONFIRMATION", "")
+VK_CALLBACK_SECRET = env_str("VK_CALLBACK_SECRET", "")
+
+# VK ID (OAuth личного кабинета). Секреты только в .env / окружении.
 _vkid_app_raw = env_str("VKID_APP_ID", "54515641")
 try:
     VKID_APP_ID = int(_vkid_app_raw)
