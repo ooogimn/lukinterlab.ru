@@ -4,6 +4,7 @@ Views для дашборда управления автопостингом
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.http import HttpResponseRedirect
+from django.conf import settings as django_settings
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.http import JsonResponse
@@ -671,7 +672,20 @@ def history_detail(request, pk):
 @user_passes_test(is_superuser)
 def monitoring(request):
     """Мониторинг системы автопостинга"""
-    
+    if request.method == 'POST' and request.POST.get('action') == 'toggle_telegram_channel_autopost':
+        ast = AssistantSettings.objects.first()
+        if ast:
+            ast.telegram_channel_autopost_enabled = not ast.telegram_channel_autopost_enabled
+            ast.save(update_fields=['telegram_channel_autopost_enabled'])
+            state = 'включён' if ast.telegram_channel_autopost_enabled else 'выключен'
+            messages.success(request, f'Автопост статей в Telegram-канал {state}.')
+        else:
+            messages.error(
+                request,
+                'Нет записи настроек ассистента — создайте AssistantSettings в админке.',
+            )
+        return redirect('assistant:dashboard_monitoring')
+
     # Статус GigaChat
     gigachat_status = {
         'configured': False,
@@ -864,12 +878,19 @@ def monitoring(request):
     # Статистика токенов для графиков (последние 7 дней)
     daily_token_stats = TokenUsage.get_daily_stats(days=7) if hasattr(TokenUsage, 'get_daily_stats') else []
     
+    ast = AssistantSettings.objects.first()
+    tg_env = getattr(django_settings, 'TELEGRAM_CHANNEL_AUTOPOST', True)
+    tg_db = getattr(ast, 'telegram_channel_autopost_enabled', True) if ast else True
+
     context = {
         'gigachat_status': gigachat_status,
         'q_schedules_status': q_schedules_status,
         'stats_24h': stats_24h,
         'token_limits_status': token_limits_status,
         'daily_token_stats': list(daily_token_stats),
+        'telegram_channel_autopost_env': tg_env,
+        'telegram_channel_autopost_db': tg_db,
+        'telegram_channel_autopost_effective': tg_env and tg_db,
     }
     
     return render(request, 'assistant/dashboard/monitoring.html', context)

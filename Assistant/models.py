@@ -235,6 +235,11 @@ class AssistantSettings(models.Model):
         verbose_name='Разрешить перехват диалога администратором',
         help_text='Позволить администратору перехватывать диалог через Telegram'
     )
+    telegram_channel_autopost_enabled = models.BooleanField(
+        default=True,
+        verbose_name='Автопост статей в Telegram-канал',
+        help_text='Анонсы опубликованных статей в Telegram-канал. Выключите при блокировках или сбоях API; VK не затрагивается.',
+    )
     
     # Ограничения
     max_messages_per_session = models.IntegerField(default=50, verbose_name='Максимум сообщений в сессии')

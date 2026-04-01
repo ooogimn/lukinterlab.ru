@@ -1,4 +1,5 @@
 {% extends 'assistant/dashboard/base.html' %}
+{% load tz %}
 
 {% block dashboard_content %}
 <div class="max-w-7xl mx-auto">
@@ -16,6 +17,24 @@
     </nav>
     
     <h1 class="text-3xl font-bold text-gray-900 mb-8">Мониторинг системы</h1>
+
+    <div class="bg-white rounded-xl shadow-md p-6 mb-6 border-l-4 {% if telegram_channel_autopost_effective %}border-green-500{% else %}border-amber-500{% endif %}">
+        <h2 class="text-xl font-bold text-gray-900 mb-2">Автопост в Telegram-канал</h2>
+        <p class="text-sm text-gray-600 mb-4">
+            Анонсы статей в публичный канал (отдельно от уведомлений админу).
+            В .env: <code class="bg-gray-100 px-1 rounded">TELEGRAM_CHANNEL_AUTOPOST=False</code> — жёсткое отключение.
+            Сейчас: окружение {% if telegram_channel_autopost_env %}<span class="text-green-700">вкл.</span>{% else %}<span class="text-red-700">выкл.</span>{% endif %},
+            дашборд {% if telegram_channel_autopost_db %}<span class="text-green-700">вкл.</span>{% else %}<span class="text-red-700">выкл.</span>{% endif %}
+            → итого <strong>{% if telegram_channel_autopost_effective %}включено{% else %}выключено{% endif %}</strong>.
+        </p>
+        <form method="post" action="" class="inline">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="toggle_telegram_channel_autopost">
+            <button type="submit" class="px-4 py-2 rounded-lg font-medium {% if telegram_channel_autopost_db %}bg-amber-100 text-amber-900 hover:bg-amber-200{% else %}bg-green-600 text-white hover:bg-green-700{% endif %}">
+                {% if telegram_channel_autopost_db %}Выключить автопост в канал{% else %}Снова включить автопост в канал{% endif %}
+            </button>
+        </form>
+    </div>
     
     <!-- GigaChat Status -->
     <div class="bg-white rounded-xl shadow-md p-6 mb-6">
@@ -59,10 +78,10 @@
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-500">{{ item.q_schedule.cron }}</td>
                         <td class="px-6 py-4 text-sm text-gray-500">
-                            {{ item.last_run|date:"d.m.Y H:i"|default:"—" }}
+                            {% if item.last_run %}{{ item.last_run|localtime|date:"d.m.Y H:i" }}{% else %}—{% endif %}
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-500">
-                            {{ item.next_run|date:"d.m.Y H:i"|default:"—" }}
+                            {% if item.next_run %}{{ item.next_run|localtime|date:"d.m.Y H:i" }}{% else %}—{% endif %}
                         </td>
                     </tr>
                     {% empty %}

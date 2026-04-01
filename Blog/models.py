@@ -354,6 +354,13 @@ def publish_to_social(sender, instance, created, **kwargs):
     Обработчик сигналов для публикации сообщений в социальных сетях при их публикации
     """
     if instance.status == 'published':
+        # Только переход к публикации или первая запись уже опубликованной — иначе каждый
+        # последующий save (SEO meta, обновление полей) снова ставит задачи в очередь, пока
+        # vk_posted_at / telegram_posted_at ещё пусты → дубли постов в VK/Telegram.
+        prev = getattr(instance, '_post_prev_status', None)
+        if not created and prev == 'published':
+            return
+
         # Telegram и VK только в фоне (django-q), иначе синхронные requests в этом же HTTP-запросе
         # дают у Passenger «Incomplete response received from application».
         need_tg = not instance.telegram_posted_at
@@ -365,9 +372,23 @@ def publish_to_social(sender, instance, created, **kwargs):
         def _enqueue_social():
             try:
                 from django_q.tasks import async_task
+                from django.conf import settings as dj_settings
 
                 if need_tg:
-                    async_task('Blog.telegram_utils.send_to_telegram_by_id', post_pk)
+                    allow_tg = getattr(dj_settings, 'TELEGRAM_CHANNEL_AUTOPOST', True)
+                    try:
+                        from Assistant.models import AssistantSettings
+
+                        st = AssistantSettings.objects.only(
+                            'telegram_channel_autopost_enabled'
+                        ).first()
+                        if st is not None:
+                            allow_tg = allow_tg and st.telegram_channel_autopost_enabled
+                    except Exception:
+                        pass
+                    if allow_tg:
+                        async_task('Blog.telegram_utils.send_to_telegram_by_id', post_pk)
+
                 if need_vk:
                     async_task('Blog.vk_utils.send_to_vk_by_id', post_pk)
             except Exception:

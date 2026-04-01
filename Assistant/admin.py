@@ -79,8 +79,14 @@ class AssistantSettingsAdmin(admin.ModelAdmin):
             'description': 'Настройки для подключения к OpenAI API (для обратной совместимости)'
         }),
         ('Telegram интеграция', {
-            'fields': ('enable_telegram_notifications', 'telegram_bot_token', 'telegram_admin_chat_id', 'enable_admin_takeover'),
-            'description': 'Настройки интеграции с Telegram для уведомлений и управления'
+            'fields': (
+                'telegram_channel_autopost_enabled',
+                'enable_telegram_notifications',
+                'telegram_bot_token',
+                'telegram_admin_chat_id',
+                'enable_admin_takeover',
+            ),
+            'description': 'Автопост в канал — анонсы статей; уведомления админу — отдельная опция.',
         }),
         ('Поведение', {
             'fields': ('show_typing_indicator', 'enable_voice')

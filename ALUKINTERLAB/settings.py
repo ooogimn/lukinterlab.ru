@@ -39,6 +39,8 @@ ALLOWED_HOSTS = split_hosts(
 
 TELEGRAM_BOT_TOKEN = env_str("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHANNEL_ID = env_str("TELEGRAM_CHANNEL_ID", "-1002200401634")
+# Публичный канал: анонсы статей (можно выключить в .env при блокировках; дашборд может дополнительно выключить)
+TELEGRAM_CHANNEL_AUTOPOST = env_bool("TELEGRAM_CHANNEL_AUTOPOST", True)
 
 # VK API — автопостинг статей на стену сообщества (Blog.models.publish_to_social → send_to_vk).
 # VK_ACCESS_TOKEN — ключ СООБЩЕСТВА (Работа с API → создать ключ): для wall.post достаточно прав «Стена».

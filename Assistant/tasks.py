@@ -428,6 +428,17 @@ def setup_schedules():
     Одна транзакция на весь прогон — меньше шансов «мигания» SQLite.
     """
     with transaction.atomic():
+        # Легаси: несколько CRON ai_autoposting_HHMM с одним и тем же args — лишние запуски в 8:00, 9:00 и т.д.
+        legacy_n, _ = Schedule.objects.filter(
+            func=SCHEDULE_TASK_FUNC,
+            name__startswith='ai_autoposting_',
+        ).delete()
+        if legacy_n:
+            logger.info(
+                '[OK] Удалены легаси-расписания django-q ai_autoposting_* (%s шт.)',
+                legacy_n,
+            )
+
         inactive_removed = 0
         for schedule_obj in AISchedule.objects.filter(is_active=False):
             n, _ = Schedule.objects.filter(

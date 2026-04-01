@@ -271,3 +271,12 @@ class Command(BaseCommand):
             '\n[WARNING] Не забудьте запустить Django-Q worker:'
             '\n   python manage.py qcluster'
         ))
+
+        from Assistant.tasks import setup_schedules
+
+        setup_schedules()
+        self.stdout.write(
+            self.style.SUCCESS(
+                '[OK] Канонические расписания django-q (ai_schedule_*) синхронизированы; легаси ai_autoposting_* удалены.'
+            )
+        )

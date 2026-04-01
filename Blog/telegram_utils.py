@@ -11,6 +11,19 @@ def send_to_telegram(post):
     """
     Отправьте сообщение в Telegram-канал с изображением и отформатированным сообщением
     """
+    if not getattr(settings, 'TELEGRAM_CHANNEL_AUTOPOST', True):
+        logger.info("Автопост в канал Telegram отключён (TELEGRAM_CHANNEL_AUTOPOST или дашборд)")
+        return False
+    try:
+        from Assistant.models import AssistantSettings
+
+        st = AssistantSettings.objects.only('telegram_channel_autopost_enabled').first()
+        if st is not None and not st.telegram_channel_autopost_enabled:
+            logger.info("Автопост в канал Telegram отключён в настройках ассистента")
+            return False
+    except Exception:
+        pass
+
     if not settings.TELEGRAM_BOT_TOKEN or not settings.TELEGRAM_CHANNEL_ID:
         logger.error("Настройки Telegram не настроены")
         return False
