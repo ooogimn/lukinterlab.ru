@@ -7,13 +7,8 @@ class AssistantConfig(AppConfig):
     verbose_name = 'AI Ассистент'
     
     def ready(self):
-        """Инициализация при запуске приложения"""
-        import Assistant.signals  # Регистрируем сигналы
-    
-    def ready(self):
-        """Инициализация приложения"""
-        # Импортируем сигналы
+        """Инициализация при запуске приложения — регистрация сигналов."""
         try:
-            import Assistant.signals
+            import Assistant.signals  # noqa: F401
         except ImportError:
             pass
