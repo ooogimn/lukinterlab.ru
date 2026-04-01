@@ -236,8 +236,15 @@ def send_to_max(post):
             image_attachment = _max_build_image_attachment(token, raw, upload_name, mime)
             if not image_attachment:
                 logger.warning('MAX: «%s» — картинка не прикреплена, уходит только текст', (post.title or '')[:80])
+            else:
+                logger.info('MAX: «%s» — вложение image подготовлено (upload + payload)', (post.title or '')[:80])
         except Exception as e:
             logger.warning('MAX: превью (kartinka) не подготовилось, только текст: %s', e)
+    else:
+        logger.info(
+            'MAX: «%s» — поле kartinka пустое, в MAX уходит только текст (без attachments image)',
+            (post.title or '')[:80],
+        )
 
     url = f"{MAX_PLATFORM_API.rstrip('/')}/messages"
     body = {'text': text}
