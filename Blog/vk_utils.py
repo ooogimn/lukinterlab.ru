@@ -56,6 +56,16 @@ def _truncate_at_word_boundary(text: str, max_chars: int) -> str:
     return cut + '…'
 
 
+def _truncate_to_word_count(text: str, max_words: int) -> str:
+    """Обрезка текста по числу слов (разделитель — пробельные символы); хвост «…» при обрезке."""
+    if max_words <= 0 or not text:
+        return text
+    words = text.split()
+    if len(words) <= max_words:
+        return text
+    return ' '.join(words[:max_words]) + '…'
+
+
 def _strip_common_prefix(a: str, b: str, min_len: int = 80) -> tuple[str, str]:
     """Если b начинается с теми же словами, что и a — отрезаем префикс у b (анонс без дубля)."""
     if not a or not b or len(a) < min_len:
@@ -110,6 +120,10 @@ def _build_vk_message(post, site_url: str) -> str:
     body = body.strip()
     if len(body) > budget:
         body = _truncate_at_word_boundary(body, budget)
+
+    max_words = getattr(settings, 'SOCIAL_ANNOUNCE_MAX_WORDS', 100)
+    if max_words > 0:
+        body = _truncate_to_word_count(body, max_words)
 
     return header + body + footer
 

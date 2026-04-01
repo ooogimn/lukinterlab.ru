@@ -60,6 +60,11 @@ MAX_BOT_TOKEN = env_str("MAX_BOT_TOKEN")
 MAX_CHAT_ID = env_str("MAX_CHAT_ID")
 MAX_AUTO_POST = env_bool("MAX_AUTO_POST", False)
 
+# Сколько слов оставить в теле анонса VK и MAX (заголовок и «Читать далее: URL» не режутся).
+# 0 — не ограничивать по словам, только по лимиту символов API. По умолчанию 100 (~короткий тизер).
+_social_words = env_int("SOCIAL_ANNOUNCE_MAX_WORDS", 100)
+SOCIAL_ANNOUNCE_MAX_WORDS = 100 if _social_words is None else max(0, _social_words)
+
 # VK Callback API: URL вида {SITE_URL}/callback/{VK_CALLBACK_PATH_SLUG}/ (метод POST, JSON).
 VK_CALLBACK_PATH_SLUG = env_str("VK_CALLBACK_PATH_SLUG", "")
 VK_CALLBACK_CONFIRMATION = env_str("VK_CALLBACK_CONFIRMATION", "")

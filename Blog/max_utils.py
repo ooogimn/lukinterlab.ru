@@ -15,6 +15,7 @@ from Blog.vk_utils import (
     _prepare_preview_bytes,
     _strip_common_prefix,
     _truncate_at_word_boundary,
+    _truncate_to_word_count,
     is_test_article_description,
 )
 
@@ -54,6 +55,10 @@ def _build_max_message(post, site_url: str) -> str:
     body = body.strip()
     if len(body) > budget:
         body = _truncate_at_word_boundary(body, budget)
+
+    max_words = getattr(settings, 'SOCIAL_ANNOUNCE_MAX_WORDS', 100)
+    if max_words > 0:
+        body = _truncate_to_word_count(body, max_words)
 
     return header + body + footer
 
