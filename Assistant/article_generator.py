@@ -1943,7 +1943,7 @@ class ArticleGeneratorService:
         return sanitized
     
     """Генерация нескольких статей"""
-    def gЫenerate_batch(self, count: Optional[int] = None) -> list[Post]:
+    def generate_batch(self, count: Optional[int] = None) -> list[Post]:
         """
         Генерация нескольких статей
         
