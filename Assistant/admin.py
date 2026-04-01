@@ -178,11 +178,11 @@ class AIScheduleAdmin(admin.ModelAdmin):
             'fields': ('name', 'prompt_template', 'is_active', 'created_by')
         }),
         ('Расписание', {
-            'fields': ('frequency', 'cron_expression'),
-            'description': 'Настройте частоту генерации. Для произвольного расписания используйте CRON выражение.'
+            'fields': ('frequency', 'start_time', 'cron_expression'),
+            'description': 'Частота и время старта (для пресетов). Произвольное — только CRON.'
         }),
         ('Параметры генерации', {
-            'fields': ('articles_per_run', 'category', 'tags', 'keywords', 'context_data'),
+            'fields': ('articles_per_run', 'batch_interval', 'category', 'tags', 'keywords', 'context_data'),
             'description': 'Параметры, которые будут использоваться при генерации статей.'
         }),
         ('Настройки моделей GigaChat', {

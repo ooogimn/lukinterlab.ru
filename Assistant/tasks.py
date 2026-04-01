@@ -9,11 +9,16 @@ import platform
 from pathlib import Path
 from django.conf import settings
 from django.utils import timezone
-from django_q.tasks import schedule
+from django.db import transaction
 from django_q.models import Schedule
 from datetime import timedelta
 
 from .models import AISchedule
+
+# Имя func у расписаний автопостинга в Django-Q (единая строка для фильтров и очистки)
+SCHEDULE_TASK_FUNC = 'Assistant.tasks.run_schedule_task'
+# Префикс канонического имени расписания в ORM Django-Q
+AI_SCHEDULE_NAME_PREFIX = 'ai_schedule_'
 from .article_generator import ArticleGeneratorService
 
 logger = logging.getLogger(__name__)
@@ -400,39 +405,91 @@ def calculate_next_run(schedule_obj: AISchedule) -> timezone.datetime:
         return now + timedelta(days=1)
 
 
+def schedules_for_monitoring():
+    """
+    Канонические расписания Django-Q для дашборда мониторинга.
+    Не включает легаси (ai_autoposting_* и т.п.).
+    """
+    qs = Schedule.objects.filter(func=SCHEDULE_TASK_FUNC).order_by('name')
+    prefix_len = len(AI_SCHEDULE_NAME_PREFIX)
+    return [
+        s
+        for s in qs
+        if (s.name or '').startswith(AI_SCHEDULE_NAME_PREFIX)
+        and (s.name[prefix_len:].isdigit())
+    ]
+
+
 def setup_schedules():
     """
-    Настройка расписаний в Django-Q
-    Вызывается при создании/обновлении расписания
+    Настройка расписаний в Django-Q.
+    Перед upsert удаляет чужие строки с тем же args (легаси ai_autoposting_*).
+    Неактивные AISchedule — все связанные записи Schedule с данным args удаляются.
+    Одна транзакция на весь прогон — меньше шансов «мигания» SQLite.
     """
-    active_schedules = AISchedule.objects.filter(is_active=True)
-    
-    for schedule_obj in active_schedules:
-        cron_expr = schedule_obj.get_cron_expression()
-        
-        # Создаем или обновляем расписание в Django-Q
-        # Используем одну группу для всех задач автопостинга для управления
-        schedule, created = Schedule.objects.update_or_create(
-            func='Assistant.tasks.run_schedule_task',
-            name=f'ai_schedule_{schedule_obj.id}',
-            defaults={
-                'schedule_type': Schedule.CRON,
-                'cron': cron_expr,
-                'args': str(schedule_obj.id),  # Django-Q принимает строку с аргументом
-                'group': 'autoposting',  # Все задачи автопостинга в одной группе
-            }
-        )
-        
-        action = 'создано' if created else 'обновлено'
-        logger.info(f"[OK] Расписание Django-Q для {schedule_obj.name} {action}: {cron_expr}")
+    with transaction.atomic():
+        inactive_removed = 0
+        for schedule_obj in AISchedule.objects.filter(is_active=False):
+            n, _ = Schedule.objects.filter(
+                func=SCHEDULE_TASK_FUNC,
+                args=str(schedule_obj.id),
+            ).delete()
+            inactive_removed += n
+        if inactive_removed:
+            logger.info(
+                '[OK] Удалены расписания Django-Q для неактивных AISchedule (всего записей: %s)',
+                inactive_removed,
+            )
+
+        active_schedules = AISchedule.objects.filter(is_active=True)
+        for schedule_obj in active_schedules:
+            canonical_name = f'{AI_SCHEDULE_NAME_PREFIX}{schedule_obj.id}'
+            stale_qs = Schedule.objects.filter(
+                func=SCHEDULE_TASK_FUNC,
+                args=str(schedule_obj.id),
+            ).exclude(name=canonical_name)
+            stale_count, _ = stale_qs.delete()
+            if stale_count:
+                logger.info(
+                    '[OK] Удалены устаревшие расписания Django-Q для id=%s: %s шт.',
+                    schedule_obj.id,
+                    stale_count,
+                )
+
+            cron_expr = schedule_obj.get_cron_expression()
+
+            dq_schedule, created = Schedule.objects.update_or_create(
+                func=SCHEDULE_TASK_FUNC,
+                name=canonical_name,
+                defaults={
+                    'schedule_type': Schedule.CRON,
+                    'cron': cron_expr,
+                    'args': str(schedule_obj.id),
+                    'group': 'autoposting',
+                },
+            )
+
+            action = 'создано' if created else 'обновлено'
+            logger.info(
+                f'[OK] Расписание Django-Q для {schedule_obj.name} {action}: {cron_expr}'
+            )
 
 
 def remove_schedule(schedule_id: int):
-    """Удалить расписание из Django-Q"""
-    try:
-        schedule = Schedule.objects.get(name=f'ai_schedule_{schedule_id}')
-        schedule.delete()
-        logger.info(f"[OK] Расписание Django-Q для schedule_id={schedule_id} удалено")
-    except Schedule.DoesNotExist:
-        logger.warning(f"[WARNING] Расписание Django-Q для schedule_id={schedule_id} не найдено")
+    """Удалить из Django-Q все задачи автопостинга с данным id (канонические и легаси)."""
+    deleted, _ = Schedule.objects.filter(
+        func=SCHEDULE_TASK_FUNC,
+        args=str(schedule_id),
+    ).delete()
+    if deleted:
+        logger.info(
+            '[OK] Удалено расписаний Django-Q для schedule_id=%s: %s',
+            schedule_id,
+            deleted,
+        )
+    else:
+        logger.warning(
+            '[WARNING] Расписание Django-Q для schedule_id=%s не найдено',
+            schedule_id,
+        )
 

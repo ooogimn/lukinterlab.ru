@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.conf import settings
 from django.db.models import Sum
-from datetime import timedelta
+from datetime import timedelta, time
 from typing import Dict, Any
 import uuid
 import base64
@@ -662,6 +662,16 @@ class AISchedule(models.Model):
         verbose_name='CRON выражение',
         help_text='Используется только для частоты "Произвольное". Формат: минута час день месяц день_недели'
     )
+    start_time = models.TimeField(
+        default=time(9, 0),
+        verbose_name='Время старта',
+        help_text='Для пресетов (кроме «Произвольное»): час и минута срабатывания CRON',
+    )
+    batch_interval = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Интервал между статьями в пачке',
+        help_text='Интервал в минутах между статьями в одной пачке (0 — без паузы; используется в генераторе при articles_per_run > 1)',
+    )
     
     # Параметры генерации
     articles_per_run = models.IntegerField(
@@ -742,18 +752,27 @@ class AISchedule(models.Model):
         return f"{self.name} ({self.get_frequency_display()})"
     
     def get_cron_expression(self):
-        """Получить CRON выражение для расписания"""
+        """Получить CRON выражение для расписания (формат: минута час день месяц день_недели)."""
         if self.frequency == 'custom' and self.cron_expression:
             return self.cron_expression
-        
-        # Стандартные CRON выражения
-        cron_map = {
-            'hourly': '0 * * * *',  # Каждый час
-            'daily': '0 9 * * *',   # Каждый день в 9:00
-            'weekly': '0 9 * * 1',  # Каждый понедельник в 9:00
-            'monthly': '0 9 1 * *', # Первое число месяца в 9:00
-        }
-        return cron_map.get(self.frequency, '0 9 * * *')
+
+        st = self.start_time or time(9, 0)
+        m, h = st.minute, st.hour
+
+        # Пресеты: время из start_time; custom по-прежнему из cron_expression
+        if self.frequency == 'hourly':
+            # Каждый час, в ту же минуту часа (как раньше « :00 », если start_time 09:00)
+            return f'{m} * * * *'
+        if self.frequency == 'daily':
+            return f'{m} {h} * * *'
+        if self.frequency == 'weekly':
+            # Понедельник (1), как в прежней логике
+            return f'{m} {h} * * 1'
+        if self.frequency == 'monthly':
+            # 1-е число месяца
+            return f'{m} {h} 1 * *'
+
+        return f'{m} {h} * * *'
 
 
 class AIGeneratedArticle(models.Model):

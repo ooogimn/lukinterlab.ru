@@ -152,8 +152,9 @@ class AIScheduleForm(forms.ModelForm):
         model = AISchedule
         fields = [
             'name', 'prompt_template', 'is_active',
-            'frequency', 'cron_expression',
-            'articles_per_run', 'category', 'tags', 'keywords', 'context_data',
+            'frequency', 'cron_expression', 'start_time',
+            'articles_per_run', 'batch_interval',
+            'category', 'tags', 'keywords', 'context_data',
             'text_model', 'image_model', 'use_image_generation'
         ]
         widgets = {
@@ -173,10 +174,21 @@ class AIScheduleForm(forms.ModelForm):
                 'placeholder': '0 9 * * *',
                 'id': 'id_cron_expression'
             }),
+            'start_time': forms.TimeInput(attrs={
+                'class': 'form-control',
+                'type': 'time',
+                'id': 'id_start_time',
+            }),
             'articles_per_run': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'min': 1,
                 'max': 10
+            }),
+            'batch_interval': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 0,
+                'max': 1440,
+                'id': 'id_batch_interval',
             }),
             'category': forms.Select(attrs={
                 'class': 'form-control'
@@ -216,7 +228,9 @@ class AIScheduleForm(forms.ModelForm):
             'is_active': 'Активно',
             'frequency': 'Частота генерации',
             'cron_expression': 'CRON выражение',
+            'start_time': 'Время старта',
             'articles_per_run': 'Статей за раз',
+            'batch_interval': 'Интервал между статьями в пачке (мин)',
             'category': 'Категория',
             'tags': 'Теги',
             'keywords': 'Ключевые слова',

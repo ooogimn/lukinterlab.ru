@@ -6,6 +6,7 @@ import time
 import re
 import base64
 from typing import Dict, Any, Optional
+from django.conf import settings
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
@@ -1945,21 +1946,38 @@ class ArticleGeneratorService:
     """Генерация нескольких статей"""
     def generate_batch(self, count: Optional[int] = None) -> list[Post]:
         """
-        Генерация нескольких статей
-        
-        Args:
-            count: Количество статей для генерации (по умолчанию из расписания)
-            
-        Returns:
-            Список созданных статей
+        Генерация нескольких статей.
+        Между статьями при articles_per_run > 1 применяется пауза schedule.batch_interval (минуты).
+        Долгие sleep в одной задаче удерживают воркер Django-Q; при необходимости см. Q_CLUSTER['timeout']
+        и альтернативу — цепочку отдельных async_task с countdown.
         """
         if not self.schedule:
             raise ValueError("generate_batch требует наличие расписания")
         count = count or self.schedule.articles_per_run
+        count = max(1, int(count))
         generated_posts = []
-        
+
+        interval_min = int(self.schedule.batch_interval or 0)
+        if count > 1 and interval_min > 60:
+            logger.warning(
+                '[BATCH] batch_interval=%s мин — одна задача Django-Q может выполняться очень долго; '
+                'на шаред-хостинге воркер иногда перезапускают. Рассмотрите интервал ≤60 мин или низкий articles_per_run.',
+                interval_min,
+            )
+
+        if count > 1 and interval_min > 0:
+            idle_sec = (count - 1) * interval_min * 60
+            q_timeout = (getattr(settings, 'Q_CLUSTER', None) or {}).get('timeout') or 300
+            if idle_sec >= q_timeout:
+                logger.warning(
+                    '[BATCH] Суммарные паузы ~%s с при Q_CLUSTER timeout=%s с — задачу может прервать Django-Q '
+                    '(без учёта времени самой генерации). Увеличьте timeout или уменьшите паузы.',
+                    idle_sec,
+                    q_timeout,
+                )
+
         logger.info(f"[BATCH] Начало пакетной генерации: {count} статей")
-        
+
         for i in range(count):
             logger.info(f"[BATCH] Генерация статьи {i+1}/{count}...")
             context_data = {'_article_index': i + 1}
@@ -1968,9 +1986,14 @@ class ArticleGeneratorService:
                 generated_posts.append(post)
             else:
                 logger.warning(f"[WARNING] Не удалось сгенерировать статью {i+1}")
-        
+
+            if i < count - 1 and interval_min > 0:
+                delay_sec = interval_min * 60
+                logger.info('[BATCH] Пауза %s мин между статьями...', interval_min)
+                time.sleep(delay_sec)
+
         logger.info(f"[OK] Пакетная генерация завершена: {len(generated_posts)}/{count} статей создано")
-        
+
         return generated_posts
     
     """Генерация тестовой статьи без расписания"""

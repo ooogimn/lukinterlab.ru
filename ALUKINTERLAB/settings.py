@@ -407,11 +407,21 @@ AI_TEMPERATURE = 0.7
 # sync=True: async_task выполняется в том же процессе, что и HTTP-запрос → долгие задачи
 # рвут ответ Passenger («Incomplete response»). На проде держим sync=False, воркер — qcluster.
 # При необходимости синхронной отладки: DJANGO_Q_SYNC=True в .env
+#
+# timeout — максимальная длительность ОДНОЙ задачи (сек): генерация статьи + time.sleep между
+# статьями (batch_interval). 300 с недостаточно при интервалах 5–10 мин между статьями в пачке.
+# Задаётся через DJANGO_Q_TASK_TIMEOUT (по умолчанию 3600 = 1 час). При очень длинных пачках
+# увеличьте в .env на сервере.
+_DJANGO_Q_TASK_TIMEOUT = env_int('DJANGO_Q_TASK_TIMEOUT', 3600) or 3600
+_DJANGO_Q_RETRY = env_int('DJANGO_Q_RETRY', max(600, _DJANGO_Q_TASK_TIMEOUT * 2)) or max(
+    600, _DJANGO_Q_TASK_TIMEOUT * 2
+)
+
 Q_CLUSTER = {
     'name': 'LukInterLab',
     'workers': 1,  # Один воркер для SQLite (меньше конкуренции за db.sqlite3)
-    'timeout': 300,
-    'retry': 600,
+    'timeout': _DJANGO_Q_TASK_TIMEOUT,
+    'retry': _DJANGO_Q_RETRY,
     'queue_limit': 500,
     'bulk': 10,
     'orm': 'default',

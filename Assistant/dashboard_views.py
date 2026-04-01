@@ -18,10 +18,9 @@ import json
 from .models import PromptTemplate, AISchedule, AIGeneratedArticle, AssistantSettings, TokenUsage
 from .token_cost_analysis import TokenCostAnalyzer
 from . import forms
-from .tasks import run_schedule_task
+from .tasks import run_schedule_task, schedules_for_monitoring
 from .article_generator import ArticleGeneratorService
 from django_q.tasks import async_task
-from django_q.models import Schedule as QSchedule
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -231,10 +230,8 @@ def dashboard_main(request):
         cost_analysis = None
         efficiency_report = None
     
-    # Статистика по расписаниям Django-Q
-    q_schedules = QSchedule.objects.filter(
-        func='Assistant.tasks.run_schedule_task'
-    ).count()
+    # Только канонические расписания (без легаси ai_autoposting_*)
+    q_schedules = len(schedules_for_monitoring())
     
     # Проверка настроек GigaChat
     gigachat_configured = False
@@ -721,13 +718,9 @@ def monitoring(request):
         except:
             pass
     
-    # Статус расписаний Django-Q
-    q_schedules = QSchedule.objects.filter(
-        func='Assistant.tasks.run_schedule_task'
-    )
-    
+    # Статус расписаний Django-Q (только ai_schedule_<id>)
     q_schedules_status = []
-    for q_schedule in q_schedules:
+    for q_schedule in schedules_for_monitoring():
         # Извлекаем schedule_id из args
         try:
             schedule_id = int(q_schedule.args) if q_schedule.args else None
