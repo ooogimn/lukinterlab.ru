@@ -29,7 +29,7 @@ def disable_all_signals():
 disable_all_signals()
 User = get_user_model()
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def _label_from_rescued_stem(stem: str):

@@ -6,8 +6,8 @@ import django
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ALUKINTERLAB.settings")
 
-# Корень проекта (файл лежит в корне рядом с manage.py)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Корень проекта (каталог с manage.py; скрипт в scripts/)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Имя битого файла можно переопределить: RESCUE_BROKEN_SQLITE=db.sqlite3.broken или абсолютный путь
 _broken_relpath = os.environ.get("RESCUE_BROKEN_SQLITE", "db.sqlite3.broken")
 _broken_name = (

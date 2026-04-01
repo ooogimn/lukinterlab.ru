@@ -36,9 +36,8 @@
 - `static/` (статические файлы)
 - `media/` (медиа файлы)
 - `requirements.txt`
-- `ALUKINTERLAB/settings_prod.py`
 - `ALUKINTERLAB/wsgi_prod.py`
-- `run.py`
+- `passenger_wsgi.py`
 - `manage.py`
 - `db.sqlite3` (если есть данные)
 
