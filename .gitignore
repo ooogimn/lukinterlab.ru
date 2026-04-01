@@ -21,6 +21,7 @@ logs/
 db.sqlite3
 db.sqlite3.SERVER_BACKUP
 db.sqlite3-*
+db.sqlite3.corrupt*
 # Восстановление БД / спасательные дампы (не в репозиторий)
 rescued_*.json
 *.broken

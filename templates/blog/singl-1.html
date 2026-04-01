@@ -84,6 +84,12 @@
                     {% endif %}
                 </div>
                 {% endif %}
+                {% if post.max_posted_at %}
+                <div class="flex items-center mr-6 flex-wrap gap-x-1">
+                    <span class="mr-1 rounded bg-violet-600 px-1.5 py-0.5 text-[10px] font-bold text-white leading-none" title="MAX">MAX</span>
+                    <span class="text-gray-500">анонс {{ post.max_posted_at|date:"d.m.Y" }}</span>
+                </div>
+                {% endif %}
                 {% if post.views %}
                 <div class="flex items-center mr-6">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

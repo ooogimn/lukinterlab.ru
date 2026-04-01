@@ -105,7 +105,7 @@ document.getElementById('mobile-menu-button').addEventListener('click', function
             <!-- Отдельная форма: нельзя вкладывать <form> в форму редактирования -->
             <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-2 mb-8">
                 <h3 class="text-sm font-semibold text-gray-800">Публикация в соцсетях</h3>
-                <p class="text-xs text-gray-500">После сохранения статьи в статусе «Опубликовано» время ВК подставляется автоматически (если настроен токен).</p>
+                <p class="text-xs text-gray-500">После первого перехода в «Опубликовано» время в соцсетях подставляется автоматически (если заданы токены и включён автопост). Повторная отправка — сбросьте метку времени вручную в админке.</p>
                 <div class="text-sm text-gray-700">
                     <span class="font-medium text-gray-600">Telegram:</span>
                     {% if post.telegram_posted_at %}
@@ -125,6 +125,14 @@ document.getElementById('mobile-menu-button').addEventListener('click', function
                         {% else %}
                             <span class="text-gray-500">— ссылка появится после успешной публикации в ВК</span>
                         {% endif %}
+                    {% else %}
+                        <span class="text-gray-500">ещё не отправлялось</span>
+                    {% endif %}
+                </div>
+                <div class="text-sm text-gray-700">
+                    <span class="font-medium text-gray-600">MAX:</span>
+                    {% if post.max_posted_at %}
+                        {{ post.max_posted_at|date:"d.m.Y H:i" }}
                     {% else %}
                         <span class="text-gray-500">ещё не отправлялось</span>
                     {% endif %}

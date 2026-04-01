@@ -54,6 +54,12 @@ VK_USER_ACCESS_TOKEN = env_str("VK_USER_ACCESS_TOKEN")
 VK_GROUP_ID = env_str("VK_GROUP_ID", "231035215")
 VK_AUTO_POST = env_bool("VK_AUTO_POST", True)
 
+# MAX (messenger): анонсы статей → POST https://platform-api.max.ru/messages
+# Токен: business.max.ru → Чат-боты → Интеграция. chat_id — id чата/канала назначения.
+MAX_BOT_TOKEN = env_str("MAX_BOT_TOKEN")
+MAX_CHAT_ID = env_str("MAX_CHAT_ID")
+MAX_AUTO_POST = env_bool("MAX_AUTO_POST", False)
+
 # VK Callback API: URL вида {SITE_URL}/callback/{VK_CALLBACK_PATH_SLUG}/ (метод POST, JSON).
 VK_CALLBACK_PATH_SLUG = env_str("VK_CALLBACK_PATH_SLUG", "")
 VK_CALLBACK_CONFIRMATION = env_str("VK_CALLBACK_CONFIRMATION", "")

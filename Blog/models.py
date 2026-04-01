@@ -88,6 +88,12 @@ class Post(models.Model):
                                 related_name='updater_posts', blank=True)
     telegram_posted_at = models.DateTimeField(verbose_name='Время публикации в Телеге', blank=True, null=True)
     vk_posted_at = models.DateTimeField(verbose_name='Время публикации в VK', blank=True, null=True)
+    max_posted_at = models.DateTimeField(
+        verbose_name='Время публикации в MAX',
+        blank=True,
+        null=True,
+        help_text='Ставится при успешной отправке анонса в чат/канал MAX (django-q).',
+    )
     vk_wall_post_id = models.PositiveIntegerField(
         verbose_name='ID поста на стене VK',
         blank=True,
@@ -356,16 +362,17 @@ def publish_to_social(sender, instance, created, **kwargs):
     if instance.status == 'published':
         # Только переход к публикации или первая запись уже опубликованной — иначе каждый
         # последующий save (SEO meta, обновление полей) снова ставит задачи в очередь, пока
-        # vk_posted_at / telegram_posted_at ещё пусты → дубли постов в VK/Telegram.
+        # vk_posted_at / telegram_posted_at / max_posted_at ещё пусты → иначе дубли при каждом save.
         prev = getattr(instance, '_post_prev_status', None)
         if not created and prev == 'published':
             return
 
-        # Telegram и VK только в фоне (django-q), иначе синхронные requests в этом же HTTP-запросе
+        # Telegram, VK и MAX только в фоне (django-q), иначе синхронные requests в этом же HTTP-запросе
         # дают у Passenger «Incomplete response received from application».
         need_tg = not instance.telegram_posted_at
         need_vk = not instance.vk_posted_at
-        if not need_tg and not need_vk:
+        need_max = not instance.max_posted_at
+        if not need_tg and not need_vk and not need_max:
             return
         post_pk = instance.pk
 
@@ -391,6 +398,12 @@ def publish_to_social(sender, instance, created, **kwargs):
 
                 if need_vk:
                     async_task('Blog.vk_utils.send_to_vk_by_id', post_pk)
+
+                if need_max and getattr(dj_settings, 'MAX_AUTO_POST', False):
+                    tok = (getattr(dj_settings, 'MAX_BOT_TOKEN', None) or '').strip()
+                    cid = getattr(dj_settings, 'MAX_CHAT_ID', None)
+                    if tok and cid is not None and str(cid).strip() != '':
+                        async_task('Blog.max_utils.send_to_max_by_id', post_pk)
             except Exception:
                 logger.exception('Соцсети: не удалось поставить задачи в очередь django-q')
 

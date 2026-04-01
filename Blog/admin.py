@@ -101,7 +101,7 @@ class PostAdmin(admin.ModelAdmin):
     
     form = PostAdminForm
 
-    list_display = ['title', 'post_photo', 'category', 'status', 'seo_score', 'fixed', 'author', 'created', 'published_at', 'telegram_posted_at', 'vk_posted_at']
+    list_display = ['title', 'post_photo', 'category', 'status', 'seo_score', 'fixed', 'author', 'created', 'published_at', 'telegram_posted_at', 'vk_posted_at', 'max_posted_at']
     list_display_links = ['title', 'post_photo', 'category']
     list_filter = ['status', 'category', 'author', 'seo_score']
     search_fields = ['title', 'author', 'meta_title', 'focus_keyword']
@@ -139,7 +139,7 @@ class PostAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
         ('Социальные сети', {
-            'fields': ('telegram_posted_at', 'vk_posted_at', 'vk_wall_post_id', 'description'),
+            'fields': ('telegram_posted_at', 'vk_posted_at', 'vk_wall_post_id', 'max_posted_at', 'description'),
             'classes': ('collapse',)
         }),
     )
