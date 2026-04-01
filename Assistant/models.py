@@ -611,8 +611,9 @@ class PromptTemplate(models.Model):
         # Определяем системные переменные
         # Базовые системные переменные
         system_vars = {
-            'topic', 'category', 'keywords', 'title', 'content', 
-            'parsed_news_content', 'news_title', 'news_url', 'news_source'
+            'topic', 'category', 'keywords', 'title', 'content',
+            'parsed_news_content', 'parsed_content_200_words',
+            'news_title', 'news_url', 'news_source',
         }
         
         # Разделяем на системные и пользовательские

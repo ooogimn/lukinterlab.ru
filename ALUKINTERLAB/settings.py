@@ -82,6 +82,9 @@ USE_CLOUDSCRAPER = env_bool("USE_CLOUDSCRAPER", True)
 USE_TRAFILATURA = env_bool("USE_TRAFILATURA", True)
 USE_ASYNC_PARSING = env_bool("USE_ASYNC_PARSING", False)
 
+# Целевой объём спарсенного текста новости для генерации статьи (слов). Больше — меньше «добор воды» моделью, но длиннее промпт.
+ARTICLE_PARSED_NEWS_TARGET_WORDS = env_int("ARTICLE_PARSED_NEWS_TARGET_WORDS", 480) or 480
+
 INSTALLED_APPS = [
     'ckeditor', 'ckeditor_uploader',
     'jazzmin', 

@@ -55,7 +55,40 @@ def safe_log_text(text: str) -> str:
         except Exception:
             return str(text)[:100]  # Ограничиваем длину на случай проблем
 
-"""Класс для генерации статей через GigaChat API с использованием шаблонов промптов"""
+
+def _strip_title_wrapping(s: str) -> str:
+    return (s or '').strip().strip('"\'«»')
+
+
+def _normalize_ai_title_response(title: str) -> str:
+    """
+    Один заголовок для БД: поддержка ответа вида «3 варианта + итог» или нумерованного списка.
+    """
+    if not title:
+        return title
+    t = title.strip()
+    if '\n' not in t and '\r' not in t:
+        return _strip_title_wrapping(t)
+    lines = [ln.strip() for ln in re.split(r'[\r\n]+', t) if ln.strip()]
+    if not lines:
+        return _strip_title_wrapping(t)
+    for ln in lines:
+        low = ln.lower()
+        if ':' in ln:
+            head, tail = ln.split(':', 1)
+            if any(p in head.lower() for p in ('итог', 'выбран', 'лучший', 'финал', 'заголовок')):
+                tail = tail.strip()
+                if tail:
+                    return _strip_title_wrapping(tail)
+    for ln in reversed(lines):
+        m = re.match(r'^\d+[\.\)]\s*(.+)$', ln)
+        if m and len(m.group(1)) < 200:
+            return _strip_title_wrapping(m.group(1).strip())
+        if len(ln) < 160 and not re.match(r'^\d+[\.\)]', ln):
+            return _strip_title_wrapping(ln)
+    return _strip_title_wrapping(lines[-1])
+
+
 class ArticleGeneratorService:
     """Сервис для генерации статей через GigaChat API с использованием шаблонов промптов"""
     
@@ -190,14 +223,15 @@ class ArticleGeneratorService:
             # Сохраняем категорию для публикации (нужна для режимов парсинга)
             self._category_for_publication = category_for_publication
             
-            # 0.1. НОВАЯ СХЕМА: Поиск и парсинг новостей ВСЕГДА если генерируется контент (200-300 слов)
+            # 0.1. Поиск и парсинг новостей при генерации контента (см. ARTICLE_PARSED_NEWS_TARGET_WORDS)
             # Новости парсятся сначала, затем используется для генерации контента, потом из контента генерируется заголовок
             parsed_news = None
             parsed_image_data = None  # Для режима search_and_parse изображений
             
             if self.prompt_template.generate_content:
-                # НОВАЯ ЛОГИКА: Всегда парсим новости для генерации контента (200-300 слов)
-                logger.info("[SEARCH] Поиск и парсинг новостей (200-300 слов) для генерации контента...")
+                # Парсим новости для генерации (объём настраивается ARTICLE_PARSED_NEWS_TARGET_WORDS)
+                _tw = getattr(settings, 'ARTICLE_PARSED_NEWS_TARGET_WORDS', 480) or 480
+                logger.info("[SEARCH] Поиск и парсинг новостей (~%s слов) для генерации контента...", _tw)
                 
                 # Определяем, нужно ли также парсить изображения для режима search_and_parse
                 need_image_parsing = (
@@ -205,8 +239,7 @@ class ArticleGeneratorService:
                     self.prompt_template.image_generation_mode == 'search_and_parse'
                 )
                 
-                # Парсим новости (200-300 слов, по умолчанию 250)
-                target_words = 250
+                target_words = getattr(settings, 'ARTICLE_PARSED_NEWS_TARGET_WORDS', 480) or 480
                 parsed_news = self._search_and_parse_news(category_for_publication, test_keywords, target_words=target_words)
                 
                 # Если режим изображения - search_and_parse, парсим изображения одновременно с новостями
@@ -1060,6 +1093,7 @@ class ArticleGeneratorService:
             
             # Очистка заголовка (убираем лишние символы, кавычки и т.д.)
             title = self._clean_text(title)
+            title = _normalize_ai_title_response(title)
             
             # Сохраняем ответ AI для истории
             if not hasattr(self, '_ai_responses'):
@@ -1153,6 +1187,7 @@ class ArticleGeneratorService:
             
             # Очистка заголовка (убираем лишние символы, кавычки и т.д.)
             title = self._clean_text(title)
+            title = _normalize_ai_title_response(title)
             
             # Сохраняем ответ AI для истории (будет сохранено в generate_article)
             # Временно сохраняем в контексте
@@ -1309,11 +1344,11 @@ class ArticleGeneratorService:
     """Генерация контента через парсинг 200 слов + генерация на основе этих данных (режим 2: parse_and_generate)"""
     def _generate_content_parse_and_generate(self, context: Dict[str, Any], title: Optional[str] = None) -> Optional[str]:
         """
-        Генерация контента через парсинг 200 слов + генерация на основе этих данных (режим 2: parse_and_generate)
+        Генерация контента через парсинг фрагмента новости + генерация (режим 2: parse_and_generate)
         
         Алгоритм:
-        1. Парсим 200 слов из интернета по категории и ключевым словам
-        2. Добавляем спарсенные данные в контекст как parsed_content_200_words
+        1. Парсим фрагмент (ARTICLE_PARSED_NEWS_TARGET_WORDS) по категории и ключевым словам
+        2. Добавляем спарсенные данные в контекст как parsed_content_200_words / parsed_news_content
         3. Генерируем полный текст (800-1300 слов) через AI на основе спарсенных данных и промпта
         """
         logger.info("[MODE] Режим: parse_and_generate (парсинг 200 слов + генерация)")
@@ -1351,17 +1386,19 @@ class ArticleGeneratorService:
             parsed_url = ''
             
             if 'parsed_news_content' in context and context.get('parsed_news_content'):
-                # Используем уже спарсенные новости (берем первые 200 слов из 250)
+                # Уже спарсенный текст; ужимаем до лимита настроек
+                _lim = getattr(settings, 'ARTICLE_PARSED_NEWS_TARGET_WORDS', 480) or 480
                 news_text = context['parsed_news_content']
-                words = news_text.split()[:200]
+                words = news_text.split()[:_lim]
                 parsed_text_200_words = ' '.join(words)
                 parsed_source = context.get('news_source', 'Unknown')
                 parsed_url = context.get('news_url', '')
                 logger.info(f"[REUSE] Используются уже спарсенные новости из context: {len(parsed_text_200_words.split())} слов из источника: {parsed_source}")
             else:
                 # Fallback: Парсим только если не были спарсены ранее
-                logger.info(f"[PARSE] Парсинг 200 слов для категории: {category_for_search.title}, keywords: {keywords}")
-                parsed_news = self._search_and_parse_news(category_for_search, keywords, target_words=200)
+                _lim = getattr(settings, 'ARTICLE_PARSED_NEWS_TARGET_WORDS', 480) or 480
+                logger.info(f"[PARSE] Парсинг ~{_lim} слов для категории: {category_for_search.title}, keywords: {keywords}")
+                parsed_news = self._search_and_parse_news(category_for_search, keywords, target_words=_lim)
                 
                 if not parsed_news or not parsed_news.get('parsed_text'):
                     logger.warning("[WARNING] Не удалось спарсить 200 слов. Используется режим generate без парсинга.")
@@ -1375,6 +1412,13 @@ class ArticleGeneratorService:
             # Добавляем спарсенные данные в контекст
             context_with_parsed = {**context}
             context_with_parsed['parsed_content_200_words'] = parsed_text_200_words
+            # Совпадает с плейсхолдером {parsed_news_content} в типовых промптах
+            context_with_parsed['parsed_news_content'] = parsed_text_200_words
+            if parsed_url:
+                context_with_parsed['news_url'] = parsed_url
+            if parsed_source:
+                context_with_parsed['news_source'] = parsed_source
+            
             context_with_parsed['parsed_source'] = parsed_source
             context_with_parsed['parsed_url'] = parsed_url
             
