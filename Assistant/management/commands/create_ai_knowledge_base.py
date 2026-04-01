@@ -1,5 +1,32 @@
 from django.core.management.base import BaseCommand
+from django.db.models import Count
+
 from Assistant.models import AssistantKnowledge
+
+
+def _merge_duplicate_knowledge_by_title(stdout_write=None):
+    """
+    У одного title не должно быть нескольких строк — иначе update_or_create падает с
+    MultipleObjectsReturned. Оставляем запись с максимальным id, остальные удаляем.
+    """
+    dup_titles = (
+        AssistantKnowledge.objects.values('title')
+        .annotate(n=Count('id'))
+        .filter(n__gt=1)
+    )
+    removed = 0
+    for row in dup_titles:
+        title = row['title']
+        qs = AssistantKnowledge.objects.filter(title=title).order_by('-updated_at', '-id')
+        keeper = qs.first()
+        if not keeper:
+            continue
+        n_extra, _ = qs.exclude(pk=keeper.pk).delete()
+        removed += n_extra
+        if stdout_write and n_extra:
+            short = (title[:57] + '…') if title and len(title) > 60 else (title or '—')
+            stdout_write(f'  [dedupe] «{short}»: удалено дублей {n_extra}, оставлен id={keeper.pk}')
+    return removed
 
 
 class Command(BaseCommand):
@@ -7,7 +34,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.stdout.write('Создание базы знаний для AI-ассистента...')
-        
+
+        merged = _merge_duplicate_knowledge_by_title(self.stdout.write)
+        if merged:
+            self.stdout.write(self.style.WARNING(f'Устранены дубликаты по title (удалено строк: {merged})'))
+
         # Удаляем старые записи (опционально)
         # AssistantKnowledge.objects.all().delete()
         
