@@ -329,8 +329,8 @@ class ArticleGeneratorService:
                 
                 if word_count < 800:
                     logger.warning(f"[WARNING] Контент слишком короткий ({word_count} слов, требуется 800-1300). Перегенерирую...")
-                    # Перегенерируем с дополнительным промптом (только для режима AI генерации)
-                    if self.prompt_template.content_generation_mode == 'generate':
+                    # Повторный проход с усиленным требованием объёма (generate и parse_and_generate)
+                    if self.prompt_template.content_generation_mode in ('generate', 'parse_and_generate'):
                         context['min_words'] = 800
                         context['max_words'] = 1300
                         # title еще не сгенерирован, передаем None
@@ -1230,7 +1230,7 @@ class ArticleGeneratorService:
         if mode == 'generate':
             return self._generate_content_ai(context, title, retry)
         elif mode == 'parse_and_generate':
-            return self._generate_content_parse_and_generate(context, title)
+            return self._generate_content_parse_and_generate(context, title, retry=retry)
         elif mode == 'full_parse':
             return self._generate_content_full_parse(context, title)
         else:
@@ -1341,8 +1341,10 @@ class ArticleGeneratorService:
             logger.error(f"[ERROR] Ошибка генерации контента: {str(e)}")
             return None
     
-    """Генерация контента через парсинг 200 слов + генерация на основе этих данных (режим 2: parse_and_generate)"""
-    def _generate_content_parse_and_generate(self, context: Dict[str, Any], title: Optional[str] = None) -> Optional[str]:
+    """Генерация контента через парсинг фрагмента новости + генерация (режим 2: parse_and_generate)"""
+    def _generate_content_parse_and_generate(
+        self, context: Dict[str, Any], title: Optional[str] = None, retry: bool = False
+    ) -> Optional[str]:
         """
         Генерация контента через парсинг фрагмента новости + генерация (режим 2: parse_and_generate)
         
@@ -1351,7 +1353,7 @@ class ArticleGeneratorService:
         2. Добавляем спарсенные данные в контекст как parsed_content_200_words / parsed_news_content
         3. Генерируем полный текст (800-1300 слов) через AI на основе спарсенных данных и промпта
         """
-        logger.info("[MODE] Режим: parse_and_generate (парсинг 200 слов + генерация)")
+        logger.info("[MODE] Режим: parse_and_generate (фрагмент новости + генерация)")
         
         try:
             # Получаем категорию для поиска
@@ -1423,8 +1425,8 @@ class ArticleGeneratorService:
             context_with_parsed['parsed_url'] = parsed_url
             
             # Генерируем полный текст через AI на основе спарсенных данных
-            logger.info("[GENERATE] Генерация полного текста на основе спарсенных 200 слов...")
-            return self._generate_content_ai(context_with_parsed, title or None, retry=False)
+            logger.info("[GENERATE] Генерация полного текста на основе фрагмента новости...")
+            return self._generate_content_ai(context_with_parsed, title or None, retry=retry)
             
         except Exception as e:
             logger.error(f"[ERROR] Ошибка в режиме parse_and_generate: {str(e)}", exc_info=True)

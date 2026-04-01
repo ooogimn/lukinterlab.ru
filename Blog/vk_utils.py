@@ -15,28 +15,45 @@ VK_API_VERSION = '5.131'
 MAX_VK_MESSAGE_CHARS = 3948
 
 
-def _collapse_ws(text: str) -> str:
-    return re.sub(r'\s+', ' ', (text or '').strip())
+def strip_test_article_marker(text: str) -> str:
+    """Убирает служебную пометку тестовой генерации в любом месте строки."""
+    if not text:
+        return ''
+    return re.sub(r'\[TEST_ARTICLE\]\s*', '', text, flags=re.I).strip()
+
+
+def is_test_article_description(text: str) -> bool:
+    return bool(text and re.search(r'\[TEST_ARTICLE\]', text, re.I))
 
 
 def _html_or_markdown_to_plain(text: str) -> str:
-    """Текст для анонса VK: убираем теги и типичный Markdown (#, **, списки)."""
+    """Грубая очистка для анонса VK: HTML, Markdown-разметка, служебные метки, без схлопывания в одну строку."""
     if not text:
         return ''
-    s = strip_tags(text)
-    lines = []
-    for line in s.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        if line.startswith('#'):
-            line = re.sub(r'^#+\s*', '', line)
-        line = re.sub(r'\*\*([^*]+)\*\*', r'\1', line)
-        line = re.sub(r'\*([^*]+)\*', r'\1', line)
-        if re.match(r'^[-*]\s+', line):
-            line = re.sub(r'^[-*]\s+', '', line)
-        lines.append(line)
-    return _collapse_ws(' '.join(lines))
+    t = strip_test_article_marker(text)
+    t = strip_tags(t)
+    # Остатки угловых скобок после strip_tags
+    t = re.sub(r'<[^>]+>', '', t)
+    # Markdown: решётки, жирность/курсив без аккуратного парсинга
+    t = re.sub(r'#+\s*', '', t)
+    t = re.sub(r'[*_]{1,3}', '', t)
+    # Разделители «---», длинные тире
+    t = re.sub(r'\s*[—\-]{2,}\s*', '\n', t)
+    # Маркеры списков в начале строки
+    t = re.sub(r'(?m)^\s*[-*]\s+', '', t)
+    lines = [ln.strip() for ln in t.splitlines() if ln.strip()]
+    t = '\n\n'.join(lines)
+    return re.sub(r'\n{3,}', '\n\n', t).strip()
+
+
+def _truncate_at_word_boundary(text: str, max_chars: int) -> str:
+    """Обрезка по лимиту VK без обрыва на полуслове (если возможно)."""
+    if max_chars < 8 or len(text) <= max_chars:
+        return text
+    cut = text[: max_chars - 1].rstrip()
+    if ' ' in cut:
+        cut = cut.rsplit(' ', 1)[0].rstrip()
+    return cut + '…'
 
 
 def _strip_common_prefix(a: str, b: str, min_len: int = 80) -> tuple[str, str]:
@@ -69,7 +86,14 @@ def _build_vk_message(post, site_url: str) -> str:
     if budget < 120:
         budget = 120
 
-    desc = _html_or_markdown_to_plain(post.description or '')
+    raw_desc = post.description or ''
+    # Тест из дашборда: в description попадает [TEST_ARTICLE] и часто дубль начала статьи в Markdown —
+    # для VK берём анонс только из тела (после заголовка поста).
+    if is_test_article_description(raw_desc):
+        desc = ''
+    else:
+        desc = _html_or_markdown_to_plain(raw_desc)
+
     content = _html_or_markdown_to_plain(post.content or '')
 
     _, content = _strip_common_prefix(desc, content)
@@ -85,7 +109,7 @@ def _build_vk_message(post, site_url: str) -> str:
 
     body = body.strip()
     if len(body) > budget:
-        body = body[: budget - 1] + '…'
+        body = _truncate_at_word_boundary(body, budget)
 
     return header + body + footer
 

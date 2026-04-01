@@ -5,6 +5,8 @@ from django.core.files.storage import default_storage
 import os
 import logging
 
+from Blog.vk_utils import is_test_article_description
+
 logger = logging.getLogger(__name__)
 
 def send_to_telegram(post):
@@ -36,8 +38,9 @@ def send_to_telegram(post):
     
     # Подготовьте текст сообщения
     # Формат: Заголовок + Описание (первые 200 слов) + Ссылка "Читать далее"
+    # Тест из дашборда помечает description как [TEST_ARTICLE] — в канал не дублируем этот сырой текст.
     message = f"*{post.title}*\n\n"
-    if post.description:
+    if post.description and not is_test_article_description(post.description):
         message += f"{post.description}\n\n"
     message += f"👉 [Читать далее]({site_url}{post.get_absolute_url()})"
     
