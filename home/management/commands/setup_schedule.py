@@ -1,5 +1,8 @@
 """
-Management команда для настройки расписания задач django-Q
+Management команда для настройки расписания задач django-Q.
+
+SEO и база знаний обновляются только по этим CRON, а не при AppConfig.ready —
+иначе каждый процесс (runserver, qcluster, migrate) дублировал бы тяжёлые call_command и портил логи.
 """
 from django.core.management.base import BaseCommand
 from django_q.models import Schedule
