@@ -19,6 +19,44 @@ def _collapse_ws(text: str) -> str:
     return re.sub(r'\s+', ' ', (text or '').strip())
 
 
+def _html_or_markdown_to_plain(text: str) -> str:
+    """Текст для анонса VK: убираем теги и типичный Markdown (#, **, списки)."""
+    if not text:
+        return ''
+    s = strip_tags(text)
+    lines = []
+    for line in s.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith('#'):
+            line = re.sub(r'^#+\s*', '', line)
+        line = re.sub(r'\*\*([^*]+)\*\*', r'\1', line)
+        line = re.sub(r'\*([^*]+)\*', r'\1', line)
+        if re.match(r'^[-*]\s+', line):
+            line = re.sub(r'^[-*]\s+', '', line)
+        lines.append(line)
+    return _collapse_ws(' '.join(lines))
+
+
+def _strip_common_prefix(a: str, b: str, min_len: int = 80) -> tuple[str, str]:
+    """Если b начинается с теми же словами, что и a — отрезаем префикс у b (анонс без дубля)."""
+    if not a or not b or len(a) < min_len:
+        return a, b
+    al = a.lower()
+    bl = b.lower()
+    if bl.startswith(al[: min(len(al), 600)]):
+        return a, b[len(a) :].strip()
+    # Совпадение по первым словам (описание часто = начало статьи)
+    aw = a.split()
+    if len(aw) < 12:
+        return a, b
+    prefix = ' '.join(aw[:20])
+    if len(prefix) >= min_len and bl.startswith(prefix.lower()):
+        return a, b[len(prefix) :].lstrip(' ,.;—-')
+    return a, b
+
+
 def _build_vk_message(post, site_url: str) -> str:
     """
     Текст поста: заголовок + максимум текста из описания и начала статьи,
@@ -31,8 +69,10 @@ def _build_vk_message(post, site_url: str) -> str:
     if budget < 120:
         budget = 120
 
-    desc = _collapse_ws(strip_tags(post.description or ''))
-    content = _collapse_ws(strip_tags(post.content or ''))
+    desc = _html_or_markdown_to_plain(post.description or '')
+    content = _html_or_markdown_to_plain(post.content or '')
+
+    _, content = _strip_common_prefix(desc, content)
 
     body = desc[:budget] if desc else ''
     used = len(body)

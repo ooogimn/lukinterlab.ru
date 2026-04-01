@@ -574,14 +574,27 @@ def generate_table_of_contents(html_content, min_headings=3):
         toc_items = []
         processed_content = html_content
         heading_count = 0
-        
+        skip_faq_subheads = False
+        _faq_title_re = re.compile(
+            r'(?:частые вопросы|часто задаваемые|❓\s*часты|\bfaq\b|html[-\s]*блок\s*faq)',
+            re.IGNORECASE,
+        )
+
         for level, heading_text in headings:
             heading_count += 1
             # Очищаем текст заголовка от HTML
             clean_text = re.sub(r'<[^>]+>', '', heading_text).strip()
             if not clean_text:
                 continue
-            
+            lv = int(level)
+            if lv == 2:
+                if _faq_title_re.search(clean_text):
+                    skip_faq_subheads = True
+                    continue
+                skip_faq_subheads = False
+            elif lv == 3 and skip_faq_subheads:
+                continue
+
             # Генерируем уникальный ID для якоря
             # Используем первые слова заголовка + номер для уникальности
             anchor_id = f"heading-{heading_count}-{hashlib.md5(clean_text.encode()).hexdigest()[:8]}"

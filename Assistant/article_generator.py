@@ -24,6 +24,13 @@ from .category_rotator import CategoryRotator
 from .seo_integration import SEOArticleService
 from .search_engines_submitter import SearchEnginesSubmitter
 from Blog.models import Post, Category
+from Blog.markup import (
+    article_markup_to_html,
+    normalize_additional_section_to_html,
+    strip_leading_inline_faq_html_fragment,
+    strip_leading_inline_faq_markdown,
+    strip_trailing_faq_rubric_markdown,
+)
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -396,6 +403,16 @@ class ArticleGeneratorService:
                 logger.info("[IMAGE] Генерация изображения отключена в шаблоне - элемент исключен из работы")
             
             # 5. Генерация дополнительной секции (если включено и промпт заполнен)
+            # 5а. Markdown → HTML, вырезание дублирующего FAQ из основного текста (FAQ задаётся доп. секцией)
+            if self.prompt_template.generate_content and content:
+                content = strip_trailing_faq_rubric_markdown(content)
+                if self.prompt_template.generate_additional_section and self.prompt_template.additional_section_prompt:
+                    content = strip_leading_inline_faq_markdown(content)
+                    content = strip_leading_inline_faq_html_fragment(content)
+                content = article_markup_to_html(content)
+                if self.prompt_template.generate_additional_section and self.prompt_template.additional_section_prompt:
+                    content = strip_leading_inline_faq_html_fragment(content)
+
             if self.prompt_template.generate_additional_section and self.prompt_template.additional_section_prompt and self.prompt_template.generate_content and content:
                 if self.progress_callback:
                     self.progress_callback('additional', 'Генерация дополнительной секции...', 85)
@@ -406,6 +423,8 @@ class ArticleGeneratorService:
                 self._generation_stats['additional_section'] = {'time': round(additional_time, 2)}
                 if additional_section:
                     logger.info("[OK] Дополнительная секция сгенерирована")
+                    additional_section = normalize_additional_section_to_html(additional_section)
+                    additional_section = strip_trailing_faq_rubric_markdown(additional_section)
                     # Сохраняем дополнительную секцию отдельно для отображения
                     if not hasattr(self, '_additional_section'):
                         self._additional_section = {}
@@ -1877,16 +1896,16 @@ class ArticleGeneratorService:
     
     """Очистка текста от лишних символов"""
     def _clean_text(self, text: str) -> str:
-        """Очистка текста от лишних символов"""
+        """Очистка: сжатие пробелов внутри строк, сохранение переводов строк (Markdown/HTML)."""
         if not text:
             return ""
-        
-        # Убираем лишние пробелы
-        text = ' '.join(text.split())
-        
-        # Убираем кавычки в начале и конце, если они есть
+
+        lines = [re.sub(r'[ \t]+', ' ', line).strip() for line in text.splitlines()]
+        text = '\n'.join(lines)
+        while '\n\n\n' in text:
+            text = text.replace('\n\n\n', '\n\n')
+
         text = text.strip('"\'«»')
-        
         return text.strip()
     
     """Очистка контекста для JSON сериализации"""
