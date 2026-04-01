@@ -65,6 +65,12 @@ MAX_AUTO_POST = env_bool("MAX_AUTO_POST", False)
 _social_words = env_int("SOCIAL_ANNOUNCE_MAX_WORDS", 100)
 SOCIAL_ANNOUNCE_MAX_WORDS = 100 if _social_words is None else max(0, _social_words)
 
+# Один кадр превью для VK и MAX: ширина×высота (альбом, по умолчанию как OG 1200×630), центр-обрезка, JPEG.
+_ssw = env_int("SOCIAL_SHARE_IMAGE_WIDTH", 1200)
+_ssh = env_int("SOCIAL_SHARE_IMAGE_HEIGHT", 630)
+SOCIAL_SHARE_IMAGE_WIDTH = 1200 if not _ssw or _ssw < 320 else min(int(_ssw), 4096)
+SOCIAL_SHARE_IMAGE_HEIGHT = 630 if not _ssh or _ssh < 180 else min(int(_ssh), 4096)
+
 # VK Callback API: URL вида {SITE_URL}/callback/{VK_CALLBACK_PATH_SLUG}/ (метод POST, JSON).
 VK_CALLBACK_PATH_SLUG = env_str("VK_CALLBACK_PATH_SLUG", "")
 VK_CALLBACK_CONFIRMATION = env_str("VK_CALLBACK_CONFIRMATION", "")

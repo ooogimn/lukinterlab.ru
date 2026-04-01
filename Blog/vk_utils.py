@@ -145,13 +145,53 @@ def send_to_vk_by_id(post_id: int):
 
 def _prepare_preview_bytes(post):
     """
-    Байты и имя файла для загрузки превью. WebP конвертируем в JPEG —
-    иначе загрузка на стену VK часто падает.
+    Байты для загрузки превью в VK и MAX: единый альбомный кадр (по умолчанию 1200×630),
+    масштаб с центр-обрезкой (ImageOps.fit), затем JPEG. И квадрат, и вертикаль — приводятся к одному формату.
     """
     from pathlib import Path
 
     name = Path(post.kartinka.name).name if post.kartinka.name else 'photo.jpg'
     data = post.kartinka.read()
+
+    w = int(getattr(settings, 'SOCIAL_SHARE_IMAGE_WIDTH', 1200))
+    h = int(getattr(settings, 'SOCIAL_SHARE_IMAGE_HEIGHT', 630))
+    if w < 320 or h < 180:
+        w, h = 1200, 630
+
+    try:
+        from PIL import Image, ImageOps
+
+        im = Image.open(io.BytesIO(data))
+        im.load()
+
+        if im.mode in ('RGBA', 'LA'):
+            background = Image.new('RGB', im.size, (255, 255, 255))
+            if im.mode == 'RGBA':
+                background.paste(im, mask=im.split()[3])
+            else:
+                background.paste(im, mask=im.split()[1])
+            im = background
+        elif im.mode == 'P':
+            im = im.convert('RGBA')
+            background = Image.new('RGB', im.size, (255, 255, 255))
+            background.paste(im, mask=im.split()[3])
+            im = background
+        elif im.mode != 'RGB':
+            im = im.convert('RGB')
+
+        fitted = ImageOps.fit(
+            im,
+            (w, h),
+            method=Image.Resampling.LANCZOS,
+            centering=(0.5, 0.5),
+        )
+        out = io.BytesIO()
+        fitted.save(out, format='JPEG', quality=88, optimize=True)
+        out.seek(0)
+        return out, 'social_preview.jpg', 'image/jpeg'
+    except Exception as e:
+        logger.warning('Соц. превью: PIL-нормализация не удалась (%s), запасной путь', e)
+
     is_webp = name.lower().endswith('.webp') or (
         len(data) >= 12 and data[0:4] == b'RIFF' and data[8:12] == b'WEBP'
     )
