@@ -124,8 +124,23 @@
             </div>
         </header>
 
-        <!-- Featured Image -->
-        {% if post.kartinka and post.has_image %}
+        <!-- Featured Image or Video -->
+        {% if post.video_file %}
+        <div class="mb-12 relative">
+            <video src="{{ post.video_file.url }}" 
+                   class="w-full max-h-[80vh] object-contain rounded-2xl shadow-lg bg-black"
+                   controls 
+                   autoplay 
+                   preload="metadata">
+            </video>
+            <!-- Category Badge -->
+            <div class="absolute top-4 right-4 z-10">
+                <a href="{% url 'Blog:post_list' %}?category={{ post.category.id }}" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-200 inline-block">
+                    {{ post.category.title }}
+                </a>
+            </div>
+        </div>
+        {% elif post.kartinka and post.has_image %}
         <div class="mb-12 relative">
             <img src="{{ post.kartinka.url }}" 
                  alt="{% if post.meta_description %}{{ post.meta_description|truncatewords:10 }} - AI и ИИ технологии LukInterLab{% else %}{{ post.title }} - искусственный интеллект, AI, ИИ, LLM{% endif %}" 

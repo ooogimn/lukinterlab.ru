@@ -161,6 +161,69 @@ def _max_build_image_attachment(token: str, image_bytes: bytes, filename: str, m
         return None
     return {'type': 'image', 'payload': payload}
 
+def _max_build_video_attachment(token: str, file_path: str, mime: str):
+    """
+    POST /uploads?type=video, затем POST на upload url с полем data (multipart).
+    """
+    base = MAX_PLATFORM_API.rstrip('/')
+    try:
+        up = requests.post(
+            f'{base}/uploads',
+            params={'type': 'video'},
+            headers={'Authorization': token},
+            timeout=30,
+        )
+        up.raise_for_status()
+        meta = up.json()
+    except (requests.RequestException, ValueError) as e:
+        logger.error('MAX: /uploads (video): %s', e)
+        return None
+
+    upload_url = meta.get('url') if isinstance(meta, dict) else None
+    if not upload_url:
+        logger.error('MAX: /uploads (video): нет url в ответе: %s', meta)
+        return None
+
+    import os
+    try:
+        with open(file_path, 'rb') as f:
+            ul = requests.post(
+                upload_url,
+                headers={'Authorization': token},
+                files={'data': (os.path.basename(file_path), f, mime)},
+                timeout=600,
+            )
+            ul.raise_for_status()
+            try:
+                uploaded = ul.json()
+            except ValueError:
+                logger.error('MAX: ответ загрузки видео не JSON: %s', (ul.text or '')[:400])
+                return None
+    except requests.RequestException as e:
+        logger.error('MAX: загрузка видео на CDN: %s', e)
+        return None
+
+    # Полезная нагрузка (`payload`) почти всегда содержит `token` и/или `url`.
+    # Иногда может вернуть просто `id` или `video_id`.
+    payload = {}
+    if isinstance(uploaded, dict):
+        if 'id' in uploaded:
+            payload['id'] = uploaded['id']
+        if 'video_id' in uploaded:
+            payload['video_id'] = uploaded['video_id']
+        elif 'photo_id' in uploaded:
+            payload['photo_id'] = uploaded['photo_id']
+        if uploaded.get('token'):
+            payload['token'] = uploaded['token']
+        if uploaded.get('url'):
+            payload['url'] = uploaded['url']
+
+    if not payload:
+        logger.error('MAX: не разобрать payload видео: %s', uploaded)
+        return None
+        
+    return {'type': 'video', 'payload': payload}
+
 
 def _max_response_attachment_not_ready(response: requests.Response) -> bool:
     try:
@@ -216,6 +279,7 @@ def send_to_max(post):
             'slug',
             'category_id',
             'kartinka',
+            'video_file',
         ]
     )
     if post.max_posted_at:
@@ -233,13 +297,24 @@ def send_to_max(post):
 
     logger.info('MAX: отправка анонса «%s»', (post.title or '')[:80])
 
-    image_attachment = None
-    if post.kartinka:
+    media_attachment = None
+    if post.video_file:
+        try:
+            import mimetypes
+            mime = mimetypes.guess_type(post.video_file.name)[0] or 'video/mp4'
+            media_attachment = _max_build_video_attachment(token, post.video_file.path, mime)
+            if not media_attachment:
+                logger.warning('MAX: «%s» — видео не прикреплено, уходит только текст', (post.title or '')[:80])
+            else:
+                logger.info('MAX: «%s» — вложение video подготовлено', (post.title or '')[:80])
+        except Exception as e:
+            logger.warning('MAX: видео не загрузилось: %s', e)
+    elif post.kartinka:
         try:
             file_obj, upload_name, mime = _prepare_preview_bytes(post)
             raw = file_obj.read()
-            image_attachment = _max_build_image_attachment(token, raw, upload_name, mime)
-            if not image_attachment:
+            media_attachment = _max_build_image_attachment(token, raw, upload_name, mime)
+            if not media_attachment:
                 logger.warning('MAX: «%s» — картинка не прикреплена, уходит только текст', (post.title or '')[:80])
             else:
                 logger.info('MAX: «%s» — вложение image подготовлено (upload + payload)', (post.title or '')[:80])
@@ -247,18 +322,18 @@ def send_to_max(post):
             logger.warning('MAX: превью (kartinka) не подготовилось, только текст: %s', e)
     else:
         logger.info(
-            'MAX: «%s» — поле kartinka пустое, в MAX уходит только текст (без attachments image)',
+            'MAX: «%s» — поле kartinka и video пустое, в MAX уходит только текст',
             (post.title or '')[:80],
         )
 
     url = f"{MAX_PLATFORM_API.rstrip('/')}/messages"
     body = {'text': text}
-    if image_attachment:
-        body['attachments'] = [image_attachment]
+    if media_attachment:
+        body['attachments'] = [media_attachment]
 
     # После загрузки файла API рекомендует паузу; при attachment.not.ready — повтор с бэкоффом.
     backoff_seconds = (1.5, 2.5, 4.0, 8.0, 16.0)
-    delays = list(backoff_seconds) if image_attachment else [0]
+    delays = list(backoff_seconds) if media_attachment else [0]
     try:
         for attempt, wait in enumerate(delays):
             if wait:

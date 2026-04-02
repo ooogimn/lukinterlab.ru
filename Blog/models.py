@@ -72,6 +72,13 @@ class Post(models.Model):
         options={'quality': 80}
     )
     
+    video_file = models.FileField(
+        verbose_name='Видео-файл (вместо превью)', 
+        upload_to='videos/', 
+        blank=True, 
+        null=True, 
+        help_text='Загрузите MP4 видео для автовоспроизведения в ленте. Если видео загружено, оно будет показано вместо картинки (ВК, MAX, Блог).'
+    )
     video = RichTextUploadingField(config_name='vstavka', verbose_name='Видео', blank=True, null=True, )
     status = models.CharField(choices=STATUS_OPTIONS, default='draft', verbose_name='Статус поста', max_length=10)
     created = models.DateTimeField(auto_now_add=True, verbose_name='Время добавления')

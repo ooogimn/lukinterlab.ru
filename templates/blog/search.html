@@ -113,7 +113,9 @@ document.getElementById('mobile-menu-button').addEventListener('click', function
                 <article class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden group">
                     <!-- Post Image -->
                     <div class="relative overflow-hidden">
-                        {% if post.kartinka %}
+                        {% if post.video_file %}
+                            <video src="{{ post.video_file.url }}" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110" autoplay muted loop playsinline></video>
+                        {% elif post.kartinka %}
                             <img src="{{ post.kartinka.url }}" alt="{{ post.title }}" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" width="400" height="300">
                         {% elif post.video %}
                             <div class="w-full h-64 bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center">

@@ -179,27 +179,16 @@ def _prepare_preview_bytes(post):
         elif im.mode != 'RGB':
             im = im.convert('RGB')
 
-        # Убрана жесткая обрезка ImageOps.fit для сохранения всех деталей.
-        # Теперь мы создаем фон 1200х630 из размытой версии картинки 
-        # и помещаем оригинальную картинку строго по центру, чтобы соцсети не делали "квадраты".
-        from PIL import ImageFilter
-        
-        # 1. Создаем размытый фон 1200x630
-        background = im.resize((w, h), Image.Resampling.LANCZOS)
-        background = background.filter(ImageFilter.GaussianBlur(30))
-        # Слегка затемняем фон для контраста
-        background = background.point(lambda p: p * 0.8)
-        
-        # 2. Уменьшаем оригинал так, чтобы он влез в 1200x630
-        im_front = im.copy()
-        im_front.thumbnail((w, h), Image.Resampling.LANCZOS)
-        
-        # 3. Накладываем оригинал по центру
-        offset = ((w - im_front.size[0]) // 2, (h - im_front.size[1]) // 2)
-        background.paste(im_front, offset)
+        # Возвращаем жесткую обрезку (как было изначально)
+        fitted = ImageOps.fit(
+            im,
+            (w, h),
+            method=Image.Resampling.LANCZOS,
+            centering=(0.5, 0.5),
+        )
         
         out = io.BytesIO()
-        background.save(out, format='JPEG', quality=88, optimize=True)
+        fitted.save(out, format='JPEG', quality=88, optimize=True)
         out.seek(0)
         return out, 'social_preview.jpg', 'image/jpeg'
     except Exception as e:
@@ -250,7 +239,14 @@ def send_to_vk(post):
 
     attachments = []
     user_photo_tok = (getattr(settings, 'VK_USER_ACCESS_TOKEN', None) or '').strip()
-    if post.kartinka:
+    
+    if post.video_file:
+        att = _upload_wall_video(post, user_photo_tok or access_token, group_id)
+        if att:
+            attachments.append(att)
+        else:
+            logger.warning('VK: не удалось загрузить видео, возможно токен не имеет прав video')
+    elif post.kartinka:
         if user_photo_tok:
             att = _upload_wall_photo(post, user_photo_tok, group_id)
             if att:
@@ -381,3 +377,63 @@ def _upload_wall_photo(post, user_access_token: str, group_id: int):
     except Exception as e:
         logger.exception('VK: не удалось прикрепить фото, пост будет только текстом: %s', e)
         return None
+
+def _upload_wall_video(post, access_token: str, group_id: int):
+    """
+    Загрузка видео для стены сообщества.
+    Токен должен иметь права "video".
+    """
+    try:
+        if not post.video_file:
+            return None
+            
+        # 1. Получаем URL для загрузки видео
+        save_response = requests.post(
+            'https://api.vk.com/method/video.save',
+            data={
+                'name': (post.title or '')[:128],
+                'description': (post.meta_description or '')[:200],
+                'group_id': group_id,
+                'wallpost': 0, # Прикрепим видео сами к посту
+                'access_token': access_token,
+                'v': VK_API_VERSION,
+            },
+            timeout=30,
+        )
+        save_response.raise_for_status()
+        save_data = save_response.json()
+        
+        if 'error' in save_data:
+            logger.error('VK video.save error: %s', save_data['error'])
+            return None
+            
+        upload_url = save_data['response']['upload_url']
+        video_id = save_data['response']['video_id']
+        owner_id = save_data['response']['owner_id']
+        
+        # 2. Загружаем сам файл
+        with open(post.video_file.path, 'rb') as f:
+            upload_response = requests.post(
+                upload_url,
+                files={'video_file': f},
+                timeout=600, # Видео может грузиться долго
+            )
+            upload_response.raise_for_status()
+            try:
+                upload_data = upload_response.json()
+            except ValueError:
+                logger.error('VK upload video: не JSON в ответе, статус=%s', upload_response.status_code)
+                return None
+                
+            if 'error' in upload_data and upload_data.get('size', 1) == 0:
+                logger.warning('VK upload video странная ошибка (size=0, но возможно загружено): %s', upload_data)
+                
+        # 3. Формируем строку attachment
+        att = f'video{owner_id}_{video_id}'
+        logger.info('VK: видео прикреплено к посту (%s)', att)
+        return att
+        
+    except Exception as e:
+        logger.exception('VK: не удалось прикрепить видео: %s', e)
+        return None
+

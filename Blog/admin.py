@@ -126,7 +126,7 @@ class PostAdmin(admin.ModelAdmin):
             'classes': ('wide',)
         }),
         ('Медиа', {
-            'fields': ('kartinka', 'post_photo', 'og_image'),
+            'fields': ('kartinka', 'video_file', 'post_photo', 'og_image'),
             'classes': ('wide',)
         }),
         ('SEO настройки', {
