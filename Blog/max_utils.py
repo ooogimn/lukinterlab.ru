@@ -144,7 +144,11 @@ def _max_build_image_attachment(token: str, image_bytes: bytes, filename: str, m
         try:
             uploaded = ul.json()
         except ValueError:
-            logger.error('MAX: ответ загрузки картинки не JSON: %s', (ul.text or '')[:400])
+            resp_text = (ul.text or '').strip()
+            logger.error('MAX: ответ загрузки картинки не JSON: %s', resp_text[:400])
+            # Если это XML с retval, попробуем понять, успех ли это
+            if '<retval>' in resp_text:
+                logger.info('MAX: ответ загрузки картинки похож на XML: %s', resp_text)
             return None
     except requests.RequestException as e:
         logger.error('MAX: загрузка файла на CDN: %s', e)
@@ -197,7 +201,11 @@ def _max_build_video_attachment(token: str, file_path: str, mime: str):
             try:
                 uploaded = ul.json()
             except ValueError:
-                logger.error('MAX: ответ загрузки видео не JSON: %s', (ul.text or '')[:400])
+                resp_text = (ul.text or '').strip()
+                logger.error('MAX: ответ загрузки видео не JSON: %s', resp_text[:400])
+                # Если это XML с retval=1, это может быть специфический ответ CDN MAX
+                if '<retval>1</retval>' in resp_text:
+                    logger.info('MAX: ответ видео-загрузки содержит <retval>1</retval>. Возможно, файл принят, но payload не выдан.')
                 return None
     except requests.RequestException as e:
         logger.error('MAX: загрузка видео на CDN: %s', e)

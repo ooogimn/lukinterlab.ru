@@ -1,6 +1,7 @@
 import io
 import logging
 import re
+import html
 from mimetypes import guess_type
 
 import requests
@@ -27,10 +28,16 @@ def is_test_article_description(text: str) -> bool:
 
 
 def _html_or_markdown_to_plain(text: str) -> str:
-    """Грубая очистка для анонса VK: HTML, Markdown-разметка, служебные метки, без схлопывания в одну строку."""
+    """Грубая очистка для анонса VK/MAX: HTML, Entities, Markdown-разметка, без схлопывания в одну строку."""
     if not text:
         return ''
-    t = strip_test_article_marker(text)
+    
+    # 1. Сначала декодируем HTML сущности (&nbsp;, &mdash; и т.д.)
+    t = html.unescape(text)
+    # 2. Заменяем неразрывные пробелы (\xa0) на обычные
+    t = t.replace('\xa0', ' ')
+    
+    t = strip_test_article_marker(t)
     t = strip_tags(t)
     # Остатки угловых скобок после strip_tags
     t = re.sub(r'<[^>]+>', '', t)

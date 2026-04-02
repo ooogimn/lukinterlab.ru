@@ -534,7 +534,8 @@ def filter_posts_ajax(request):
                 'category_id': post.category.id,
                 'fixed': post.fixed,
                 'image_url': post.kartinka.url if post.kartinka else None,
-                'has_video': bool(post.video),
+                'video_file_url': post.video_file.url if post.video_file else None,
+                'has_video': bool(post.video) or bool(post.video_file),
                 'tags': [tag.name for tag in post.tags.all()],
                 'tags_count': post.tags.count(),
                 'comments_count': post.comments_count

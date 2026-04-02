@@ -217,6 +217,7 @@
 .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -224,6 +225,7 @@
 .line-clamp-3 {
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -421,7 +423,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     let postsHTML = '<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8" id="posts-grid">';
                     
                     data.posts.forEach(post => {
-                        const imageHTML = post.image_url 
+                        const imageHTML = post.video_file_url
+                            ? `<video src="${post.video_file_url}" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110 cursor-pointer" autoplay muted loop playsinline></video>`
+                            : post.image_url 
                             ? `<img src="${post.image_url}" alt="${post.title}" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110 cursor-pointer">`
                             : post.has_video
                             ? `<div class="w-full h-64 bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center cursor-pointer hover:from-primary-200 hover:to-secondary-200 transition-colors">
