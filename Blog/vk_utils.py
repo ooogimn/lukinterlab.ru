@@ -180,10 +180,26 @@ def _prepare_preview_bytes(post):
             im = im.convert('RGB')
 
         # Убрана жесткая обрезка ImageOps.fit для сохранения всех деталей.
-        # Заменяем на пропорциональное уменьшение (thumbnail впишет картинку в w, h)
-        im.thumbnail((w, h), Image.Resampling.LANCZOS)
+        # Теперь мы создаем фон 1200х630 из размытой версии картинки 
+        # и помещаем оригинальную картинку строго по центру, чтобы соцсети не делали "квадраты".
+        from PIL import ImageFilter
+        
+        # 1. Создаем размытый фон 1200x630
+        background = im.resize((w, h), Image.Resampling.LANCZOS)
+        background = background.filter(ImageFilter.GaussianBlur(30))
+        # Слегка затемняем фон для контраста
+        background = background.point(lambda p: p * 0.8)
+        
+        # 2. Уменьшаем оригинал так, чтобы он влез в 1200x630
+        im_front = im.copy()
+        im_front.thumbnail((w, h), Image.Resampling.LANCZOS)
+        
+        # 3. Накладываем оригинал по центру
+        offset = ((w - im_front.size[0]) // 2, (h - im_front.size[1]) // 2)
+        background.paste(im_front, offset)
+        
         out = io.BytesIO()
-        im.save(out, format='JPEG', quality=88, optimize=True)
+        background.save(out, format='JPEG', quality=88, optimize=True)
         out.seek(0)
         return out, 'social_preview.jpg', 'image/jpeg'
     except Exception as e:
