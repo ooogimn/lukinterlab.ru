@@ -179,14 +179,11 @@ def _prepare_preview_bytes(post):
         elif im.mode != 'RGB':
             im = im.convert('RGB')
 
-        fitted = ImageOps.fit(
-            im,
-            (w, h),
-            method=Image.Resampling.LANCZOS,
-            centering=(0.5, 0.5),
-        )
+        # Убрана жесткая обрезка ImageOps.fit для сохранения всех деталей.
+        # Заменяем на пропорциональное уменьшение (thumbnail впишет картинку в w, h)
+        im.thumbnail((w, h), Image.Resampling.LANCZOS)
         out = io.BytesIO()
-        fitted.save(out, format='JPEG', quality=88, optimize=True)
+        im.save(out, format='JPEG', quality=88, optimize=True)
         out.seek(0)
         return out, 'social_preview.jpg', 'image/jpeg'
     except Exception as e:

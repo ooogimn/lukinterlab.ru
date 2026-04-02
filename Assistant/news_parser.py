@@ -80,6 +80,16 @@ class NewsParserService:
                 'language': 'ru'
             },
             {
+                'name': 'DuckDuckGo (Глобальный поиск)',
+                'type': 'html',
+                'base_url': 'https://html.duckduckgo.com',
+                'search_url': 'https://html.duckduckgo.com/html/?q={query} новости IT AI',
+                'article_selector': '.result__title a.result__url',
+                'title_selector': 'h2',
+                'enabled': True,
+                'language': 'ru'
+            },
+            {
                 'name': 'IXBT.com',
                 'type': 'html',
                 'base_url': 'https://www.ixbt.com',

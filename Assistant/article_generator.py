@@ -196,9 +196,13 @@ class ArticleGeneratorService:
                     category_for_publication = test_category
                     logger.info(f"[TEST] Используется категория из параметров: {category_for_publication.title}")
             elif self.schedule:
-                # Для расписаний - используем ротацию или категорию из расписания
-                logger.info("[ROTATE] Выбор категории...")
-                category_for_publication = self._rotate_category()
+                if self.schedule.category:
+                    logger.info("[ROTATE] Категория задана в расписании вручную. Пропускаем умную ротацию.")
+                    category_for_publication = self.schedule.category
+                else:
+                    logger.info("[ROTATE] Категория не задана явно. Выбор категории через ротатор...")
+                    category_for_publication = self._rotate_category()
+                    
                 if not category_for_publication:
                     logger.error("[ERROR] Не удалось выбрать категорию")
                     return None
@@ -789,7 +793,11 @@ class ArticleGeneratorService:
                 if not url:
                     continue
                 
-                # КЭШ ПРОТИВОДУБЛИРОВАНИЯ ОТКЛЮЧЕН - парсим все статьи
+                # Включаем проверку дубликатов: проверяем, не была ли статья уже использована
+                from Blog.models import Post
+                if Post.objects.filter(news_source_url=url).exists():
+                    logger.info(f"[SKIP] Статья {url[:80]}... уже публиковалась ранее, пропускаем.")
+                    continue
                 
                 parsed_count += 1
                 logger.info(f"[PARSE #{parsed_count}] Немедленный парсинг статьи: {url[:80]}...")
