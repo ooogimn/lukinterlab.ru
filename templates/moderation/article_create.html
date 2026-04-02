@@ -1,0 +1,195 @@
+{% extends 'moderation/base.html' %}
+{% load static %}
+
+{% block moderation_content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8 flex items-center justify-between">
+        <div>
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                Создание новой статьи
+            </h1>
+            <p class="text-gray-600">Заполните поля ниже и сохраните статью. Статус определяет, будет ли статья опубликована или останется черновиком.</p>
+        </div>
+        <a href="{% url 'moderation:article_list' %}"
+           class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors font-medium">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Назад к списку
+        </a>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="mb-6 space-y-2">
+        {% for message in messages %}
+        <div class="px-4 py-3 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Form -->
+    <div class="bg-white rounded-2xl shadow-xl p-8">
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- Title -->
+            <div>
+                <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Заголовок статьи *
+                </label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.title.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Slug -->
+            <div>
+                <label for="{{ form.slug.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    URL (slug)
+                </label>
+                {{ form.slug }}
+                <p class="text-xs text-gray-500 mt-1">Оставьте пустым для автоматической генерации из заголовка</p>
+                {% if form.slug.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.slug.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Category & Status -->
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Категория *
+                    </label>
+                    {{ form.category }}
+                    {% if form.category.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.category.errors }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Статус *
+                    </label>
+                    {{ form.status }}
+                    {% if form.status.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.status.errors }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Fixed -->
+            <div class="flex items-center">
+                {{ form.fixed }}
+                <label for="{{ form.fixed.id_for_label }}" class="ml-2 text-sm font-medium text-gray-700">
+                    Отметить как важное (★ Важное)
+                </label>
+            </div>
+
+            <!-- Image -->
+            <div>
+                <label for="{{ form.kartinka.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Превью изображение
+                </label>
+                {{ form.kartinka }}
+                {% if form.kartinka.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.kartinka.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Video File (MP4) -->
+            <div>
+                <label for="{{ form.video_file.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Видео-превью для соцсетей (MP4)
+                </label>
+                <p class="text-xs text-gray-500 mb-3">Загрузите MP4-файл для автопостинга в ВКонтакте и MAX вместо изображения. Также отображается в ленте с автовоспроизведением.</p>
+                {{ form.video_file }}
+                {% if form.video_file.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.video_file.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Описание для Telegram
+                </label>
+                {{ form.description }}
+                <p class="text-xs text-gray-500 mt-1">Только для публикации в Telegram, на сайте не отображается</p>
+                {% if form.description.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.description.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Content -->
+            <div>
+                <label for="{{ form.content.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Основной текст статьи *
+                </label>
+                {{ form.content }}
+                {% if form.content.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.content.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Video (CKEditor embed) -->
+            <div>
+                <label for="{{ form.video.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Видео контент (вставка через редактор)
+                </label>
+                {{ form.video }}
+                {% if form.video.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.video.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Tags -->
+            <div>
+                <label for="{{ form.tags.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Теги
+                </label>
+                {{ form.tags }}
+                <p class="text-xs text-gray-500 mt-1">Введите теги через запятую</p>
+                {% if form.tags.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.tags.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-4 pt-6 border-t border-gray-200">
+                <button type="submit"
+                        class="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white
+                               bg-gradient-to-r from-indigo-600 to-purple-600
+                               hover:from-indigo-500 hover:to-purple-500
+                               shadow-lg hover:shadow-indigo-200
+                               transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Сохранить статью
+                </button>
+                <a href="{% url 'moderation:article_list' %}"
+                   class="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium">
+                    Отмена
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock moderation_content %}
+
+{% block extra_scripts %}
+{% load static %}
+<!-- CKEditor Scripts -->
+<script id="ckeditor-init-script"
+        type="text/javascript"
+        data-ckeditor-basepath="{% static 'ckeditor/ckeditor/' %}">
+</script>
+<script type="text/javascript" src="{% static 'ckeditor/ckeditor/ckeditor.js' %}"></script>
+<script type="text/javascript" src="{% static 'ckeditor/ckeditor-init.js' %}"></script>
+{% endblock %}
+

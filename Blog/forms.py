@@ -79,7 +79,7 @@ class PostEditForm(forms.ModelForm):
     """Форма для редактирования статьи"""
     class Meta:
         model = Post
-        fields = ['title', 'slug', 'category', 'content', 'video', 'kartinka', 'description', 'status', 'fixed', 'tags']
+        fields = ['title', 'slug', 'category', 'content', 'video', 'kartinka', 'video_file', 'description', 'status', 'fixed', 'tags']
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
@@ -100,6 +100,10 @@ class PostEditForm(forms.ModelForm):
             }),
             'kartinka': forms.FileInput(attrs={
                 'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500'
+            }),
+            'video_file': forms.FileInput(attrs={
+                'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
+                'accept': 'video/mp4',
             }),
             'description': forms.Textarea(attrs={
                 'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500',

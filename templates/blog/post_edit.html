@@ -225,6 +225,28 @@ document.getElementById('mobile-menu-button').addEventListener('click', function
                     {% endif %}
                 </div>
 
+                <!-- Video File (MP4 для соцсетей) -->
+                <div>
+                    <label for="{{ form.video_file.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Видео-превью для соцсетей (MP4)
+                    </label>
+                    <p class="text-xs text-gray-500 mb-3">Загрузите MP4-файл, который будет использоваться при автопостинге в ВКонтакте и МАX вместо изображения. Отображается также в ленте на сайте с автовоспроизведением.</p>
+                    {% if post.video_file %}
+                    <div class="mb-4">
+                        <video src="{{ post.video_file.url }}" controls muted playsinline
+                               class="w-64 rounded-lg border border-gray-300 bg-black"
+                               style="max-height: 200px;">
+                            Ваш браузер не поддерживает видео.
+                        </video>
+                        <p class="text-xs text-gray-500 mt-2">Текущее видео</p>
+                    </div>
+                    {% endif %}
+                    {{ form.video_file }}
+                    {% if form.video_file.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.video_file.errors }}</p>
+                    {% endif %}
+                </div>
+
                 <!-- Description for Telegram -->
                 <div>
                     <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">

@@ -5,6 +5,7 @@ app_name = 'moderation'
 
 urlpatterns = [
     path('', views.moderation_dashboard, name='dashboard'),
+    path('articles/create/', views.article_create, name='article_create'),
     path('articles/delete-post/<int:post_id>/', views.article_post_delete, name='article_post_delete'),
     path('articles/', views.article_moderation_list, name='article_list'),
     path('comments/', views.comment_moderation_list, name='comment_list'),

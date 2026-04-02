@@ -8,6 +8,7 @@ from django.views.decorators.http import require_http_methods
 import json
 import logging
 from Blog.models import Post, Comment
+from Blog.forms import PostEditForm
 
 logger = logging.getLogger(__name__)
 from .models import (
@@ -482,3 +483,36 @@ def comment_criteria_delete(request, criteria_id):
         'usage_count': usage_count,
     }
     return render(request, 'moderation/comment_criteria_delete.html', context)
+
+
+@login_required
+@user_passes_test(is_moderator)
+def article_create(request):
+    """Ручное создание новой статьи из панели модерации."""
+    if request.method == 'POST':
+        form = PostEditForm(request.POST, request.FILES)
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.author = request.user
+            # slug генерируется автоматически моделью если пустой
+            post.save()
+            form.save_m2m()  # теги
+            # Создаём запись модерации
+            ArticleModeration.objects.create(
+                post=post,
+                submitted_at=timezone.now(),
+                status='pending',
+            )
+            messages.success(request, f'Статья «{post.title}» создана.')
+            return redirect('moderation:article_list')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
+    else:
+        form = PostEditForm()
+
+    return render(request, 'moderation/article_create.html', {
+        'form': form,
+        'title': 'Создание новой статьи',
+    })

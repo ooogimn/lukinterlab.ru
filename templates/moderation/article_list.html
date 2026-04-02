@@ -3,18 +3,31 @@
 {% block moderation_content %}
 <div class="max-w-7xl mx-auto">
     <!-- Header -->
-    <div class="mb-8">
-        <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
-            Модерация статей
-        </h1>
-        <p class="text-gray-700 text-lg font-medium">Управление модерацией статей блога</p>
-        <p class="text-gray-600 text-sm mt-2 max-w-3xl">
-            Список карточек модерации и статусов на сайте. Сама <strong>модерация текста и SEO</strong> запускается автоматически,
-            когда в админке или форме редактирования пост переводят из черновика в «Опубликовано» и сохраняют:
-            при успехе статья выходит на сайт, при отклонении критериями остаётся черновиком до правок.
-            Здесь удобно смотреть очередь, ошибки проверки и открывать предпросмотр / редактирование.
-            По умолчанию скрыт архив «уже на сайте и одобрено» — откройте <strong>Все записи</strong>, чтобы увидеть всё.
-        </p>
+    <div class="mb-8 flex items-start justify-between gap-4">
+        <div>
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                Модерация статей
+            </h1>
+            <p class="text-gray-700 text-lg font-medium">Управление модерацией статей блога</p>
+            <p class="text-gray-600 text-sm mt-2 max-w-3xl">
+                Список карточек модерации и статусов на сайте. Сама <strong>модерация текста и SEO</strong> запускается автоматически,
+                когда в админке или форме редактирования пост переводят из черновика в «Опубликовано» и сохраняют:
+                при успехе статья выходит на сайт, при отклонении критериями остаётся черновиком до правок.
+                Здесь удобно смотреть очередь, ошибки проверки и открывать предпросмотр / редактирование.
+                По умолчанию скрыт архив «уже на сайте и одобрено» — откройте <strong>Все записи</strong>, чтобы увидеть всё.
+            </p>
+        </div>
+        <a href="{% url 'moderation:article_create' %}"
+           class="shrink-0 inline-flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-white
+                  bg-gradient-to-r from-indigo-600 to-purple-600
+                  hover:from-indigo-500 hover:to-purple-500
+                  shadow-lg hover:shadow-indigo-200
+                  transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Создать статью
+        </a>
     </div>
     
     <!-- Фильтры -->
