@@ -7,8 +7,9 @@
 #   POSTGRES_HOST=127.0.0.1 REDIS_URL=redis://127.0.0.1:6379/1 в .env для доступа с хоста
 #   python manage.py migrate
 #
-# Полный стек с Gunicorn (профиль full):
+# Полный стек: Gunicorn + воркер django-q (профиль full):
 #   docker compose --profile full up -d --build
+# Порт web слушает только на 127.0.0.1 (снаружи — nginx на хосте на :80/:443).
 #
 services:
   postgres:
@@ -59,7 +60,28 @@ services:
         python manage.py collectstatic --noinput
         exec gunicorn ALUKINTERLAB.wsgi:application --bind 0.0.0.0:8000 --workers 2 --threads 4 --timeout 120
     ports:
-      - "${WEB_PORT:-8000}:8000"
+      - "127.0.0.1:${WEB_PORT:-8000}:8000"
+    volumes:
+      - media_data:/app/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  qcluster:
+    profiles: ["full"]
+    build: .
+    env_file:
+      - .env.docker
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      REDIS_URL: redis://redis:6379/1
+      DJANGO_Q_REDIS_HOST: redis
+      DJANGO_Q_REDIS_PORT: "6379"
+    command: python manage.py qcluster
     volumes:
       - media_data:/app/media
     depends_on:
