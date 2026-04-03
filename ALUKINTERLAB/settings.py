@@ -225,10 +225,10 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 STATIC_URL = "/static/"
 
-# Только если каталог есть: иначе на сервере без этой папки — предупреждение staticfiles.W004.
-_extra_static = BASE_DIR / "STATIC"
+# Доп. статика проекта (имя папки не «STATIC» — на Windows .gitignore для static/ склеивается с STATIC/).
+_extra_static = BASE_DIR / "assets_static"
 STATICFILES_DIRS = [_extra_static] if _extra_static.is_dir() else []
-# В STATIC не должно быть своей папки vendor/adminlte (и т.п.) из старых collectstatic:
+# В assets_static не должно быть своей папки vendor/adminlte (и т.п.) из старых collectstatic:
 # она перекрывает статику пакета jazzmin → подключается старый AdminLTE без классов .app-wrapper,
 # боковое меню «разъезжается» на всю ширину. Актуальные vendor/* идут из django-jazzmin.
 
@@ -323,8 +323,8 @@ JAZZMIN_SETTINGS = {
     "site_title": "LukInterLab — админка",
     "site_header": "Панель управления",
     "site_brand": "LukInterLab",
-    # Путь относительно STATIC (как в {% static 'img/400-crug.png' %})
-    "site_logo": "img/400-crug.png",
+    # Путь относительно assets_static (после collectstatic — в STATIC_ROOT)
+    "site_logo": "img/favicon.svg",
     "site_icon": None,
     "welcome_sign": "Вход в админ-панель",
     "copyright": "lukinterlab.ru",

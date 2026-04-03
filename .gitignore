@@ -27,8 +27,9 @@ rescued_*.json
 *.broken
 *.REBORN_FINAL
 media/
-# Собранная статика (STATIC_ROOT); исходники — папка STATIC/
-static/
+# Собранная статика Django (только каталог в корне репозитория, нижний регистр).
+# Не использовать шаблон «static/» без слэша — на Windows он совпадает с папкой STATIC/.
+/static/
 
 # Кэши и runtime
 cache/

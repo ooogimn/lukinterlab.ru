@@ -119,7 +119,7 @@ def generate_article_structured_data(post, request=None):
             "name": "LukInterLab",
             "logo": {
                 "@type": "ImageObject",
-                "url": f"{site_url}/static/img/400-crug.png"
+                "url": f"{site_url}/static/img/favicon.svg"
             }
         },
         "mainEntityOfPage": {

@@ -1,81 +1,15 @@
 {% load static %}
 
-<!-- Hero Section -->
-<section class="relative min-h-screen flex items-center justify-center overflow-hidden">
-    <!-- Background Video -->
-    <div class="absolute inset-0 z-0">
-        <!-- Градиентный фон как fallback (показывается пока видео не загрузилось) -->
-        <div class="absolute inset-0 video-fallback" style="background: linear-gradient(135deg, #1e3a8a 0%, #581c87 50%, #312e81 100%); z-index: 1;"></div>
-        
-        <!-- Video (основной фон) -->
-        <video 
-            class="w-full h-full object-cover video-background"
-            src="{% static 'img/123.mp4' %}"
-            autoplay 
-            muted 
-            loop 
-            playsinline
-            preload="metadata"
-            style="z-index: 2; position: relative;">
-        </video>
-        
-        <!-- Overlay -->
-        <div class="absolute inset-0 bg-black/50" style="z-index: 3;"></div>
-    </div>
-    
-    <!-- Скрипт для гарантированного запуска видео и скрытия fallback -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const video = document.querySelector('.video-background');
-            const fallback = document.querySelector('.video-fallback');
-            
-            if (video) {
-                // Скрываем fallback когда видео начинает играть
-                video.addEventListener('playing', function() {
-                    if (fallback) {
-                        fallback.style.opacity = '0';
-                        fallback.style.transition = 'opacity 0.5s ease-out';
-                    }
-                });
-                
-                // Пытаемся запустить видео сразу
-                video.play().catch(function(error) {
-                    console.log('Автовоспроизведение заблокировано, пробуем еще раз:', error);
-                    // Повторная попытка через небольшую задержку
-                    setTimeout(function() {
-                        video.play().catch(function(err) {
-                            console.log('Не удалось запустить видео:', err);
-                        });
-                    }, 500);
-                });
-                
-                // Дополнительная проверка - запускаем если видео остановилось
-                video.addEventListener('pause', function() {
-                    if (!video.ended) {
-                        video.play().catch(function(error) {
-                            console.log('Видео остановилось, перезапуск:', error);
-                        });
-                    }
-                });
-                
-                // Если видео уже играет при загрузке
-                if (video.readyState >= 3 && !video.paused) {
-                    if (fallback) {
-                        fallback.style.opacity = '0';
-                        fallback.style.transition = 'opacity 0.5s ease-out';
-                    }
-                }
-            }
-        });
-    </script>
-    
-    <!-- Content -->
-    <div class="relative z-10 text-center text-white px-4 max-w-6xl mx-auto">
+{# Фон первой секции (градиент / картинка / видео) задаётся в home/1.html через SectionBackground — здесь только контент поверх. #}
+<div class="relative z-10 flex min-h-screen w-full flex-col items-center justify-center overflow-hidden py-16 text-center">
+    <div class="relative z-10 px-4 max-w-6xl mx-auto text-center text-white pb-20">
         <!-- Logo/Brand -->
         <div class="mb-8 animate-fade-in">
-            <img src="{% static 'img/400x400-round.ico' %}" 
-                 alt="LukInterLab" 
+            <img src="{% static 'img/favicon.svg' %}"
+                 alt="LukInterLab"
                  class="w-24 h-24 mx-auto mb-6 rounded-full shadow-2xl"
+                 width="96"
+                 height="96"
                  loading="eager"
                  fetchpriority="high">
         </div>
@@ -120,7 +54,7 @@
             </svg>
         </div>
     </div>
-</section>
+</div>
 
 <!-- Services Preview -->
 <section class="py-20 bg-gradient-to-br from-gray-50 to-blue-50">

@@ -18,7 +18,8 @@ db.sqlite3-*
 *.log
 logs
 media
-static
+# Только собранный STATIC_ROOT в корне (иначе можно отфильтровать app/static у приложений)
+/static
 cache
 qcache
 tmp
