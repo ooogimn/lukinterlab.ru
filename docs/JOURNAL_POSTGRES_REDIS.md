@@ -8,32 +8,32 @@
 
 **Было:** прод на общем хостинге без возможности нормально поднять **PostgreSQL** и **Redis** → один процесс, SQLite, Django-Q на diskcache, узкие места по БД и очередям.
 
-**Цель:** локально отладить стек **Postgres + Redis** (Docker Compose), убрать зависимость от SQLite как основной схемы, почистить артефакты и код под новые порядки, затем **чистый VPS** с Docker (или аналог), прод без «наследия» старой БД.
+**Цель:** **чистый VPS** и промышленный стек; локально — Docker Compose и те же переменные окружения. Старую БД на новый сервер **не тянем**; схема **`migrate` с нуля**, при необходимости проверенный **JSON fixture (`loaddata`)**; из артефактов старого места в основном **`media/`**.
 
-**Данные на новом сервере:** старую БД **не переносим**. Поднимаем пустой Postgres, `migrate`, наполнение с нуля (или вручную/импорты выборочно). На VPS выезжают в основном **`media/`** (файлы), не дампы SQLite.
+---
 
-**Код (состояние на эту дату):**
+## 2026-04-03 — Техническая веха: только PostgreSQL и Redis
 
-- В `settings.py`: при **`USE_POSTGRES=1`** и переменных `POSTGRES_*` — PostgreSQL; иначе по умолчанию всё ещё **SQLite** (`ALUKINTERLAB.db_backends`, `db.sqlite3`). Полный «отказ от SQLite» = следующий этап (сделать Postgres единственным режимом по умолчанию / выпилить ветку и кастомный backend).
-- При **`USE_REDIS_CACHE=1`** / **`USE_REDIS_Q=1`** — кэш и брокер Django-Q2 на Redis; иначе LocMem + diskcache (как для старого хостинга).
-- `docker-compose.yml`, `Dockerfile`, `env.docker.example` — локальный и прод-ориентированный контур.
+**Решение:** убрана поддержка SQLite как запасного режима; удалены `ALUKINTERLAB/db_backends/`, хук PRAGMA в `ALUKINTERLAB/__init__.py`, middleware закрытия соединений под SQLite.
 
-**Сопутствующее:**
+**Поведение (fail-fast):** если в `.env` не заданы **`POSTGRES_DB`**, **`POSTGRES_USER`**, **`POSTGRES_HOST`** или **`REDIS_URL`**, при загрузке настроек выбрасывается **`ImproperlyConfigured`** — приложение не «молча» создаёт `db.sqlite3`.
 
-- `loaddata`: сигналы не гоняют SEO/пинги/модерацию при `raw=True`.
-- Дампы JSON: игнор в git (`*_dump.json`), скрипт `scripts/dumpdata_utf8.py` / `PYTHONUTF8=1` для Windows.
+**Кэш и очередь:** `CACHES` и **`Q_CLUSTER`** используют **только Redis** (diskcache / LocMem / FileBased cache веба сняты).
+
+**Артефакт:** этот файл + обновлённые `env.example`, `env.docker.example`, `Dockerfile` (без `qcache`/`cache` в образе).
+
+**Миграция данных:** подход «zero legacy DB on server» — таблицы только из миграций; наполнение опционально fixture; медиафайлы отдельным переносом.
 
 ---
 
 ## Чеклист до прод на VPS
 
-- [ ] Локально: `docker compose up -d postgres redis`, `.env` / `.env.docker` с `USE_POSTGRES=1`, `USE_REDIS_CACHE=1`, `USE_REDIS_Q=1`, секреты и `DJANGO_SECRET_KEY`.
-- [ ] `pip install -r requirements.txt`, `migrate`, `createsuperuser`, смоук-тесты (сайт, админка, фоновые задачи `qcluster`).
-- [ ] Решить по умолчанию: только Postgres в коде + обновить `env.example`; при желании удалить `ALUKINTERLAB/db_backends` и упоминания `db.sqlite3` из доков/скриптов.
-- [ ] VPS: Docker (или Postgres/CRedis системно), SSL, reverse proxy, том под `media`, `.env`, `collectstatic`, воркер очереди.
+- [ ] `docker compose up -d postgres redis`, скопировать секреты в `.env` (**`POSTGRES_*`**, **`REDIS_URL`**, **`DJANGO_Q_REDIS_*`**, **`DJANGO_SECRET_KEY`**).
+- [ ] `pip install -r requirements.txt` → `migrate` → `createsuperuser` → смоук (сайт, админка, **`python manage.py qcluster`**).
+- [ ] VPS: Docker или системные Postgres/Redis, TLS, reverse proxy, том **`media/`**, `collectstatic`, systemd/supervisor для Gunicorn и qcluster.
 
 ---
 
 ## Старый прод-хостинг
 
-Считается закрываемым по мере готовности VPS: конфигурация под него (SQLite как основа) оставалась из-за ограничений платформы, не как целевая архитектура.
+Закрывается по мере ввода VPS; целевая архитектура описана выше.

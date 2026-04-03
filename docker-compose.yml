@@ -1,9 +1,10 @@
 # Локальный полигон и прод-образ: Postgres + Redis (+ опционально веб).
 #
 # Только БД и Redis (Django на хосте в .venv):
-#   cp env.docker.example .env.docker  # задать секреты
+#   В корневом .env обязательны POSTGRES_*, REDIS_URL, DJANGO_Q_REDIS_* (см. env.example).
+#   cp env.docker.example .env.docker; подставить пароль и DJANGO_SECRET_KEY
 #   docker compose up -d postgres redis
-#   export $(grep -v '^#' .env.docker | xargs)  # или вручную в .env
+#   POSTGRES_HOST=127.0.0.1 REDIS_URL=redis://127.0.0.1:6379/1 в .env для доступа с хоста
 #   python manage.py migrate
 #
 # Полный стек с Gunicorn (профиль full):

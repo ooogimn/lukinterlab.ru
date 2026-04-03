@@ -19,7 +19,7 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-RUN mkdir -p logs media qcache cache
+RUN mkdir -p logs media
 
 ENV DJANGO_SETTINGS_MODULE=ALUKINTERLAB.settings
 
