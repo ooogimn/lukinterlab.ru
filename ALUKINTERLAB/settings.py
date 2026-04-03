@@ -27,6 +27,8 @@ SECRET_KEY = require_secret_key()
 # На продакшене в .env или панели хостинга: DJANGO_DEBUG=False
 DEBUG = env_bool("DJANGO_DEBUG", True)
 
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # Админка: длинные списки (комментарии и т.д.), массовые действия и темы вроде Jazzmin
 # могут отправлять >1000 полей в одном POST — иначе TooManyFieldsSent.
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
@@ -142,6 +144,10 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 CSRF_COOKIE_HTTPONLY = False  # Разрешаем JavaScript доступ к CSRF cookie
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_TRUSTED_ORIGINS = split_origins(os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS"), SITE_URL)
+
+# Nginx терминирует TLS и шлёт в Gunicorn HTTP; без этого request.is_secure() = False.
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 ROOT_URLCONF = 'ALUKINTERLAB.urls'
 
