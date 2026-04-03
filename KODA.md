@@ -265,24 +265,20 @@ python manage.py migrate
 
 Доступ через админку: AI-ассистент → Использование токенов.
 
-### Восстановление данных
-
-В папке `scripts/` находятся утилиты для работы с поврежденной БД:
+### Восстановление данных из JSON
 
 ```bash
-# Спасение данных из битой SQLite
-RESCUE_BROKEN_SQLITE=db.sqlite3.broken python scripts/rescue_script.py
-
-# Восстановление данных из JSON
 python scripts/restore_script.py
 ```
+
+(Актуально для выборочного импорта из файлов `rescued_*.json`, если используются.)
 
 ## Развертывание
 
 ### Требования к серверу
 
-- Python 3.8+
-- SQLite3 (или другая БД при необходимости миграции)
+- Python 3.12+ (в Docker-образе — 3.13)
+- PostgreSQL и Redis (см. `env.example`, `docs/JOURNAL_POSTGRES_REDIS.md`)
 - Доступ к интернету для работы с API (GigaChat, Telegram, VK)
 
 ### Конфигурация веб-сервера

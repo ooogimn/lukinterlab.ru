@@ -24,6 +24,8 @@
 
 **Миграция данных:** подход «zero legacy DB on server» — таблицы только из миграций; наполнение опционально fixture; медиафайлы отдельным переносом.
 
+**Удалено (SQLite-only):** `Blog.management.commands.purge_blog_comments`, `scripts/rescue_script.py`.
+
 ---
 
 ## Чеклист до прод на VPS

@@ -33,7 +33,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def _label_from_rescued_stem(stem: str):
-    """rescued_home_RabotaMedia -> home.RabotaMedia (как при дампе в rescue_script)."""
+    """rescued_home_RabotaMedia -> home.RabotaMedia (префикс rescued_<app>_<Model>)."""
     prefix = "rescued_"
     if not stem.startswith(prefix):
         return None
