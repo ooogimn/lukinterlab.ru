@@ -1,0 +1,73 @@
+# Локальный полигон и прод-образ: Postgres + Redis (+ опционально веб).
+#
+# Только БД и Redis (Django на хосте в .venv):
+#   cp env.docker.example .env.docker  # задать секреты
+#   docker compose up -d postgres redis
+#   export $(grep -v '^#' .env.docker | xargs)  # или вручную в .env
+#   python manage.py migrate
+#
+# Полный стек с Gunicorn (профиль full):
+#   docker compose --profile full up -d --build
+#
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lukinterlab}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lukinterlab_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-lukinterlab}
+    ports:
+      - "${POSTGRES_PORT_PUBLISH:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 8
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT_PUBLISH:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 8
+    restart: unless-stopped
+
+  web:
+    profiles: ["full"]
+    build: .
+    env_file:
+      - .env.docker
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      REDIS_URL: redis://redis:6379/1
+      DJANGO_Q_REDIS_HOST: redis
+      DJANGO_Q_REDIS_PORT: "6379"
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        python manage.py migrate --noinput
+        python manage.py collectstatic --noinput
+        exec gunicorn ALUKINTERLAB.wsgi:application --bind 0.0.0.0:8000 --workers 2 --threads 4 --timeout 120
+    ports:
+      - "${WEB_PORT:-8000}:8000"
+    volumes:
+      - media_data:/app/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  media_data:

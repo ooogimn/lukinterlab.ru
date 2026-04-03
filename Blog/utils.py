@@ -10,6 +10,19 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def safe_log_text(text: str) -> str:
+    """Заголовки с emoji для Windows-консоли (cp1251): безопасная строка для logger."""
+    if not text:
+        return ''
+    try:
+        return text.encode('cp1251', errors='ignore').decode('cp1251', errors='ignore')
+    except Exception:
+        try:
+            return text.encode('ascii', errors='ignore').decode('ascii')
+        except Exception:
+            return str(text)[:100]
+
+
 def get_related_posts(post, limit=5):
     """
     Получение похожих статей для внутренней перелинковки
@@ -538,7 +551,11 @@ def add_internal_links_to_content(post, html_content, max_links=5):
                 links_added += 1
                 break  # Добавляем только одну ссылку на ключевое слово
         
-        logger.info(f"[SEO] Добавлено {links_added} внутренних ссылок в статью: {post.title}")
+        logger.info(
+            '[SEO] Добавлено %s внутренних ссылок в статью: %s',
+            links_added,
+            safe_log_text(post.title) if getattr(post, 'title', None) else '',
+        )
         return processed_content
         
     except Exception as e:

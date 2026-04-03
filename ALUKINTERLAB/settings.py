@@ -168,15 +168,33 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ALUKINTERLAB.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'ALUKINTERLAB.db_backends',  # Используем кастомный backend с WAL mode
-        'NAME': BASE_DIR / 'db.sqlite3',
-        'OPTIONS': {
-            'timeout': 30,  # Увеличиваем timeout для SQLite (по умолчанию 5 секунд)
-        },
+# --- БД: SQLite (по умолчанию) или PostgreSQL (USE_POSTGRES=1 / Docker / VPS)
+_use_postgres = env_bool('USE_POSTGRES', False)
+
+if _use_postgres:
+    _pg_port = env_str('POSTGRES_PORT', '5432')
+    _conn_max = env_int('DATABASE_CONN_MAX_AGE', 60)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': env_str('POSTGRES_DB', 'lukinterlab'),
+            'USER': env_str('POSTGRES_USER', 'lukinterlab'),
+            'PASSWORD': env_str('POSTGRES_PASSWORD', ''),
+            'HOST': env_str('POSTGRES_HOST', 'localhost'),
+            'PORT': _pg_port,
+            'CONN_MAX_AGE': _conn_max if _conn_max is not None else 60,
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'ALUKINTERLAB.db_backends',  # кастомный SQLite backend с WAL
+            'NAME': BASE_DIR / 'db.sqlite3',
+            'OPTIONS': {
+                'timeout': 30,
+            },
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -443,40 +461,85 @@ _DJANGO_Q_RETRY = env_int('DJANGO_Q_RETRY', max(600, _DJANGO_Q_TASK_TIMEOUT * 2)
     600, _DJANGO_Q_TASK_TIMEOUT * 2
 )
 
-Q_CLUSTER = {
-    'name': 'LukInterLab',
-    'workers': 1,  # Один воркер для SQLite (меньше конкуренции за db.sqlite3)
-    'timeout': _DJANGO_Q_TASK_TIMEOUT,
-    'retry': _DJANGO_Q_RETRY,
-    'queue_limit': 500,
-    'bulk': 10,
-    'orm': 'default',
-    'cache': 'diskcache',
-    'diskcache_dir': BASE_DIR / 'qcache',
-    'save_limit': 250,
-    'sync': env_bool('DJANGO_Q_SYNC', False),
-    'catch_up': True,
-    'label': 'Django Q',
-    'db_timeout': 30,  # Timeout для операций с БД
-}
-
-# Caching Configuration
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'lukinterlab-cache',
-        'OPTIONS': {
-            'MAX_ENTRIES': 1000,
-        }
-    },
-    'filesystem': {
-        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'LOCATION': BASE_DIR / 'cache',
-        'OPTIONS': {
-            'MAX_ENTRIES': 5000,
-        }
+# Django-Q2: по умолчанию diskcache (SQLite-friendly); с USE_REDIS_Q=1 — брокер Redis
+_use_redis_q = env_bool('USE_REDIS_Q', False)
+if _use_redis_q:
+    _redis_q: dict = {
+        'host': env_str('DJANGO_Q_REDIS_HOST', env_str('REDIS_HOST', '127.0.0.1')),
+        'port': env_int('DJANGO_Q_REDIS_PORT', env_int('REDIS_PORT', 6379)) or 6379,
+        'db': env_int('DJANGO_Q_REDIS_DB', 0) or 0,
     }
-}
+    _redis_pass = env_str('REDIS_PASSWORD', '')
+    if _redis_pass:
+        _redis_q['password'] = _redis_pass
+    Q_CLUSTER = {
+        'name': 'LukInterLab',
+        'workers': env_int('DJANGO_Q_WORKERS', 2) or 2,
+        'timeout': _DJANGO_Q_TASK_TIMEOUT,
+        'retry': _DJANGO_Q_RETRY,
+        'queue_limit': 500,
+        'bulk': 10,
+        'orm': 'default',
+        'redis': _redis_q,
+        'save_limit': 250,
+        'sync': env_bool('DJANGO_Q_SYNC', False),
+        'catch_up': True,
+        'label': 'Django Q',
+        'db_timeout': 30,
+    }
+else:
+    Q_CLUSTER = {
+        'name': 'LukInterLab',
+        'workers': 1,  # один воркер для SQLite
+        'timeout': _DJANGO_Q_TASK_TIMEOUT,
+        'retry': _DJANGO_Q_RETRY,
+        'queue_limit': 500,
+        'bulk': 10,
+        'orm': 'default',
+        'cache': 'diskcache',
+        'diskcache_dir': BASE_DIR / 'qcache',
+        'save_limit': 250,
+        'sync': env_bool('DJANGO_Q_SYNC', False),
+        'catch_up': True,
+        'label': 'Django Q',
+        'db_timeout': 30,
+    }
+
+# Кэш: LocMem+файлы (по умолчанию) или Redis (USE_REDIS_CACHE=1, нужен пакет redis)
+_use_redis_cache = env_bool('USE_REDIS_CACHE', False)
+if _use_redis_cache:
+    _redis_cache_url = env_str('REDIS_URL', 'redis://127.0.0.1:6379/1')
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': _redis_cache_url,
+            'KEY_PREFIX': env_str('REDIS_CACHE_KEY_PREFIX', 'luk'),
+            'TIMEOUT': env_int('REDIS_CACHE_DEFAULT_TIMEOUT', 300) or 300,
+        },
+        'filesystem': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': env_str('REDIS_URL_FILECACHE', _redis_cache_url),
+            'KEY_PREFIX': env_str('REDIS_FILECACHE_KEY_PREFIX', 'luk_fs'),
+            'TIMEOUT': 3600,
+        },
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'lukinterlab-cache',
+            'OPTIONS': {
+                'MAX_ENTRIES': 1000,
+            },
+        },
+        'filesystem': {
+            'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+            'LOCATION': BASE_DIR / 'cache',
+            'OPTIONS': {
+                'MAX_ENTRIES': 5000,
+            },
+        },
+    }
 
 # Logging Configuration
 LOGGING = {

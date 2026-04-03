@@ -69,3 +69,7 @@ htmlcov/
 
 # Архивы из docs не в репозиторий
 docs/*.zip
+
+# Локальные дампы БД (не в git)
+final_reborn_dump.json
+*_dump.json

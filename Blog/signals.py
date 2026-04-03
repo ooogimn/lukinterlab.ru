@@ -1,10 +1,9 @@
 from django.db.models.signals import post_save, pre_save, m2m_changed
 from django.dispatch import receiver
-from django.conf import settings
 from django.utils.text import slugify
 from django.utils import timezone
 from .models import Post, Comment
-from .utils import add_nofollow_to_external_links, add_internal_links_to_content
+from .utils import add_nofollow_to_external_links, add_internal_links_to_content, safe_log_text
 from home.seo_utils import SEOUtils
 from Moderation.services import SEOService
 import re
@@ -16,6 +15,9 @@ logger = logging.getLogger(__name__)
 @receiver(pre_save, sender=Post)
 def cache_post_previous_status(sender, instance, **kwargs):
     """Предыдущий статус поста в БД — для модерации при публикации и для published_at."""
+    if kwargs.get('raw'):
+        instance._post_prev_status = None
+        return
     if instance.pk:
         try:
             instance._post_prev_status = Post.objects.only('status').values_list('status', flat=True).get(
@@ -30,6 +32,8 @@ def cache_post_previous_status(sender, instance, **kwargs):
 @receiver(post_save, sender=Post)
 def set_post_published_at(sender, instance, **kwargs):
     """Фиксируем дату выхода на сайт (переход с не-published на published)."""
+    if kwargs.get('raw'):
+        return
     prev = getattr(instance, '_post_prev_status', None)
     if instance.status != 'published' or prev == 'published':
         return
@@ -52,29 +56,11 @@ def _compute_meta_keywords_for_post(instance):
     return ', '.join(unique_keywords)
 
 
-def safe_log_text(text: str) -> str:
-    """
-    Безопасное преобразование текста для логирования в Windows cp1251
-    Убирает эмодзи и небезопасные Unicode символы
-    """
-    if not text:
-        return ''
-    try:
-        # Простой способ: убираем все символы, которые нельзя закодировать в cp1251
-        # Сохраняем кириллицу и ASCII
-        safe_text = text.encode('cp1251', errors='ignore').decode('cp1251', errors='ignore')
-        return safe_text
-    except Exception:
-        # Если не получилось - возвращаем только ASCII
-        try:
-            return text.encode('ascii', 'ignore').decode('ascii')
-        except Exception:
-            return str(text)[:100]  # Ограничиваем длину на случай проблем
-
-
 @receiver(pre_save, sender=Post)
 def generate_seo_meta_tags(sender, instance, **kwargs):
     """Автогенерация SEO мета-тегов перед сохранением статьи"""
+    if kwargs.get('raw'):
+        return
     try:
         # Генерация slug если не указан
         if not instance.slug and instance.title:
@@ -186,6 +172,10 @@ def post_tags_changed_fill_meta_keywords(sender, instance, action, **kwargs):
     """
     После привязки тегов в админке keywords в pre_save ещё без тегов — дозаполняем, если поле пустое.
     """
+    import sys
+
+    if len(sys.argv) >= 2 and sys.argv[1] == 'loaddata':
+        return
     if action not in ('post_add', 'post_remove', 'post_clear'):
         return
     if not isinstance(instance, Post) or not instance.pk:
@@ -204,6 +194,8 @@ def post_tags_changed_fill_meta_keywords(sender, instance, action, **kwargs):
 @receiver(post_save, sender=Post)
 def analyze_post_seo(sender, instance, created, **kwargs):
     """Автоматический SEO анализ после сохранения статьи"""
+    if kwargs.get('raw'):
+        return
     try:
         # Анализируем только опубликованные статьи
         if instance.status == 'published':
@@ -229,6 +221,8 @@ def analyze_post_seo(sender, instance, created, **kwargs):
 @receiver(post_save, sender=Post)
 def submit_to_search_engines(sender, instance, created, **kwargs):
     """Отправка в поисковые системы при публикации статьи"""
+    if kwargs.get('raw'):
+        return
     try:
         # Отправляем только опубликованные статьи
         if instance.status == 'published':
@@ -276,6 +270,8 @@ def submit_to_search_engines(sender, instance, created, **kwargs):
 @receiver(pre_save, sender=Comment)
 def add_nofollow_to_comment_links(sender, instance, **kwargs):
     """Автоматическое добавление rel="nofollow" к внешним ссылкам в комментариях"""
+    if kwargs.get('raw'):
+        return
     try:
         if instance.content:
             # Обрабатываем только текстовые ссылки (не HTML)

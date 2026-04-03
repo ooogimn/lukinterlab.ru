@@ -17,6 +17,8 @@ article_moderation_service = ArticleModerationService()
 @receiver(post_save, sender=Post)
 def create_article_moderation(sender, instance, created, **kwargs):
     """Создание записи модерации при создании статьи"""
+    if kwargs.get('raw'):
+        return
     if created and instance.status == 'draft':
         moderation, created_mod = ArticleModeration.objects.get_or_create(
             post=instance,
@@ -42,6 +44,8 @@ def gate_draft_to_published_article_moderation(sender, instance, **kwargs):
     Если итог не «approved» — публикация отменяется, пост остаётся черновиком; правки и снова «Опубликовать».
     SEO-анализ после успешной публикации по-прежнему в post_save Blog (analyze_post_seo).
     """
+    if kwargs.get('raw'):
+        return
     prev = getattr(instance, '_post_prev_status', None)
     if prev != 'draft' or instance.status != 'published':
         return
@@ -69,6 +73,8 @@ def sync_article_moderation_when_published(sender, instance, **kwargs):
     Публикация статьи (Post.status=published) раньше не обновляла ArticleModeration —
     в дашборде оставались «ожидают модерации» при уже живых на сайте постах.
     """
+    if kwargs.get('raw'):
+        return
     if instance.status != 'published' or not instance.pk:
         return
     ArticleModeration.objects.filter(
@@ -87,6 +93,8 @@ def _auto_moderate_comment_handler(sender, instance, created, **kwargs):
     3. В зависимости от результатов и настроек критерия (delete / correct / reply) применяется действие:
        approved, deleted, hidden, corrected, replied — как задано в админке для активного критерия
     """
+    if kwargs.get('raw'):
+        return
     # Пропускаем, если это обновление существующего комментария (не создание)
     if not created:
         return
@@ -191,6 +199,8 @@ def _auto_moderate_comment_handler(sender, instance, created, **kwargs):
 @receiver(post_save, sender=Comment)
 def auto_moderate_comment(sender, instance, created, **kwargs):
     """Автоматическая модерация комментариев к статьям"""
+    if kwargs.get('raw'):
+        return
     _auto_moderate_comment_handler(sender, instance, created, **kwargs)
 
 
@@ -203,11 +213,15 @@ def register_comment_signals():
         # Регистрируем сигнал для OtzivComment через connect (более надежный способ)
         def otziv_comment_handler(sender, instance, created, **kwargs):
             """Автоматическая модерация комментариев к отзывам"""
+            if kwargs.get('raw'):
+                return
             logger.info(f"[OTZIV_SIGNAL] Сигнал сработал! Comment ID: {instance.id}, Created: {created}, Content: {instance.content[:50] if hasattr(instance, 'content') else 'NO CONTENT'}...")
             _auto_moderate_comment_handler(sender, instance, created, **kwargs)
         
         def order_comment_handler(sender, instance, created, **kwargs):
             """Автоматическая модерация комментариев к заказам"""
+            if kwargs.get('raw'):
+                return
             logger.info(f"[ORDER_SIGNAL] Сигнал сработал! Comment ID: {instance.id}, Created: {created}")
             _auto_moderate_comment_handler(sender, instance, created, **kwargs)
         
@@ -229,6 +243,8 @@ register_comment_signals()
 @receiver(post_save, sender=ArticleModeration)
 def update_article_moderation_time(sender, instance, **kwargs):
     """Обновление времени модерации при изменении статуса"""
+    if kwargs.get('raw'):
+        return
     if instance.status != 'pending' and instance.moderated_at is None:
         instance.moderated_at = timezone.now()
         instance.save(update_fields=['moderated_at'])
@@ -237,6 +253,8 @@ def update_article_moderation_time(sender, instance, **kwargs):
 @receiver(post_save, sender=CommentModeration)
 def update_comment_moderation_time(sender, instance, **kwargs):
     """Обновление времени модерации при установке действия"""
+    if kwargs.get('raw'):
+        return
     if instance.action and instance.moderated_at is None:
         instance.moderated_at = timezone.now()
         instance.save(update_fields=['moderated_at'])

@@ -71,3 +71,7 @@ requests>=2.31.0
 django-jazzmin==3.0.4
 django-taggit
 yookassa
+# PostgreSQL (USE_POSTGRES=1) и Redis-кэш Django 5
+psycopg[binary]>=3.2
+redis>=5.0
+gunicorn>=23.0
