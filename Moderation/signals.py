@@ -236,10 +236,6 @@ def register_comment_signals():
         logger.error(f"[SIGNALS] Ошибка при регистрации сигналов: {str(e)}", exc_info=True)
 
 
-# Вызываем регистрацию сигналов
-register_comment_signals()
-
-
 @receiver(post_save, sender=ArticleModeration)
 def update_article_moderation_time(sender, instance, **kwargs):
     """Обновление времени модерации при изменении статуса"""

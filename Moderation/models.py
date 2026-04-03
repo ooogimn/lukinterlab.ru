@@ -383,7 +383,7 @@ class ModerationNotification(models.Model):
         verbose_name='Тип уведомления'
     )
     
-    title = models.CharField(max_length=200, verbose_name='Заголовок')
+    title = models.CharField(max_length=512, verbose_name='Заголовок')
     message = models.TextField(verbose_name='Сообщение')
     
     # Связи с объектами

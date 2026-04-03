@@ -41,6 +41,8 @@ def create_welcome_message(sender, instance, created, **kwargs):
 @receiver(post_save, sender=AISchedule)
 def setup_ai_schedule(sender, instance, created, **kwargs):
     """Настроить расписание Django-Q при создании/обновлении AISchedule"""
+    if kwargs.get('raw'):
+        return
     if instance.is_active:
         try:
             setup_schedules()
@@ -52,6 +54,8 @@ def setup_ai_schedule(sender, instance, created, **kwargs):
 @receiver(post_delete, sender=AISchedule)
 def remove_ai_schedule(sender, instance, **kwargs):
     """Удалить расписание Django-Q при удалении AISchedule"""
+    if kwargs.get('raw'):
+        return
     try:
         remove_schedule(instance.id)
         logger.info(f"[OK] Расписание Django-Q удалено для: {instance.name}")

@@ -18,7 +18,7 @@ def load_env_file(base_dir: Path) -> None:
         return
     env_path = base_dir / ".env"
     if env_path.is_file():
-        load_dotenv(env_path)
+        load_dotenv(env_path, encoding="utf-8-sig")
 
 
 def _get(key: str, default: str | None = None) -> str | None:

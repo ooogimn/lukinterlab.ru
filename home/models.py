@@ -282,11 +282,13 @@ class ContactMessage(models.Model):
 class SEOModel(models.Model):
     """SEO модель для управления мета-тегами"""
     page_url = models.CharField(max_length=200, unique=True, verbose_name="URL страницы")
-    title = models.CharField(max_length=60, verbose_name="Title (до 60 символов)")
-    description = models.CharField(max_length=160, verbose_name="Description (до 160 символов)")
+    title = models.CharField(max_length=200, verbose_name="Title (meta / до ~60 знаков в выдаче)")
+    description = models.CharField(
+        max_length=512, verbose_name="Description (meta, в выдаче режется ~160 знаков)"
+    )
     keywords = models.TextField(blank=True, verbose_name="Keywords")
-    og_title = models.CharField(max_length=60, blank=True, verbose_name="OG Title")
-    og_description = models.CharField(max_length=160, blank=True, verbose_name="OG Description")
+    og_title = models.CharField(max_length=200, blank=True, verbose_name="OG Title")
+    og_description = models.CharField(max_length=512, blank=True, verbose_name="OG Description")
     og_image = models.ImageField(upload_to='seo/', blank=True, verbose_name="OG Image")
     canonical_url = models.URLField(blank=True, verbose_name="Canonical URL")
     h1 = models.CharField(max_length=100, blank=True, verbose_name="H1 заголовок")

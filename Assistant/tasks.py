@@ -425,7 +425,7 @@ def setup_schedules():
     Настройка расписаний в Django-Q.
     Перед upsert удаляет чужие строки с тем же args (легаси ai_autoposting_*).
     Неактивные AISchedule — все связанные записи Schedule с данным args удаляются.
-    Одна транзакция на весь прогон — меньше шансов «мигания» SQLite.
+    Одна транзакция на весь прогон — атомарное обновление расписаний в БД.
     """
     with transaction.atomic():
         # Легаси: несколько CRON ai_autoposting_HHMM с одним и тем же args — лишние запуски в 8:00, 9:00 и т.д.
@@ -476,7 +476,6 @@ def setup_schedules():
                     'schedule_type': Schedule.CRON,
                     'cron': cron_expr,
                     'args': str(schedule_obj.id),
-                    'group': 'autoposting',
                 },
             )
 

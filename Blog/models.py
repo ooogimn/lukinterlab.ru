@@ -48,7 +48,7 @@ class Post(models.Model):
         ('published', 'Опубликовано'),
         ('draft', 'Черновик')
     )
-    title = models.CharField(verbose_name='Заголовок', max_length=100)
+    title = models.CharField(verbose_name='Заголовок', max_length=255)
     category = TreeForeignKey('Category',
                       related_name='posts',
                       on_delete=models.CASCADE, verbose_name='Категория')
@@ -113,16 +113,28 @@ class Post(models.Model):
     tags = TaggableManager(blank=True)
     
     # SEO поля
-    meta_title = models.CharField(verbose_name='Meta Title (до 60 символов)', max_length=60, blank=True, 
-                                  help_text='Если не указано, будет использован заголовок статьи')
-    meta_description = models.CharField(verbose_name='Meta Description (до 160 символов)', max_length=160, blank=True,
-                                        help_text='Пустое — из описания/контента. При сохранении убирается markdown/HTML, длина обрезается до 160.')
+    meta_title = models.CharField(
+        verbose_name='Meta Title',
+        max_length=200,
+        blank=True,
+        help_text='Если не указано, будет использован заголовок статьи (в выдаче режется ~60 знаков).',
+    )
+    meta_description = models.CharField(
+        verbose_name='Meta Description',
+        max_length=512,
+        blank=True,
+        help_text='Пустое — из описания/контента. В сниппете поиска обычно ~160 знаков.',
+    )
     meta_keywords = models.TextField(verbose_name='Meta Keywords', blank=True,
                                      help_text='Через запятую. Оставьте пустым — заполнятся из тегов, контента и заголовка при сохранении.')
     og_image = models.ImageField(verbose_name='OG Image (для соцсетей)', blank=True, null=True, upload_to='seo/',
                                  help_text='Отдельное изображение для Open Graph. Если не указано, используется превью поста')
-    focus_keyword = models.CharField(verbose_name='Главное ключевое слово', max_length=50, blank=True,
-                                     help_text='Основное ключевое слово для SEO оптимизации')
+    focus_keyword = models.CharField(
+        verbose_name='Главное ключевое слово',
+        max_length=200,
+        blank=True,
+        help_text='Основное ключевое слово для SEO оптимизации',
+    )
     seo_score = models.IntegerField(verbose_name='SEO Score', default=0,
                                     help_text='Кэшированный SEO score (0-100), обновляется автоматически')
     
@@ -366,6 +378,11 @@ def publish_to_social(sender, instance, created, **kwargs):
     """
     Обработчик сигналов для публикации сообщений в социальных сетях при их публикации
     """
+    # loaddata / flush и любой save(..., raw=True) — не ставить задачи в django-q иначе при
+    # qcluster после импорта уйдут тысячи постов в соцсети.
+    if kwargs.get('raw'):
+        return
+
     if instance.status == 'published':
         # Только переход к публикации или первая запись уже опубликованной — иначе каждый
         # последующий save (SEO meta, обновление полей) снова ставит задачи в очередь, пока
