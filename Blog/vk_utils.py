@@ -94,12 +94,18 @@ def _strip_common_prefix(a: str, b: str, min_len: int = 80) -> tuple[str, str]:
 def _build_vk_message(post, site_url: str) -> str:
     """
     Текст поста: заголовок + максимум текста из описания и начала статьи,
-    в конце всегда полная ссылка «Читать далее» (не отрезается обрезкой с конца).
+    в конце опционально ссылка «Читать далее» (SOCIAL_INCLUDE_ARTICLE_LINK в settings).
     """
-    article_url = f"{site_url.rstrip('/')}{post.get_absolute_url()}"
-    footer = f"\n\nЧитать далее: {article_url}"
+    include_link = getattr(settings, 'SOCIAL_INCLUDE_ARTICLE_LINK', True)
+    footer = ''
+    if include_link:
+        try:
+            article_url = f"{site_url.rstrip('/')}{post.get_absolute_url()}"
+            footer = f"\n\nЧитать далее: {article_url}"
+        except Exception:
+            footer = ''
     header = f"{(post.title or '').strip()}\n\n"
-    budget = MAX_VK_MESSAGE_CHARS - len(header) - len(footer)
+    budget = MAX_VK_MESSAGE_CHARS - len(header) - len(footer or '')
     if budget < 120:
         budget = 120
 
@@ -247,8 +253,11 @@ def send_to_vk(post):
     attachments = []
     user_photo_tok = (getattr(settings, 'VK_USER_ACCESS_TOKEN', None) or '').strip()
     
-    if post.video_file:
-        att = _upload_wall_video(post, user_photo_tok or access_token, group_id)
+    from Blog.social_video import get_local_video_path_and_mime
+
+    vpath, _vmime = get_local_video_path_and_mime(post)
+    if vpath:
+        att = _upload_wall_video(vpath, post, user_photo_tok or access_token, group_id)
         if att:
             attachments.append(att)
         else:
@@ -385,15 +394,15 @@ def _upload_wall_photo(post, user_access_token: str, group_id: int):
         logger.exception('VK: не удалось прикрепить фото, пост будет только текстом: %s', e)
         return None
 
-def _upload_wall_video(post, access_token: str, group_id: int):
+def _upload_wall_video(video_path: str, post, access_token: str, group_id: int):
     """
     Загрузка видео для стены сообщества.
     Токен должен иметь права "video".
     """
     try:
-        if not post.video_file:
+        if not video_path:
             return None
-            
+
         # 1. Получаем URL для загрузки видео
         save_response = requests.post(
             'https://api.vk.com/method/video.save',
@@ -419,7 +428,7 @@ def _upload_wall_video(post, access_token: str, group_id: int):
         owner_id = save_data['response']['owner_id']
         
         # 2. Загружаем сам файл
-        with open(post.video_file.path, 'rb') as f:
+        with open(video_path, 'rb') as f:
             upload_response = requests.post(
                 upload_url,
                 files={'video_file': f},

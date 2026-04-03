@@ -53,12 +53,28 @@ urlpatterns = [
     path('customer/orders/', customer_orders, name='customer_orders'),
     path('customer/order/<int:order_id>/', customer_order_detail, name='customer_order_detail'),
     
-    # Админ панель для заказов
-    path('admin/orders/', admin_orders, name='admin_orders'),
-    path('admin/order/<int:order_id>/', admin_order_detail, name='admin_order_detail'),
+    # Внутренние дашборды под /manage/ — не использовать префикс /admin/ (коллизия с Django Admin).
+    path('manage/orders/', admin_orders, name='admin_orders'),
+    path('manage/order/<int:order_id>/', admin_order_detail, name='admin_order_detail'),
 
     # Дашборд Портфолио
     path('portfolio/dashboard/', PortfolioDashboardView.as_view(), name='portfolio_dashboard'),
     path('portfolio/create/', RabotaCreateView.as_view(), name='portfolio_create'),
     path('portfolio/<int:pk>/edit/', RabotaUpdateView.as_view(), name='portfolio_update'),
+    
+    # ==================== ПАНЕЛЬ УПРАВЛЕНИЯ (/manage/) ====================
+    path('manage/statistics/dashboard/', admin_statistics_dashboard, name='admin_statistics_dashboard'),
+    path('manage/statistics/subscribers/', admin_subscribers_view, name='admin_subscribers'),
+    path('manage/statistics/purchases/', admin_purchases_view, name='admin_purchases'),
+    path('manage/statistics/transactions/', admin_transactions_view, name='admin_transactions'),
+    
+    path('manage/tariffs/dashboard/', admin_tariffs_dashboard, name='admin_tariffs_dashboard'),
+    path('manage/tariffs/service/create/', admin_service_create, name='admin_service_create'),
+    path('manage/tariffs/service/<int:pk>/edit/', admin_service_edit, name='admin_service_edit'),
+    path('manage/tariffs/service/<int:pk>/delete/', admin_service_delete, name='admin_service_delete'),
+    path('manage/tariffs/extra-service/create/', admin_extra_service_create, name='admin_extra_service_create'),
+    path('manage/tariffs/extra-service/<int:pk>/edit/', admin_extra_service_edit, name='admin_extra_service_edit'),
+    path('manage/tariffs/extra-service/<int:pk>/delete/', admin_extra_service_delete, name='admin_extra_service_delete'),
+
+    path('manage/marketing/', admin_marketing_settings, name='admin_marketing_settings'),
 ]

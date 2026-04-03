@@ -65,6 +65,9 @@ MAX_AUTO_POST = env_bool("MAX_AUTO_POST", False)
 _social_words = env_int("SOCIAL_ANNOUNCE_MAX_WORDS", 100)
 SOCIAL_ANNOUNCE_MAX_WORDS = 100 if _social_words is None else max(0, _social_words)
 
+# VK / MAX: добавлять в конец текста блок «Читать далее: URL». False — только заголовок и тизер (видео/картинка без ссылки на статью).
+SOCIAL_INCLUDE_ARTICLE_LINK = env_bool("SOCIAL_INCLUDE_ARTICLE_LINK", True)
+
 # Один кадр превью для VK и MAX: ширина×высота (альбом, по умолчанию как OG 1200×630), центр-обрезка, JPEG.
 _ssw = env_int("SOCIAL_SHARE_IMAGE_WIDTH", 1200)
 _ssh = env_int("SOCIAL_SHARE_IMAGE_HEIGHT", 630)
@@ -157,6 +160,7 @@ TEMPLATES = [
                 'home.context_processors.cart_info',
                 'home.context_processors.legal_info_context',
                 'home.context_processors.vkid_oauth',
+                'home.context_processors.site_marketing_context',
             ],
         },
     },

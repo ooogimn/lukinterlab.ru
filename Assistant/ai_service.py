@@ -14,13 +14,19 @@ try:
 except ImportError:
     OPENAI_AVAILABLE = False
 
-try:
-    import gigachat
-    GIGACHAT_AVAILABLE = True
-except ImportError:
-    GIGACHAT_AVAILABLE = False
+# SDK gigachat не подключаем здесь — тяжёлый импорт при apps.ready; GigaChat идёт через HTTP (requests).
 
 logger = logging.getLogger(__name__)
+
+
+def _gigachat_basic_credentials_part(authorization_key: str | None) -> str:
+    """Только base64-часть ключа для OAuth (без префикса Basic), чтобы не получить «Basic Basic …» и 401."""
+    if not authorization_key:
+        return ''
+    k = str(authorization_key).strip()
+    if k.lower().startswith('basic '):
+        k = k[6:].strip()
+    return k
 
 
 class AIService:
@@ -322,11 +328,7 @@ class AIService:
             
             # Новый способ авторизации через Authorization Key
             if self.gigachat_authorization_key:
-                # Убираем "Basic " из начала, если он есть (для совместимости)
-                auth_key = self.gigachat_authorization_key.strip()
-                if auth_key.startswith('Basic '):
-                    auth_key = auth_key[6:]  # Убираем "Basic "
-                
+                auth_key = _gigachat_basic_credentials_part(self.gigachat_authorization_key)
                 # Проверяем длину ключа (должен быть примерно 72-100 символов для Base64)
                 if len(auth_key) > 150:
                     logger.error(f"[ERROR] Authorization Key слишком длинный ({len(auth_key)} символов). Возможно, это зашифрованный ключ. Используйте ключ из settings.py.")
@@ -417,9 +419,14 @@ class AIService:
                     try:
                         error_json = response.json()
                         logger.error(f"  5. Детали ошибки от API: {error_json}")
-                    except:
+                    except Exception:
                         pass
-                
+                if response.status_code == 401 and 'header' in (response.text or '').lower():
+                    logger.error(
+                        '[401] «Authorization error: header is incorrect» часто из‑за дубля «Basic» в ключе '
+                        '(в .env оставьте одну форму: либо только Base64, либо «Basic <base64>»).'
+                    )
+
                 return None
                 
         except Exception as e:
@@ -688,26 +695,29 @@ class GigaChatAPIService:
         try:
             # Генерируем уникальный идентификатор запроса
             rq_uid = str(uuid.uuid4())
-            
+
+            auth_part = _gigachat_basic_credentials_part(self.gigachat_authorization_key)
+            if not auth_part:
+                logger.error('GigaChat: пустой Authorization Key после нормализации')
+                return None
+
             headers = {
-                'Authorization': f'Basic {self.gigachat_authorization_key}',
+                'Authorization': f'Basic {auth_part}',
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Accept': 'application/json',
-                'RqUID': rq_uid
+                'RqUID': rq_uid,
             }
-            
-            data = {
-                'scope': self.gigachat_scope
-            }
-            
+
+            data = {'scope': self.gigachat_scope}
+
             response = requests.post(
                 'https://ngw.devices.sberbank.ru:9443/api/v2/oauth',
                 headers=headers,
                 data=data,
                 verify=self.gigachat_verify_ssl,
-                timeout=10
+                timeout=10,
             )
-            
+
             if response.status_code == 200:
                 token_data = response.json()
                 access_token = token_data.get('access_token')
@@ -750,9 +760,14 @@ class GigaChatAPIService:
                     logger.error("  1. Правильность Authorization Key (должен быть Base64 строка)")
                     logger.error("  2. Правильность scope (должен быть: GIGACHAT_API_PERS, GIGACHAT_API_B2B или GIGACHAT_API_CORP)")
                     logger.error("  3. Формат заголовков (должен быть RqUID с UUID форматом)")
-                
+                if response.status_code == 401 and 'header' in (response.text or '').lower():
+                    logger.error(
+                        '[401] Проверьте GIGACHAT_AUTHORIZATION_KEY: без двойного префикса Basic; '
+                        'актуальный ключ в личном кабинете GigaChat / Studio.'
+                    )
+
                 return None
-                
+
         except Exception as e:
             logger.error(f"GigaChat auth error: {str(e)}", exc_info=True)
             return None

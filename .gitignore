@@ -66,3 +66,6 @@ nul
 htmlcov/
 .mypy_cache/
 .pytest_cache/
+
+# Архивы из docs не в репозиторий
+docs/*.zip

@@ -1,3 +1,11 @@
+{% comment %}
+Реклама / РСЯ: при активных настройках из /manage/marketing/ подставляется код из БД.
+Иначе — запасной блок R-A-15889058-1 из истории проекта.
+Дополнительно: HTML-промо и картинка из дашборда.
+{% endcomment %}
+{% if site_marketing.active and site_marketing.yandex_rsya_html %}
+{{ site_marketing.yandex_rsya_html|safe }}
+{% else %}
 <!-- Yandex.RTB R-A-15889058-1 -->
 <script>
     window.yaContextCb.push(() => {
@@ -9,3 +17,23 @@
     })
 </script>
 <!-- Yandex.RTB R-A-15889058-1 -->
+{% endif %}
+
+{% if site_marketing.active %}
+    {% if site_marketing.custom_promo_banner_html %}
+    <div class="max-w-7xl mx-auto px-4 py-2 text-center">
+        {{ site_marketing.custom_promo_banner_html|safe }}
+    </div>
+    {% endif %}
+    {% if site_marketing.promo_image_url %}
+    <div class="max-w-7xl mx-auto px-4 py-2 flex justify-center">
+        {% if site_marketing.promo_link %}
+        <a href="{{ site_marketing.promo_link }}" target="_blank" rel="noopener noreferrer" class="inline-block">
+            <img src="{{ site_marketing.promo_image_url }}" alt="" class="max-h-32 rounded-lg shadow-md" loading="lazy" width="600" height="120">
+        </a>
+        {% else %}
+        <img src="{{ site_marketing.promo_image_url }}" alt="" class="max-h-32 rounded-lg shadow-md" loading="lazy" width="600" height="120">
+        {% endif %}
+    </div>
+    {% endif %}
+{% endif %}

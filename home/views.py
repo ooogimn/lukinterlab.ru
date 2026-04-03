@@ -75,15 +75,19 @@ def home(request):
         ).order_by('-created')[:6])
         cache.set(cache_key_otzivs, otzivs, 900)
     
-    # Получаем работы из БД (кэширование отключено)
-    # Берем все работы со статусом 'completed', без ограничений по категориям
-    # Увеличиваем лимит до 24, чтобы показать все категории
-    rabotas = list(Rabota.objects.filter(
-        status='completed'
-    ).only(
-        'id', 'name', 'category', 'image', 'adres', 'body', 
-        'technologies', 'status', 'featured', 'order', 'created', 'updated'
-    ).order_by('-featured', '-order', '-created')[:24])
+    # Работы портфолио: кэш + prefetch media_items (иначе N+1 на главной в шаблоне).
+    rabotas = cache.get(cache_key_rabotas)
+    if rabotas is None:
+        rabotas = list(
+            Rabota.objects.filter(status='completed')
+            .prefetch_related('media_items')
+            .only(
+                'id', 'name', 'category', 'image', 'adres', 'body',
+                'technologies', 'status', 'featured', 'order', 'created', 'updated',
+            )
+            .order_by('-featured', '-order', '-created')[:24]
+        )
+        cache.set(cache_key_rabotas, rabotas, 900)
     
     # Логируем для отладки (можно убрать после проверки)
     import logging
@@ -1343,6 +1347,10 @@ def admin_orders(request):
     paid_orders = Order.objects.filter(payment_status='paid').count()
     total_revenue = sum(order.total_price for order in Order.objects.filter(payment_status='paid'))
     
+    params = request.GET.copy()
+    params.pop('page', None)
+    filter_query = params.urlencode()
+
     context = {
         'page_obj': page_obj,
         'status_filter': status_filter,
@@ -1352,7 +1360,10 @@ def admin_orders(request):
         'new_orders': new_orders,
         'paid_orders': paid_orders,
         'total_revenue': total_revenue,
-        'title': 'Управление заказами'
+        'title': 'Управление заказами',
+        'filter_query': filter_query,
+        'order_status_choices': Order.STATUS_CHOICES,
+        'payment_status_choices': Order.PAYMENT_STATUS_CHOICES,
     }
     return render(request, 'home/admin/orders.html', context)
 
@@ -1389,7 +1400,9 @@ def admin_order_detail(request, order_id):
     context = {
         'order': order,
         'comment_form': comment_form,
-        'title': f'Заказ №{order.order_number}'
+        'title': f'Заказ №{order.order_number}',
+        'order_status_choices': Order.STATUS_CHOICES,
+        'payment_status_choices': Order.PAYMENT_STATUS_CHOICES,
     }
     return render(request, 'home/admin/order_detail.html', context)
 
@@ -1574,8 +1587,296 @@ class RabotaUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             
         messages.success(self.request, "Проект успешно обновлен!")
         return response
-    
-    def form_valid(self, form):
-        messages.success(self.request, "Проект успешно обновлен!")
-        return super().form_valid(form)
 
+
+# ==================== ДАШБОРДЫ АДМИНИСТРАТОРА ====================
+# Дашборд статистики
+
+@staff_member_required
+def admin_statistics_dashboard(request):
+    """Главная страница статистики для администратора"""
+    # Статистика по заказам
+    total_orders = Order.objects.count()
+    total_revenue = sum(order.total_price for order in Order.objects.filter(payment_status='paid'))
+    pending_orders = Order.objects.filter(status='new').count()
+    completed_orders = Order.objects.filter(status='completed').count()
+    
+    # Статистика по клиентам
+    total_customers = Customer.objects.count()
+    active_customers = Customer.objects.filter(is_active=True).count()
+    
+    # Статистика за последние 30 дней
+    from django.utils import timezone
+    from datetime import timedelta
+    last_30_days = timezone.now() - timedelta(days=30)
+    orders_last_30_days = Order.objects.filter(created__gte=last_30_days).count()
+    revenue_last_30_days = sum(
+        order.total_price for order in Order.objects.filter(created__gte=last_30_days, payment_status='paid')
+    )
+    
+    context = {
+        'title': 'Дашборд статистики',
+        'total_orders': total_orders,
+        'total_revenue': total_revenue,
+        'pending_orders': pending_orders,
+        'completed_orders': completed_orders,
+        'total_customers': total_customers,
+        'active_customers': active_customers,
+        'orders_last_30_days': orders_last_30_days,
+        'revenue_last_30_days': revenue_last_30_days,
+    }
+    return render(request, 'home/admin/statistics_dashboard.html', context)
+
+
+@staff_member_required
+def admin_subscribers_view(request):
+    """Просмотр подписчиков (клиентов) для администратора"""
+    customers = Customer.objects.select_related('user').order_by('-created')
+    
+    # Пагинация
+    paginator = Paginator(customers, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Статистика
+    total_customers = Customer.objects.count()
+    active_customers = Customer.objects.filter(is_active=True).count()
+    
+    context = {
+        'title': 'Подписчики / Клиенты',
+        'page_obj': page_obj,
+        'total_customers': total_customers,
+        'active_customers': active_customers,
+    }
+    return render(request, 'home/admin/subscribers.html', context)
+
+
+@staff_member_required
+def admin_purchases_view(request):
+    """Просмотр покупок для администратора"""
+    # Получаем все заказы с информацией об оплате
+    orders = Order.objects.select_related('customer', 'customer__user').order_by('-created')
+    
+    # Статистика
+    total_orders = orders.count()
+    paid_orders = orders.filter(payment_status='paid').count()
+    pending_orders = orders.filter(payment_status='pending').count()
+    total_revenue = sum(order.total_price for order in orders.filter(payment_status='paid'))
+    
+    # Пагинация
+    paginator = Paginator(orders, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'title': 'Покупки и заказы',
+        'page_obj': page_obj,
+        'total_orders': total_orders,
+        'paid_orders': paid_orders,
+        'pending_orders': pending_orders,
+        'total_revenue': total_revenue,
+    }
+    return render(request, 'home/admin/purchases.html', context)
+
+
+@staff_member_required
+def admin_transactions_view(request):
+    """Просмотр транзакций для администратора"""
+    orders = Order.objects.select_related('customer').order_by('-created')
+    
+    # Фильтрация по статусу оплаты
+    payment_filter = request.GET.get('payment_status')
+    if payment_filter:
+        orders = orders.filter(payment_status=payment_filter)
+    
+    # Статистика по типам транзакций
+    paid_count = orders.filter(payment_status='paid').count()
+    pending_count = orders.filter(payment_status='pending').count()
+    failed_count = orders.filter(payment_status='failed').count()
+    
+    # Суммы по статусам
+    total_paid = sum(order.total_price for order in orders.filter(payment_status='paid'))
+    total_pending = sum(order.total_price for order in orders.filter(payment_status='pending'))
+    
+    # Пагинация
+    paginator = Paginator(orders, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'title': 'Транзакции',
+        'page_obj': page_obj,
+        'payment_filter': payment_filter,
+        'paid_count': paid_count,
+        'pending_count': pending_count,
+        'failed_count': failed_count,
+        'total_paid': total_paid,
+        'total_pending': total_pending,
+    }
+    return render(request, 'home/admin/transactions.html', context)
+
+
+# Дашборд тарификации
+
+@staff_member_required
+def admin_tariffs_dashboard(request):
+    """Главная страница тарифов для администратора"""
+    services = Service.objects.all().order_by('order')
+    extra_services = StandaloneExtraService.objects.all().order_by('order')
+    
+    # Статистика
+    total_services = services.count()
+    active_services = services.filter(is_active=True).count()
+    total_extra_services = extra_services.count()
+    active_extra_services = extra_services.filter(is_active=True).count()
+    
+    context = {
+        'title': 'Управление тарифами и услугами',
+        'services': services,
+        'extra_services': extra_services,
+        'total_services': total_services,
+        'active_services': active_services,
+        'total_extra_services': total_extra_services,
+        'active_extra_services': active_extra_services,
+    }
+    return render(request, 'home/admin/tariffs_dashboard.html', context)
+
+
+@staff_member_required
+def admin_service_create(request):
+    """Создание новой услуги"""
+    if request.method == 'POST':
+        form = ServiceAdminForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Услуга успешно создана!')
+            return redirect('home:admin_tariffs_dashboard')
+    else:
+        form = ServiceAdminForm()
+    
+    context = {
+        'title': 'Создание услуги',
+        'form': form,
+        'is_create': True,
+    }
+    return render(request, 'home/admin/service_form.html', context)
+
+
+@staff_member_required
+def admin_service_edit(request, pk):
+    """Редактирование услуги"""
+    service = get_object_or_404(Service, pk=pk)
+    
+    if request.method == 'POST':
+        form = ServiceAdminForm(request.POST, request.FILES, instance=service)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Услуга успешно обновлена!')
+            return redirect('home:admin_tariffs_dashboard')
+    else:
+        form = ServiceAdminForm(instance=service)
+    
+    context = {
+        'title': 'Редактирование услуги',
+        'form': form,
+        'service': service,
+        'is_create': False,
+    }
+    return render(request, 'home/admin/service_form.html', context)
+
+
+@staff_member_required
+def admin_service_delete(request, pk):
+    """Удаление услуги"""
+    service = get_object_or_404(Service, pk=pk)
+    
+    if request.method == 'POST':
+        service.delete()
+        messages.success(request, 'Услуга успешно удалена!')
+        return redirect('home:admin_tariffs_dashboard')
+    
+    context = {
+        'title': 'Удаление услуги',
+        'service': service,
+    }
+    return render(request, 'home/admin/service_confirm_delete.html', context)
+
+
+@staff_member_required
+def admin_extra_service_create(request):
+    """Создание новой дополнительной услуги"""
+    if request.method == 'POST':
+        form = StandaloneExtraServiceAdminForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Дополнительная услуга успешно создана!')
+            return redirect('home:admin_tariffs_dashboard')
+    else:
+        form = StandaloneExtraServiceAdminForm()
+    
+    context = {
+        'title': 'Создание дополнительной услуги',
+        'form': form,
+        'is_create': True,
+    }
+    return render(request, 'home/admin/extra_service_form.html', context)
+
+
+@staff_member_required
+def admin_extra_service_edit(request, pk):
+    """Редактирование дополнительной услуги"""
+    extra_service = get_object_or_404(StandaloneExtraService, pk=pk)
+    
+    if request.method == 'POST':
+        form = StandaloneExtraServiceAdminForm(request.POST, request.FILES, instance=extra_service)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Дополнительная услуга успешно обновлена!')
+            return redirect('home:admin_tariffs_dashboard')
+    else:
+        form = StandaloneExtraServiceAdminForm(instance=extra_service)
+    
+    context = {
+        'title': 'Редактирование дополнительной услуги',
+        'form': form,
+        'extra_service': extra_service,
+        'is_create': False,
+    }
+    return render(request, 'home/admin/extra_service_form.html', context)
+
+
+@staff_member_required
+def admin_extra_service_delete(request, pk):
+    """Удаление дополнительной услуги"""
+    extra_service = get_object_or_404(StandaloneExtraService, pk=pk)
+    
+    if request.method == 'POST':
+        extra_service.delete()
+        messages.success(request, 'Дополнительная услуга успешно удалена!')
+        return redirect('home:admin_tariffs_dashboard')
+    
+    context = {
+        'title': 'Удаление дополнительной услуги',
+        'extra_service': extra_service,
+    }
+    return render(request, 'home/admin/extra_service_confirm_delete.html', context)
+
+
+@staff_member_required
+def admin_marketing_settings(request):
+    """Реклама (РСЯ), метрики и произвольные вставки без правки кода."""
+    obj = SiteMarketingSettings.get_solo()
+    if request.method == 'POST':
+        form = SiteMarketingSettingsForm(request.POST, request.FILES, instance=obj)
+        if form.is_valid():
+            form.save()
+            cache.delete('site_marketing_ctx')
+            messages.success(request, 'Настройки рекламы и метрик сохранены.')
+            return redirect('home:admin_marketing_settings')
+    else:
+        form = SiteMarketingSettingsForm(instance=obj)
+    return render(
+        request,
+        'home/admin/marketing_settings.html',
+        {'form': form, 'title': 'Реклама и метрики'},
+    )

@@ -1954,6 +1954,10 @@ class ArticleGeneratorService:
         if not text:
             return ""
 
+        import html
+        text = html.unescape(text)
+        text = text.replace('\xa0', ' ')
+
         lines = [re.sub(r'[ \t]+', ' ', line).strip() for line in text.splitlines()]
         text = '\n'.join(lines)
         while '\n\n\n' in text:

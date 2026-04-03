@@ -1,7 +1,20 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
-from .models import Otziv, OtzivComment, Order, OrderQuestionnaire, OrderFile, Customer, OrderComment, LegalInfo, Rabota
+from .models import (
+    Otziv,
+    OtzivComment,
+    Order,
+    OrderQuestionnaire,
+    OrderFile,
+    Customer,
+    OrderComment,
+    LegalInfo,
+    Rabota,
+    Service,
+    StandaloneExtraService,
+    SiteMarketingSettings,
+)
 from .registration_guards import (
     validate_person_name,
     validate_registration_username,
@@ -726,4 +739,72 @@ class RabotaForm(forms.ModelForm):
             'technologies': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Например: Python, Django, Tailwind CSS'}),
             'featured': forms.CheckboxInput(attrs={'class': 'form-checkbox h-4 w-4 text-primary-600 border-gray-300 rounded'}),
             'order': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
+        }
+
+
+class ServiceAdminForm(forms.ModelForm):
+    """Форма для создания и редактирования услуг (Админ панель)"""
+    class Meta:
+        model = Service
+        fields = ['title', 'description', 'icon', 'price', 'order', 'is_active']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Название услуги'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Описание услуги'}),
+            'icon': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'price': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Например: от 50,000 ₽'}),
+            'order': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-checkbox h-4 w-4 text-primary-600 border-gray-300 rounded'}),
+        }
+
+
+class StandaloneExtraServiceAdminForm(forms.ModelForm):
+    """Форма для создания и редактирования дополнительных услуг (Админ панель)"""
+    class Meta:
+        model = StandaloneExtraService
+        fields = ['title', 'description', 'price', 'order', 'is_active']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Название дополнительной услуги'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Описание'}),
+            'price': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Например: от 15,000 ₽/мес'}),
+            'order': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-checkbox h-4 w-4 text-primary-600 border-gray-300 rounded'}),
+        }
+
+
+_TA = {
+    'class': 'w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm text-gray-900',
+    'rows': 6,
+}
+
+
+class SiteMarketingSettingsForm(forms.ModelForm):
+    """Реклама и метрики (единая запись в БД)."""
+
+    class Meta:
+        model = SiteMarketingSettings
+        fields = [
+            'yandex_rsya_html',
+            'yandex_metrika_html',
+            'google_tag_head_html',
+            'google_tag_body_html',
+            'head_extra_html',
+            'body_end_html',
+            'custom_promo_banner_html',
+            'promo_image',
+            'promo_link',
+            'replace_builtin_counters',
+            'active',
+        ]
+        widgets = {
+            'yandex_rsya_html': forms.Textarea(attrs={**_TA, 'rows': 8}),
+            'yandex_metrika_html': forms.Textarea(attrs=_TA),
+            'google_tag_head_html': forms.Textarea(attrs=_TA),
+            'google_tag_body_html': forms.Textarea(attrs=_TA),
+            'head_extra_html': forms.Textarea(attrs=_TA),
+            'body_end_html': forms.Textarea(attrs=_TA),
+            'custom_promo_banner_html': forms.Textarea(attrs={**_TA, 'rows': 5}),
+            'promo_link': forms.URLInput(attrs={'class': 'w-full rounded-lg border border-gray-300 px-3 py-2'}),
+            'promo_image': forms.FileInput(attrs={'class': 'block w-full text-sm text-gray-600'}),
+            'replace_builtin_counters': forms.CheckboxInput(attrs={'class': 'rounded border-gray-300 text-primary-600'}),
+            'active': forms.CheckboxInput(attrs={'class': 'rounded border-gray-300 text-primary-600'}),
         }

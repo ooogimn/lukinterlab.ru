@@ -875,3 +875,79 @@ class LegalInfo(models.Model):
         if self.is_active:
             LegalInfo.objects.filter(is_active=True).exclude(pk=self.pk).update(is_active=False)
         super().save(*args, **kwargs)
+
+
+class SiteMarketingSettings(models.Model):
+    """
+    Единые настройки: рекламные вставки (РСЯ и др.), метрики, произвольный HTML.
+    Одна строка (pk=1) — правка через /manage/marketing/ или админку.
+    """
+
+    yandex_rsya_html = models.TextField(
+        'HTML блоков РСЯ / медийной рекламы',
+        blank=True,
+        help_text='Вставьте код рекламных блоков (например, из кабинета Яндекса). Выводится в зоне reclama (подключается на всех страницах с base.html).',
+    )
+    yandex_metrika_html = models.TextField(
+        'Яндекс.Метрика и счётчики (фрагмент для &lt;head&gt; или полный)',
+        blank=True,
+        help_text='Если заполнено и включена подмена — выводится вместо встроенного счётчика в шаблоне.',
+    )
+    google_tag_head_html = models.TextField(
+        'Google Tag Manager / аналитика (часть для &lt;head&gt;)',
+        blank=True,
+    )
+    google_tag_body_html = models.TextField(
+        'Google Tag Manager (noscript сразу после &lt;body&gt;)',
+        blank=True,
+    )
+    head_extra_html = models.TextField(
+        'Дополнительно в &lt;head&gt;',
+        blank=True,
+        help_text='Проверка сайта, пиксели и т.п.',
+    )
+    body_end_html = models.TextField(
+        'Перед закрытием &lt;/body&gt;',
+        blank=True,
+        help_text='Доп. скрипты, вторичные пиксели.',
+    )
+    custom_promo_banner_html = models.TextField(
+        'Свой промо-блок (HTML)',
+        blank=True,
+        help_text='Произвольный блок: баннер, встроенное видео, текст. Рендерится |safe рядом с рекламной зоной.',
+    )
+    promo_image = models.ImageField(
+        'Промо-картинка (опционально)',
+        upload_to='marketing/',
+        blank=True,
+        null=True,
+    )
+    promo_link = models.URLField(
+        'Ссылка с промо-картинки',
+        blank=True,
+    )
+    replace_builtin_counters = models.BooleanField(
+        'Заменить встроенные GTM и Метрику в шаблоне',
+        default=False,
+        help_text='Если включено — блоки из полей выше подставляются вместо захардкоженных скриптов в base.html (заполните Metrika/GTM вручную).',
+    )
+    active = models.BooleanField('Включить вывод с БД', default=True)
+
+    class Meta:
+        verbose_name = 'Реклама и метрики (сайт)'
+        verbose_name_plural = 'Реклама и метрики (сайт)'
+
+    def __str__(self):
+        return 'Настройки рекламы и метрик'
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        pass
+
+    @classmethod
+    def get_solo(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj

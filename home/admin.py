@@ -3,10 +3,10 @@ from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 from django.urls import reverse
 from .models import (
-    Otziv, Rabota, OtzivComment, ContactMessage, SEOModel, SectionBackground, 
+    Otziv, Rabota, OtzivComment, ContactMessage, SEOModel, SectionBackground,
     Service, ExtraService, StandaloneExtraService,
     Customer, Cart, CartItem, Order, OrderItem, OrderQuestionnaire, OrderFile, OrderComment,
-    LegalInfo
+    LegalInfo, SiteMarketingSettings,
 )
 
 
@@ -774,3 +774,16 @@ class LegalInfoAdmin(admin.ModelAdmin):
         if obj.is_active:
             LegalInfo.objects.filter(is_active=True).exclude(pk=obj.pk).update(is_active=False)
         super().save_model(request, obj, form, change)
+
+
+@admin.register(SiteMarketingSettings)
+class SiteMarketingSettingsAdmin(admin.ModelAdmin):
+    """Дублирование /manage/marketing/ для суперпользователей в Jazzmin."""
+
+    list_display = ('__str__', 'active', 'replace_builtin_counters')
+
+    def has_add_permission(self, request):
+        return not SiteMarketingSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False

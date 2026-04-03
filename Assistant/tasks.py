@@ -19,7 +19,7 @@ from .models import AISchedule
 SCHEDULE_TASK_FUNC = 'Assistant.tasks.run_schedule_task'
 # Префикс канонического имени расписания в ORM Django-Q
 AI_SCHEDULE_NAME_PREFIX = 'ai_schedule_'
-from .article_generator import ArticleGeneratorService
+# Lazy-import ArticleGeneratorService в run_schedule_task — иначе при старте тянутся bs4/lxml.
 
 logger = logging.getLogger(__name__)
 
@@ -319,8 +319,8 @@ def run_schedule_task(schedule_id):
         # Блокировка получена, выполняем задачу
         try:
             logger.info(f"[START] Запуск генерации по расписанию: {schedule_obj.name}")
-            
-            # Создаем сервис генерации
+            from .article_generator import ArticleGeneratorService
+
             generator = ArticleGeneratorService(schedule_obj)
             
             # Генерируем статьи

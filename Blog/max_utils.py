@@ -27,10 +27,16 @@ MAX_MESSAGE_TOTAL_CHARS = 3980
 
 
 def _build_max_message(post, site_url: str) -> str:
-    article_url = f"{site_url.rstrip('/')}{post.get_absolute_url()}"
-    footer = f"\n\nЧитать далее: {article_url}"
+    include_link = getattr(settings, 'SOCIAL_INCLUDE_ARTICLE_LINK', True)
+    footer = ''
+    if include_link:
+        try:
+            article_url = f"{site_url.rstrip('/')}{post.get_absolute_url()}"
+            footer = f"\n\nЧитать далее: {article_url}"
+        except Exception:
+            footer = ''
     header = f"{(post.title or '').strip()}\n\n"
-    budget = MAX_MESSAGE_TOTAL_CHARS - len(header) - len(footer)
+    budget = MAX_MESSAGE_TOTAL_CHARS - len(header) - len(footer or '')
     if budget < 120:
         budget = 120
 
@@ -165,16 +171,22 @@ def _max_build_image_attachment(token: str, image_bytes: bytes, filename: str, m
         return None
     return {'type': 'image', 'payload': payload}
 
-def _max_build_video_attachment(token: str, file_path: str, mime: str):
+def _max_build_video_attachment(api_token: str, file_path: str, mime: str):
     """
-    POST /uploads?type=video, затем POST на upload url с полем data (multipart).
+    POST /uploads?type=video → POST на выданный url с полем data (multipart).
+    По документации MAX: второй запрос на CDN идёт без Authorization; токен для вложения
+    может прийти в ответе шага 2 как {"token": "..."} либо уже в шаге 1 вместе с url.
+    В POST /messages для video нужен payload вида {"token": "..."}.
     """
+    import os
+
     base = MAX_PLATFORM_API.rstrip('/')
+    pre_token = None
     try:
         up = requests.post(
             f'{base}/uploads',
             params={'type': 'video'},
-            headers={'Authorization': token},
+            headers={'Authorization': api_token},
             timeout=30,
         )
         up.raise_for_status()
@@ -183,54 +195,70 @@ def _max_build_video_attachment(token: str, file_path: str, mime: str):
         logger.error('MAX: /uploads (video): %s', e)
         return None
 
-    upload_url = meta.get('url') if isinstance(meta, dict) else None
+    if not isinstance(meta, dict):
+        logger.error('MAX: /uploads (video): некорректный ответ: %s', meta)
+        return None
+
+    upload_url = meta.get('url')
+    pre_token = meta.get('token')
+    if pre_token and isinstance(pre_token, str):
+        pre_token = pre_token.strip() or None
+
     if not upload_url:
         logger.error('MAX: /uploads (video): нет url в ответе: %s', meta)
         return None
 
-    import os
+    upload_headers = {}
+    # Официальный пример MAX не передаёт Authorization на CDN upload URL (достаточно query sig).
+    mime = mime or 'video/mp4'
+    file_name = os.path.basename(file_path) or 'video.mp4'
+
     try:
         with open(file_path, 'rb') as f:
             ul = requests.post(
                 upload_url,
-                headers={'Authorization': token},
-                files={'data': (os.path.basename(file_path), f, mime)},
+                headers=upload_headers,
+                files={'data': (file_name, f, mime)},
                 timeout=600,
             )
-            ul.raise_for_status()
+        ul.raise_for_status()
+        body_text = (ul.text or '').strip()
+        uploaded = None
+        if body_text:
             try:
                 uploaded = ul.json()
             except ValueError:
-                resp_text = (ul.text or '').strip()
-                logger.error('MAX: ответ загрузки видео не JSON: %s', resp_text[:400])
-                # Если это XML с retval=1, это может быть специфический ответ CDN MAX
-                if '<retval>1</retval>' in resp_text:
-                    logger.info('MAX: ответ видео-загрузки содержит <retval>1</retval>. Возможно, файл принят, но payload не выдан.')
-                return None
+                uploaded = None
     except requests.RequestException as e:
         logger.error('MAX: загрузка видео на CDN: %s', e)
+        if getattr(e, 'response', None) is not None and e.response is not None:
+            try:
+                logger.error('MAX: тело ответа CDN (видео): %s', (e.response.text or '')[:500])
+            except Exception:
+                pass
         return None
 
-    # Полезная нагрузка (`payload`) почти всегда содержит `token` и/или `url`.
-    # Иногда может вернуть просто `id` или `video_id`.
-    payload = {}
+    tok = None
     if isinstance(uploaded, dict):
-        if 'id' in uploaded:
-            payload['id'] = uploaded['id']
-        if 'video_id' in uploaded:
-            payload['video_id'] = uploaded['video_id']
-        elif 'photo_id' in uploaded:
-            payload['photo_id'] = uploaded['photo_id']
-        if uploaded.get('token'):
-            payload['token'] = uploaded['token']
-        if uploaded.get('url'):
-            payload['url'] = uploaded['url']
+        tok = uploaded.get('token')
+        if isinstance(tok, str):
+            tok = tok.strip() or None
 
-    if not payload:
-        logger.error('MAX: не разобрать payload видео: %s', uploaded)
+    if not tok and pre_token:
+        tok = pre_token
+        logger.info('MAX: токен видео взят из ответа POST /uploads (шаг 1)')
+
+    if not tok and body_text:
+        logger.error('MAX: ответ загрузки видео без token: %s', body_text[:500])
+        if '<retval>1</retval>' in body_text and pre_token:
+            tok = pre_token
+            logger.info('MAX: CDN вернул retval без JSON — используем pre_token из /uploads')
+
+    if not tok:
+        logger.error('MAX: не удалось получить token для video-приложения')
         return None
-        
-    return {'type': 'video', 'payload': payload}
+
+    return {'type': 'video', 'payload': {'token': tok}}
 
 
 def _max_response_attachment_not_ready(response: requests.Response) -> bool:
@@ -288,6 +316,7 @@ def send_to_max(post):
             'category_id',
             'kartinka',
             'video_file',
+            'video',
         ]
     )
     if post.max_posted_at:
@@ -305,12 +334,13 @@ def send_to_max(post):
 
     logger.info('MAX: отправка анонса «%s»', (post.title or '')[:80])
 
+    from Blog.social_video import get_local_video_path_and_mime
+
     media_attachment = None
-    if post.video_file:
+    video_path, video_mime = get_local_video_path_and_mime(post)
+    if video_path:
         try:
-            import mimetypes
-            mime = mimetypes.guess_type(post.video_file.name)[0] or 'video/mp4'
-            media_attachment = _max_build_video_attachment(token, post.video_file.path, mime)
+            media_attachment = _max_build_video_attachment(token, video_path, video_mime or 'video/mp4')
             if not media_attachment:
                 logger.warning('MAX: «%s» — видео не прикреплено, уходит только текст', (post.title or '')[:80])
             else:
@@ -339,9 +369,13 @@ def send_to_max(post):
     if media_attachment:
         body['attachments'] = [media_attachment]
 
-    # После загрузки файла API рекомендует паузу; при attachment.not.ready — повтор с бэкоффом.
-    backoff_seconds = (1.5, 2.5, 4.0, 8.0, 16.0)
-    delays = list(backoff_seconds) if media_attachment else [0]
+    # После загрузки видео MAX дольше обрабатывает файл — увеличиваем первые паузы.
+    if media_attachment and media_attachment.get('type') == 'video':
+        delays = [3.0, 5.0, 8.0, 16.0, 24.0]
+    elif media_attachment:
+        delays = [1.5, 2.5, 4.0, 8.0, 16.0]
+    else:
+        delays = [0]
     try:
         for attempt, wait in enumerate(delays):
             if wait:

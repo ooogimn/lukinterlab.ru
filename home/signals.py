@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.core.cache import cache
-from .models import Otziv, Rabota, Service, StandaloneExtraService, LegalInfo
+from .models import Otziv, Rabota, RabotaMedia, Service, StandaloneExtraService, LegalInfo, SiteMarketingSettings
 from Blog.models import Post
 
 
@@ -15,6 +15,12 @@ def clear_home_cache_on_post_change(sender, instance, **kwargs):
 @receiver([post_save, post_delete], sender=Otziv)
 def clear_home_cache_on_otziv_change(sender, instance, **kwargs):
     """Очистка кэша главной страницы при изменении отзывов"""
+    cache.delete('home_page_data')
+
+
+@receiver([post_save, post_delete], sender=RabotaMedia)
+def clear_home_cache_on_rabota_media_change(sender, instance, **kwargs):
+    cache.delete('home_rabotas')
     cache.delete('home_page_data')
 
 
@@ -62,4 +68,9 @@ def clear_legal_info_cache(sender, instance, **kwargs):
     """Очистка кэша правовой информации при её изменении"""
     cache.delete('legal_info_active')
     cache.delete('home_page_data')
+
+
+@receiver([post_save], sender=SiteMarketingSettings)
+def clear_site_marketing_cache(sender, instance, **kwargs):
+    cache.delete('site_marketing_ctx')
 

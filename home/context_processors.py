@@ -1,4 +1,4 @@
-from .models import SEOModel, SectionBackground, LegalInfo
+from .models import SEOModel, SectionBackground, LegalInfo, SiteMarketingSettings
 from django.conf import settings
 from django.core.cache import cache
 
@@ -146,3 +146,26 @@ def vkid_oauth(request):
         'vkid_app_id': getattr(settings, 'VKID_APP_ID', None),
         'vkid_redirect_url': getattr(settings, 'VKID_REDIRECT_URL', 'https://lukinterlab.ru/'),
     }
+
+
+def site_marketing_context(request):
+    """Реклама, РСЯ, заменяемые счётчики — из БД (редакция /manage/marketing/)."""
+    cache_key = 'site_marketing_ctx'
+    data = cache.get(cache_key)
+    if data is None:
+        s = SiteMarketingSettings.get_solo()
+        data = {
+            'active': s.active,
+            'replace_builtin_counters': s.replace_builtin_counters,
+            'yandex_metrika_html': s.yandex_metrika_html or '',
+            'google_tag_head_html': s.google_tag_head_html or '',
+            'google_tag_body_html': s.google_tag_body_html or '',
+            'head_extra_html': s.head_extra_html or '',
+            'body_end_html': s.body_end_html or '',
+            'yandex_rsya_html': s.yandex_rsya_html or '',
+            'custom_promo_banner_html': s.custom_promo_banner_html or '',
+            'promo_image_url': s.promo_image.url if s.promo_image else '',
+            'promo_link': s.promo_link or '',
+        }
+        cache.set(cache_key, data, 1800)
+    return {'site_marketing': data}

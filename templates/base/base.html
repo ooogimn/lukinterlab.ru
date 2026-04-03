@@ -253,6 +253,14 @@
         }
     </style>
 
+    {% if site_marketing.active and site_marketing.replace_builtin_counters %}
+        {% if site_marketing.google_tag_head_html %}
+        {{ site_marketing.google_tag_head_html|safe }}
+        {% endif %}
+        {% if site_marketing.yandex_metrika_html %}
+        {{ site_marketing.yandex_metrika_html|safe }}
+        {% endif %}
+    {% else %}
     <!-- Google Tag Manager -->
     <script>
     (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -278,11 +286,21 @@
         });
     </script>
     <noscript><div><img src="https://mc.yandex.ru/watch/102639370" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    {% endif %}
+
+    {% if site_marketing.active and site_marketing.head_extra_html %}
+    {{ site_marketing.head_extra_html|safe }}
+    {% endif %}
     
     {% block extra_head %}{% endblock %}
 </head>
 
 <body class="bg-gray-50 text-gray-900 font-sans antialiased">
+    {% if site_marketing.active and site_marketing.replace_builtin_counters %}
+        {% if site_marketing.google_tag_body_html %}
+        {{ site_marketing.google_tag_body_html|safe }}
+        {% endif %}
+    {% else %}
     <!-- Google Tag Manager (noscript) -->
     <noscript>
         <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WCPSGH7C" 
@@ -290,6 +308,7 @@
         </iframe>
     </noscript>
     <!-- End Google Tag Manager (noscript) -->
+    {% endif %}
      
     <!-- Индикатор загрузки -->
     <div id="loading" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
@@ -369,5 +388,8 @@
     {% include 'assistant/chat_widget.html' %}
     <!-- Cookie Consent Banner -->
     {% include 'base/cookie_banner.html' %}
+    {% if site_marketing.active and site_marketing.body_end_html %}
+    {{ site_marketing.body_end_html|safe }}
+    {% endif %}
 </body>
 </html>

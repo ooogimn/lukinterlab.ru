@@ -26,8 +26,10 @@ urlpatterns = [
     path('callback/<str:slug>', vk_group_callback, name='vk_group_callback'),
     path('callback/<str:slug>/', vk_group_callback, name='vk_group_callback_slash'),
     path('ckeditor/', include('ckeditor_uploader.urls')),
-    path('admin/', admin.site.urls),
+    # Раньше кастомные дашборды жили под /admin/... и конфликтовали с admin.site.urls;
+    # теперь они на префиксе /manage/ в home.urls. Порядок «сначала home» оставляем — безопасно.
     path('', include('home.urls')),
+    path('admin/', admin.site.urls),
     path('blog/', include('Blog.urls', namespace='Blog')),
     path('assistant/', include('Assistant.urls', namespace='assistant')),
     path('moderation/', include('Moderation.urls', namespace='moderation')),
