@@ -33,6 +33,15 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # могут отправлять >1000 полей в одном POST — иначе TooManyFieldsSent.
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 
+# Дефолт Django 2.5 MiB: большие загрузки в админке (фон, GIF, видео) → 413 / RequestDataTooBig.
+# Переменная DATA_UPLOAD_MAX_MB в .env (целое число мегабайт), верхняя планка 1024.
+_upload_mb = env_int("DATA_UPLOAD_MAX_MB", 512)
+if not _upload_mb or _upload_mb < 10:
+    _upload_mb = 512
+DATA_UPLOAD_MAX_MEMORY_SIZE = min(_upload_mb * 1024 * 1024, 1024 * 1024 * 1024)
+# Файлы больше этого порога пишутся во временный файл на диск, а не целиком в RAM.
+FILE_UPLOAD_MAX_MEMORY_SIZE = min(10 * 1024 * 1024, DATA_UPLOAD_MAX_MEMORY_SIZE)
+
 # Публичный URL сайта (CSRF, ссылки)
 SITE_URL = env_str("SITE_URL", "https://lukinterlab.ru").rstrip("/")
 

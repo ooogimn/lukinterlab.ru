@@ -33,7 +33,7 @@ python manage.py runserver
   python manage.py collectstatic --noinput
   Перезапуск приложения (панель хостинга / touch tmp/restart.txt / gunicorn и т.д.)
 
-Не коммитится (.gitignore): db.sqlite3, media/, static/ (собранная), .venv, логи.
+Не коммитится (.gitignore): устаревшие db.sqlite3*, media/, static/ (собранная), .venv, логи. БД — только PostgreSQL (см. .env).
 
 cd ~/domains/lukinterlab.ru
 

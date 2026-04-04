@@ -1,7 +1,16 @@
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.core.cache import cache
-from .models import Otziv, Rabota, RabotaMedia, Service, StandaloneExtraService, LegalInfo, SiteMarketingSettings
+from .models import (
+    Otziv,
+    Rabota,
+    RabotaMedia,
+    Service,
+    StandaloneExtraService,
+    LegalInfo,
+    SiteMarketingSettings,
+    SectionBackground,
+)
 from Blog.models import Post
 
 
@@ -89,4 +98,12 @@ def clear_site_marketing_cache(sender, instance, **kwargs):
     if kwargs.get('raw'):
         return
     cache.delete('site_marketing_ctx')
+
+
+@receiver([post_save, post_delete], sender=SectionBackground)
+def clear_section_backgrounds_cache(sender, instance, **kwargs):
+    """Фоны секций в шаблонах берутся из кэша section_backgrounds_all (context_processors)."""
+    if kwargs.get('raw'):
+        return
+    cache.delete('section_backgrounds_all')
 

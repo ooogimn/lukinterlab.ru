@@ -342,8 +342,8 @@ python manage.py clear_cache
 # Проверка состояния фоновых задач
 python manage.py qinfo
 
-# Создание резервной копии БД
-cp db.sqlite3 db_backup_$(date +%Y%m%d_%H%M%S).sqlite3
+# Резервная копия PostgreSQL (локально / в контейнере см. POSTGRES_* в .env)
+# pg_dump -h $POSTGRES_HOST -U $POSTGRES_USER -d $POSTGRES_DB -Fc -f backup_$(date +%Y%m%d_%H%M%S).dump
 
 # Проверка миграций
 python manage.py showmigrations
