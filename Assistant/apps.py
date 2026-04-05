@@ -12,3 +12,10 @@ class AssistantConfig(AppConfig):
             import Assistant.signals  # noqa: F401
         except ImportError:
             pass
+        # После autodiscover django-q: своя админка Schedule с колонкой AISchedule.name
+        try:
+            from Assistant.dq_schedule_admin import register_assistant_django_q_schedule_admin
+
+            register_assistant_django_q_schedule_admin()
+        except ImportError:
+            pass
