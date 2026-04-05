@@ -291,6 +291,9 @@
     {% if site_marketing.active and site_marketing.head_extra_html %}
     {{ site_marketing.head_extra_html|safe }}
     {% endif %}
+
+    {# Дашборды Assistant/Moderation и др.: стили из {% block extra_css %} дочерних шаблонов #}
+    {% block extra_css %}{% endblock %}
     
     {% block extra_head %}{% endblock %}
 </head>
