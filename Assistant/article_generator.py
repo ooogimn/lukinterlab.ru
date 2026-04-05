@@ -2074,7 +2074,7 @@ class ArticleGeneratorService:
         return generated_posts
     
     """Генерация тестовой статьи без расписания"""
-    def generate_test_article(self, category, keywords='', context_data: Optional[Dict[str, Any]] = None, use_image_generation=False) -> Optional[Post]:
+    def generate_test_article(self, category, keywords='', context_data: Optional[Dict[str, Any]] = None) -> Optional[Post]:
         """
         Генерация тестовой статьи без расписания
         
@@ -2082,7 +2082,6 @@ class ArticleGeneratorService:
             category: Категория для статьи (объект Category или None - тогда используется fallback)
             keywords: Ключевые слова для генерации
             context_data: Дополнительные данные для контекста
-            use_image_generation: Использовать генерацию изображений
             
         Returns:
             Созданная статья Post или None в случае ошибки
@@ -2116,7 +2115,6 @@ class ArticleGeneratorService:
                 logger.info(f"[TEST] Категория передана как строка: {category}")
         
         context_data['keywords'] = keywords
-        context_data['use_image_generation'] = use_image_generation
         context_data['_article_index'] = 1  # Для тестовой статьи всегда индекс 1
         
         # Генерируем статью

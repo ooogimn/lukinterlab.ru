@@ -192,8 +192,8 @@ class AIScheduleAdmin(admin.ModelAdmin):
             'description': 'Параметры, которые будут использоваться при генерации статей.'
         }),
         ('Настройки моделей GigaChat', {
-            'fields': ('text_model', 'image_model', 'use_image_generation'),
-            'description': 'Выберите модели для генерации текста и изображений. Обычная модель для текста, PRO для изображений.'
+            'fields': ('text_model', 'image_model'),
+            'description': 'Модели для текста и для шага изображения (если в шаблоне включена генерация картинки). Режим картинки задаётся в шаблоне промпта.'
         }),
         ('Статистика', {
             'fields': ('total_generated', 'last_run', 'next_run'),

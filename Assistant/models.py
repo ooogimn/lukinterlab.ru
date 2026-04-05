@@ -726,11 +726,6 @@ class AISchedule(models.Model):
         verbose_name='Модель для изображений',
         help_text='Модель GigaChat для генерации изображений. Pro или Max поддерживают генерацию изображений'
     )
-    use_image_generation = models.BooleanField(
-        default=False,
-        verbose_name='Генерировать изображения',
-        help_text='Использовать GigaChat-Pro для генерации изображений вместо загрузки из источников'
-    )
     
     # Статистика
     last_run = models.DateTimeField(null=True, blank=True, verbose_name='Последний запуск')

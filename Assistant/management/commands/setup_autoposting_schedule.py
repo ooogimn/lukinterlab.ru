@@ -72,7 +72,6 @@ class Command(BaseCommand):
                 'is_active': True,
                 'text_model': 'GigaChat',
                 'image_model': 'GigaChat-Pro',
-                'use_image_generation': False,  # Можно включить если нужно
             }
         )
         

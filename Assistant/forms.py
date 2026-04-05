@@ -176,7 +176,7 @@ class AIScheduleForm(forms.ModelForm):
             'start_time',
             'articles_per_run', 'batch_interval',
             'category', 'tags', 'keywords', 'context_data',
-            'text_model', 'image_model', 'use_image_generation',
+            'text_model', 'image_model',
         ]
         widgets = {
             'name': forms.TextInput(attrs={
@@ -236,9 +236,6 @@ class AIScheduleForm(forms.ModelForm):
                 'class': _SCHEDULE_CONTROL,
                 'placeholder': 'GigaChat-2-Pro',
             }),
-            'use_image_generation': forms.CheckboxInput(attrs={
-                'class': _SCHEDULE_CHECK,
-            }),
             'is_active': forms.CheckboxInput(attrs={
                 'class': _SCHEDULE_CHECK,
             }),
@@ -258,7 +255,6 @@ class AIScheduleForm(forms.ModelForm):
             'context_data': 'Дополнительные данные (JSON)',
             'text_model': 'Модель для текста',
             'image_model': 'Модель для изображений',
-            'use_image_generation': 'Генерировать изображения',
         }
     
     def __init__(self, *args, **kwargs):
