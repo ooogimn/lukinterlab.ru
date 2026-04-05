@@ -9,6 +9,7 @@
 #
 # Полный стек: Gunicorn + воркер django-q (профиль full):
 #   docker compose --profile full up -d --build
+# После git pull на сервере обязательно build web (и qcluster) — код в образе, не bind-mount с хоста.
 # Порт web слушает только на 127.0.0.1 (снаружи — nginx на хосте на :80/:443).
 #
 services:
@@ -43,6 +44,7 @@ services:
   web:
     profiles: ["full"]
     build: .
+    # Один файл для секретов в контейнерах: .env.docker (рядом с compose). Корневой .env Django не подхватывает compose — дублируйте нужные ключи сюда.
     env_file:
       - .env.docker
     environment:

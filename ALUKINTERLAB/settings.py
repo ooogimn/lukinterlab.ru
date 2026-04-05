@@ -22,6 +22,9 @@ from ALUKINTERLAB.secrets_env import (
 
 load_env_file(BASE_DIR)
 
+# Файловые логгеры пишут в BASE_DIR/logs; на свежем деплое каталога может не быть.
+(BASE_DIR / 'logs').mkdir(parents=True, exist_ok=True)
+
 SECRET_KEY = require_secret_key()
 
 # На продакшене в .env или панели хостинга: DJANGO_DEBUG=False
