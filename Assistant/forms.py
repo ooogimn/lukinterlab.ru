@@ -147,18 +147,18 @@ class PromptTemplateForm(forms.ModelForm):
 
 # Виджеты дашборда расписаний: заметные границы и фокус (Tailwind CDN в base.html)
 _SCHEDULE_CONTROL = (
-    'schedule-dash-control w-full rounded-xl border-2 border-slate-300 bg-white px-4 py-3 '
-    'text-slate-900 shadow-sm transition placeholder:text-slate-400 '
+    'schedule-dash-control w-full rounded-lg border-2 border-slate-300 bg-white px-3 py-2 '
+    'text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 '
     'hover:border-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 '
     'focus:ring-indigo-200'
 )
 _SCHEDULE_TEXTAREA = (
     _SCHEDULE_CONTROL
-    + ' min-h-[8rem] resize-y leading-relaxed text-[15px] bg-slate-50/80'
+    + ' min-h-[4.5rem] resize-y leading-snug text-[13px] bg-slate-50/80'
 )
 _SCHEDULE_TEXTAREA_JSON = (
     _SCHEDULE_CONTROL
-    + ' min-h-[10rem] resize-y font-mono text-sm leading-relaxed bg-indigo-50/40'
+    + ' min-h-[6rem] resize-y font-mono text-xs leading-snug bg-indigo-50/40'
 )
 _SCHEDULE_CHECK = 'schedule-dash-check h-5 w-5 rounded border-2 border-slate-400 text-indigo-600 focus:ring-indigo-500'
 
@@ -220,12 +220,12 @@ class AIScheduleForm(forms.ModelForm):
             }),
             'keywords': forms.Textarea(attrs={
                 'class': _SCHEDULE_TEXTAREA,
-                'rows': 5,
+                'rows': 3,
                 'placeholder': 'Ключевые слова через запятую',
             }),
             'context_data': forms.Textarea(attrs={
                 'class': _SCHEDULE_TEXTAREA_JSON,
-                'rows': 8,
+                'rows': 5,
                 'placeholder': '{"topic": "красота", "tone": "дружелюбный"}',
             }),
             'text_model': forms.TextInput(attrs={
