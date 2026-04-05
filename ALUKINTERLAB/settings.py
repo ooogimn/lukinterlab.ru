@@ -104,6 +104,16 @@ VKID_REDIRECT_URL = env_str("VKID_REDIRECT_URL", "").strip()
 VKID_PROTECTED_KEY = env_str("VKID_PROTECTED_KEY")
 VKID_SERVICE_KEY = env_str("VKID_SERVICE_KEY")
 
+# OAuth личного кабинета (Яндекс, Google, MAX OIDC). Пусто — кнопки отключены; непустое в БД (/manage/auth/oauth/) перекрывает .env.
+YANDEX_OAUTH_CLIENT_ID = env_str("YANDEX_OAUTH_CLIENT_ID")
+YANDEX_OAUTH_CLIENT_SECRET = env_str("YANDEX_OAUTH_CLIENT_SECRET")
+GOOGLE_OAUTH_CLIENT_ID = env_str("GOOGLE_OAUTH_CLIENT_ID")
+GOOGLE_OAUTH_CLIENT_SECRET = env_str("GOOGLE_OAUTH_CLIENT_SECRET")
+# Issuer без завершающего слэша (или со слэшем) — см. закрытую доку MAX, чаще auth.max.ru или из discovery.
+MAX_OIDC_ISSUER = env_str("MAX_OIDC_ISSUER")
+MAX_OIDC_CLIENT_ID = env_str("MAX_OIDC_CLIENT_ID")
+MAX_OIDC_CLIENT_SECRET = env_str("MAX_OIDC_CLIENT_SECRET")
+
 # GigaChat API
 GIGACHAT_AUTHORIZATION_KEY = env_str("GIGACHAT_AUTHORIZATION_KEY")
 GIGACHAT_SCOPE = env_str("GIGACHAT_SCOPE", "GIGACHAT_API_PERS")
@@ -131,6 +141,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sitemaps',  # Sitemap для SEO
+    'identity_auth',  # привязки OAuth / VK ID к одному User (см. identity_auth/README_INTEGRATION.md)
     'home', 'Blog.apps.BlogConfig', 'Users', 'taggit', 'Assistant',
     'django_q',  # Django-Q для фоновых задач
     'Moderation',  # Модерация статей, комментариев и SEO
@@ -177,7 +188,7 @@ TEMPLATES = [
                 'home.context_processors.section_backgrounds',
                 'home.context_processors.cart_info',
                 'home.context_processors.legal_info_context',
-                'home.context_processors.vkid_oauth',
+                'identity_auth.context_processors.vkid_oauth',
                 'home.context_processors.site_marketing_context',
             ],
         },
@@ -209,6 +220,9 @@ DATABASES = {
         'CONN_MAX_AGE': _conn_max if _conn_max is not None else 60,
     }
 }
+
+# Модель профиля заказчика для identity_auth (создание записи при первом соцвходе). Пусто — только User.
+IDENTITY_AUTH_CUSTOMER_MODEL = 'home.Customer'
 
 AUTH_PASSWORD_VALIDATORS = [
     {

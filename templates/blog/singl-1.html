@@ -314,7 +314,7 @@
                                     Ответить
                                 </button>
                                 {% else %}
-                                <a href="{% url 'home:customer_login' %}?next={{ request.get_full_path|urlencode }}" class="hover:text-primary-600 transition-colors">Войти, чтобы ответить</a>
+                                <a href="{% url 'identity_auth:customer_login' %}?next={{ request.get_full_path|urlencode }}" class="hover:text-primary-600 transition-colors">Войти, чтобы ответить</a>
                                 {% endif %}
                             </div>
                             
@@ -403,7 +403,7 @@
             {% else %}
             <div class="bg-gray-50 rounded-lg p-6 text-center text-gray-700">
                 <p class="mb-3">Комментарии могут оставлять только зарегистрированные пользователи.</p>
-                <a href="{% url 'home:customer_login' %}?next={{ request.get_full_path|urlencode }}" class="inline-flex bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors">Войти</a>
+                <a href="{% url 'identity_auth:customer_login' %}?next={{ request.get_full_path|urlencode }}" class="inline-flex bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors">Войти</a>
             </div>
             {% endif %}
         </div>

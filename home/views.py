@@ -38,6 +38,8 @@ import requests
 
 from django.core.cache import cache
 
+from identity_auth.services import linked_labels_for_user
+
 def home(request):
     # Кэшируем данные главной страницы на 15 минут (900 секунд)
     cache_key_posts = 'home_posts'
@@ -1020,170 +1022,7 @@ def payment_success(request, order_id):
     }
     return render(request, 'home/checkout/payment_success.html', context)
 
-# ==================== ЛИЧНЫЙ КАБИНЕТ ====================
-
-def customer_register(request):
-    """Регистрация заказчика"""
-    if request.user.is_authenticated:
-        return redirect('home:customer_dashboard')
-    
-    if request.method == 'POST':
-        form = CustomerRegistrationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            messages.success(request, 'Регистрация прошла успешно! Добро пожаловать в личный кабинет.')
-            return redirect('home:customer_dashboard')
-    else:
-        form = CustomerRegistrationForm()
-    
-    context = {
-        'form': form,
-        'title': 'Регистрация'
-    }
-    return render(request, 'home/customer/register.html', context)
-
-
-def customer_login(request):
-    """Вход в личный кабинет"""
-    from django.utils.http import url_has_allowed_host_and_scheme
-
-    def safe_next_url():
-        raw = (request.POST.get('next') or request.GET.get('next') or '').strip()
-        if raw and url_has_allowed_host_and_scheme(
-            raw,
-            allowed_hosts={request.get_host()},
-            require_https=request.is_secure(),
-        ):
-            return raw
-        return None
-
-    next_url = safe_next_url()
-    if request.user.is_authenticated:
-        if next_url:
-            return redirect(next_url)
-        return redirect('home:customer_dashboard')
-
-    if request.method == 'POST':
-        form = CustomerLoginForm(request, data=request.POST)
-        if form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
-            user = authenticate(username=username, password=password)
-            if user is not None:
-                login(request, user)
-                messages.success(request, f'Добро пожаловать, {user.get_full_name() or user.username}!')
-                next_url = safe_next_url()
-                if next_url:
-                    return redirect(next_url)
-                return redirect('home:customer_dashboard')
-    else:
-        form = CustomerLoginForm()
-
-    context = {
-        'form': form,
-        'title': 'Вход в личный кабинет',
-        'next': request.GET.get('next', ''),
-    }
-    return render(request, 'home/customer/login.html', context)
-
-
-@require_POST
-def customer_vkid_complete(request):
-    """Приём access_token после VK ID SDK → проверка через id.vk.ru → вход в личный кабинет."""
-    if not getattr(settings, 'VKID_APP_ID', None):
-        return JsonResponse({'error': 'vkid_disabled'}, status=503)
-    try:
-        payload = json.loads(request.body.decode())
-    except (json.JSONDecodeError, UnicodeDecodeError):
-        return JsonResponse({'error': 'invalid_json'}, status=400)
-
-    access_token = payload.get('access_token')
-    if not access_token:
-        return JsonResponse({'error': 'missing_token'}, status=400)
-
-    try:
-        r = requests.post(
-            'https://id.vk.ru/oauth2/user_info',
-            data={
-                'client_id': str(settings.VKID_APP_ID),
-                'access_token': access_token,
-            },
-            headers={'Content-Type': 'application/x-www-form-urlencoded'},
-            timeout=15,
-        )
-    except requests.RequestException:
-        return JsonResponse({'error': 'vk_unreachable'}, status=502)
-
-    try:
-        body = r.json()
-    except ValueError:
-        return JsonResponse({'error': 'invalid_vk_response'}, status=502)
-
-    if r.status_code != 200 or 'error' in body:
-        return JsonResponse({
-            'error': body.get('error', 'vk_error'),
-            'detail': body.get('error_description', ''),
-        }, status=400)
-
-    user_info = body.get('user') or {}
-    vk_user_id = user_info.get('user_id')
-    if vk_user_id is None:
-        return JsonResponse({'error': 'no_user'}, status=400)
-
-    vk_user_id = str(vk_user_id)
-    username = f'vkid_{vk_user_id}'
-    first_name = (user_info.get('first_name') or '')[:30]
-    last_name = (user_info.get('last_name') or '')[:30]
-    email_from_vk = user_info.get('email')
-    placeholder_email = f'vkid_{vk_user_id}@vkid.invalid'
-    email = email_from_vk or placeholder_email
-    if email_from_vk and User.objects.filter(email=email_from_vk).exclude(username=username).exists():
-        email = placeholder_email
-
-    is_new_user = False
-    with transaction.atomic():
-        try:
-            user = User.objects.get(username=username)
-            user.first_name = first_name or user.first_name
-            user.last_name = last_name or user.last_name
-            user.set_unusable_password()
-            if email_from_vk and not User.objects.filter(email=email_from_vk).exclude(pk=user.pk).exists():
-                user.email = email_from_vk
-            user.save()
-        except User.DoesNotExist:
-            is_new_user = True
-            user = User(
-                username=username,
-                email=email,
-                first_name=first_name,
-                last_name=last_name,
-            )
-            user.set_unusable_password()
-            user.save()
-
-        Customer.objects.get_or_create(user=user, defaults={'phone': ''})
-
-    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-    display = user.get_full_name() or user.username
-    if is_new_user:
-        messages.success(
-            request,
-            f'Регистрация выполнена. Добро пожаловать, {display}! '
-            f'Профиль можно дополнить в личном кабинете.',
-        )
-    else:
-        messages.success(request, f'Добро пожаловать, {display}!')
-    return JsonResponse({'ok': True, 'redirect': reverse('home:customer_dashboard')})
-
-
-@login_required
-def customer_logout(request):
-    """Выход из личного кабинета"""
-    logout(request)
-    messages.success(request, 'Вы успешно вышли из личного кабинета.')
-    return redirect('home:home')
-
+# ==================== ЛИЧНЫЙ КАБИНЕТ (вход/регистрация/OAuth — приложение identity_auth) ====================
 
 @login_required
 def customer_dashboard(request):
@@ -1213,7 +1052,9 @@ def customer_dashboard(request):
         'pending_payment_orders': pending_payment_orders,
         'completed_orders': completed_orders,
         'total_spent': total_spent,
-        'title': 'Личный кабинет'
+        'title': 'Личный кабинет',
+        'linked_auth_labels': linked_labels_for_user(request.user),
+        'password_login_enabled': request.user.has_usable_password(),
     }
     return render(request, 'home/customer/dashboard.html', context)
 
@@ -1887,3 +1728,4 @@ def admin_marketing_settings(request):
         'home/admin/marketing_settings.html',
         {'form': form, 'title': 'Реклама и метрики'},
     )
+

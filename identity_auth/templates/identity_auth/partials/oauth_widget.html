@@ -1,0 +1,112 @@
+{% if not request.user.is_authenticated %}
+{# Виджет OAuth / VK ID — настраивается через identity_auth (шаблоны, static, auth_settings). #}
+<div class="vkid-oauth-widget {{ vkid_oauth_box_class|default:'mt-6 pt-6 border-t border-gray-200' }}">
+    {% if vkid_app_id %}
+    <div class="mb-4 w-full min-h-[44px] flex justify-center items-center">
+        <div id="lukinterlab-vkid-oauth-list" class="flex w-full max-w-full flex-wrap justify-center gap-2 content-center"></div>
+    </div>
+    <script src="https://unpkg.com/@vkid/sdk@2/dist-sdk/umd/index.js" async></script>
+    <script>
+    (function () {
+        function getCookie(name) {
+            var m = document.cookie.match(new RegExp('(^|; )' + name.replace(/[-.+*]/g, '\\$&') + '=([^;]*)'));
+            return m ? decodeURIComponent(m[2]) : '';
+        }
+        function initVkId() {
+            if (!('VKIDSDK' in window)) return false;
+            var VKID = window.VKIDSDK;
+            var container = document.getElementById('lukinterlab-vkid-oauth-list');
+            if (!container || container.dataset.vkidInit === '1') return true;
+            container.dataset.vkidInit = '1';
+
+            VKID.Config.init({
+                app: {{ vkid_app_id }},
+                redirectUrl: '{{ vkid_redirect_url|escapejs }}',
+                responseMode: VKID.ConfigResponseMode.Callback,
+                source: VKID.ConfigSource.LOWCODE,
+                scope: ''
+            });
+
+            var oauthNames = (VKID.OAuthName && VKID.OAuthName.VK)
+                ? [VKID.OAuthName.VK, VKID.OAuthName.OK, VKID.OAuthName.MAIL]
+                : ['vkid', 'ok_ru', 'mail_ru'];
+
+            var oauthList = new VKID.OAuthList();
+            oauthList.render({
+                container: container,
+                oauthList: oauthNames,
+                scheme: VKID.Scheme.LIGHT,
+                lang: VKID.Languages.RUS,
+                styles: { height: 44, borderRadius: 8 }
+            })
+            .on(VKID.WidgetEvents.ERROR, function (err) {
+                if (typeof console !== 'undefined' && console.warn) console.warn('VK ID:', err);
+            })
+            .on(VKID.OAuthListInternalEvents.LOGIN_SUCCESS, function (payload) {
+                VKID.Auth.exchangeCode(payload.code, payload.device_id)
+                    .then(function (data) {
+                        var token = data && (data.access_token || data.accessToken);
+                        if (!token) return;
+                        return fetch('{% url "identity_auth:customer_vkid_complete" %}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken')
+                            },
+                            credentials: 'same-origin',
+                            body: JSON.stringify({ access_token: token })
+                        }).then(function (res) {
+                            return res.json().then(function (j) {
+                                if (res.ok && j.redirect) {
+                                    window.location.href = j.redirect;
+                                } else if (typeof console !== 'undefined' && console.warn) {
+                                    console.warn('VK ID вход:', j);
+                                }
+                            });
+                        });
+                    })
+                    .catch(function (err) {
+                        if (typeof console !== 'undefined' && console.warn) console.warn('VK ID exchange:', err);
+                    });
+            });
+            return true;
+        }
+        function poll() {
+            if (initVkId()) return;
+            var n = 0;
+            var t = setInterval(function () {
+                n += 1;
+                if (initVkId() || n > 200) clearInterval(t);
+            }, 50);
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', poll);
+        } else {
+            poll();
+        }
+    })();
+    </script>
+    {% endif %}
+
+    <div class="flex w-full flex-wrap justify-center gap-2 pb-0.5 oauth-openid-row">
+        <a href="{% url 'identity_auth:customer_oauth_start' 'yandex' %}{% if next %}?next={{ next|urlencode }}{% endif %}"
+           class="oauth-oauth-item inline-flex h-11 flex-none items-center justify-center rounded-lg border border-gray-200 bg-white shadow-sm hover:bg-gray-50 transition-colors box-border"
+           style="width: min(7.0625rem, calc((100% - 1rem) / 3));"
+           rel="nofollow" title="Войти через Яндекс" aria-label="Войти через Яндекс">
+            <img src="{{ oauth_icon_yandex }}" alt="" width="28" height="28" class="h-7 w-7 max-h-full max-w-full object-contain pointer-events-none" decoding="async" />
+        </a>
+        <a href="{% url 'identity_auth:customer_oauth_start' 'google' %}{% if next %}?next={{ next|urlencode }}{% endif %}"
+           class="oauth-oauth-item inline-flex h-11 flex-none items-center justify-center rounded-lg border border-gray-200 bg-white shadow-sm hover:bg-gray-50 transition-colors box-border"
+           style="width: min(7.0625rem, calc((100% - 1rem) / 3));"
+           rel="nofollow" title="Войти через Google" aria-label="Войти через Google">
+            <img src="{{ oauth_icon_google }}" alt="" width="28" height="28" class="h-7 w-7 max-h-full max-w-full object-contain pointer-events-none" decoding="async" />
+        </a>
+        <a href="{% url 'identity_auth:customer_oauth_start' 'max' %}{% if next %}?next={{ next|urlencode }}{% endif %}"
+           class="oauth-oauth-item inline-flex h-11 flex-none items-center justify-center rounded-lg border border-violet-200 bg-violet-50 shadow-sm hover:bg-violet-100 transition-colors box-border"
+           style="width: min(7.0625rem, calc((100% - 1rem) / 3));"
+           rel="nofollow" title="Войти через MAX" aria-label="Войти через MAX">
+            <img src="{{ oauth_icon_max }}" alt="" width="28" height="28" class="h-7 w-7 max-h-full max-w-full object-contain pointer-events-none" decoding="async" />
+        </a>
+    </div>
+</div>
+{% endif %}

@@ -52,7 +52,7 @@
                 {% if request.path|slice:":9" == "/customer/" %}
                     <!-- На странице личного кабинета: показываем только "Выйти" -->
                     <div class="hidden lg:flex items-center space-x-4">
-                        <a href="{% url 'home:customer_logout' %}" class="text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200">
+                        <a href="{% url 'identity_auth:customer_logout' %}" class="text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200">
                             Выйти
                         </a>
                     </div>
@@ -67,7 +67,7 @@
             {% else %}
                 <!-- Для неавторизованных: показываем только "Войти" -->
                 <div class="hidden lg:flex items-center space-x-4">
-                    <a href="{% url 'home:customer_login' %}" class="text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200">
+                    <a href="{% url 'identity_auth:customer_login' %}" class="text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200">
                         Войти
                     </a>
                 </div>
@@ -121,7 +121,7 @@
                 {% if user.is_authenticated %}
                     {% if request.path|slice:":9" == "/customer/" %}
                         <!-- На странице личного кабинета: показываем только "Выйти" -->
-                        <a href="{% url 'home:customer_logout' %}" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100 flex items-center">
+                        <a href="{% url 'identity_auth:customer_logout' %}" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100 flex items-center">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                             </svg>
@@ -138,7 +138,7 @@
                     {% endif %}
                 {% else %}
                     <!-- Для неавторизованных: показываем только "Войти" -->
-                    <a href="{% url 'home:customer_login' %}" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100 flex items-center">
+                    <a href="{% url 'identity_auth:customer_login' %}" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100 flex items-center">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
                         </svg>

@@ -26,8 +26,8 @@ urlpatterns = [
     path('callback/<str:slug>', vk_group_callback, name='vk_group_callback'),
     path('callback/<str:slug>/', vk_group_callback, name='vk_group_callback_slash'),
     path('ckeditor/', include('ckeditor_uploader.urls')),
-    # Раньше кастомные дашборды жили под /admin/... и конфликтовали с admin.site.urls;
-    # теперь они на префиксе /manage/ в home.urls. Порядок «сначала home» оставляем — безопасно.
+    # Вход, регистрация, OAuth, настройки ключей — приложение identity_auth (см. identity_auth/README_INTEGRATION.md).
+    path('', include('identity_auth.urls')),
     path('', include('home.urls')),
     path('admin/', admin.site.urls),
     path('blog/', include('Blog.urls', namespace='Blog')),

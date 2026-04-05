@@ -1,0 +1,140 @@
+{% extends "home/dashboard_base.html" %}
+
+{% block title %}Параметры входа (OAuth) | LukInterLab{% endblock %}
+
+{% block dashboard_header %}Параметры входа и VK ID{% endblock %}
+{% block dashboard_subtitle %}
+<p class="text-sm text-gray-600 mt-1">
+  Значения из этой формы <strong>перекрывают</strong> одноимённые переменные в <code class="bg-gray-100 px-1 rounded">.env</code>, если поле не пустое.
+  Пустые поля для секретов при сохранении означают «не менять уже записанное».
+  Доступ только у суперпользователя; храните резервные копии БД в защищённом месте (ФЗ-152).
+</p>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+    {% if messages %}
+    <div class="space-y-2">
+        {% for message in messages %}
+        <div class="rounded-lg px-4 py-3 text-sm {% if message.tags == 'error' %}bg-red-50 text-red-800{% elif message.tags == 'success' %}bg-green-50 text-green-800{% else %}bg-blue-50 text-blue-800{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900 space-y-2">
+        <p><strong>Redirect URI</strong> в кабинетах Яндекс / Google / MAX (точная строка, как в адресной строке после деплоя):</p>
+        <ul class="list-disc list-inside space-y-1 font-mono text-xs break-all">
+            <li><code class="bg-amber-100 px-1 rounded">{{ request.scheme }}://{{ request.get_host }}/customer/oauth/yandex/callback/</code></li>
+            <li><code class="bg-amber-100 px-1 rounded">{{ request.scheme }}://{{ request.get_host }}/customer/oauth/google/callback/</code></li>
+            <li><code class="bg-amber-100 px-1 rounded">{{ request.scheme }}://{{ request.get_host }}/customer/oauth/max/callback/</code></li>
+        </ul>
+        <p class="mt-2">Для localhost добавьте те же пути с хостом <code class="bg-amber-100 px-1 rounded">127.0.0.1:8000</code> (или ваш порт).</p>
+        <p><strong>VK ID:</strong> значения должны совпадать с кабинетом <a href="https://id.vk.com/" class="underline font-medium" target="_blank" rel="noopener">VK ID</a>.</p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="bg-white rounded-xl shadow-md border border-gray-200 p-6 space-y-8">
+        {% csrf_token %}
+
+        <fieldset class="space-y-4">
+            <legend class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 w-full">VK ID (ВКонтакте, ОК, Mail.ru)</legend>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">ID приложения</label>
+                {{ form.vkid_app_id }}
+                {% if form.vkid_app_id.errors %}<p class="text-red-600 text-sm mt-1">{{ form.vkid_app_id.errors.0 }}</p>{% endif %}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Доверенный redirect URL</label>
+                {{ form.vkid_redirect_url }}
+                {% if form.vkid_redirect_url.errors %}<p class="text-red-600 text-sm mt-1">{{ form.vkid_redirect_url.errors.0 }}</p>{% endif %}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Защищённый ключ (оставьте пустым, чтобы не менять)</label>
+                {{ form.vkid_protected_key }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Сервисный ключ (оставьте пустым, чтобы не менять)</label>
+                {{ form.vkid_service_key }}
+            </div>
+        </fieldset>
+
+        <fieldset class="space-y-4">
+            <legend class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 w-full">Яндекс OAuth</legend>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
+                {{ form.yandex_oauth_client_id }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Client Secret</label>
+                {{ form.yandex_oauth_client_secret }}
+            </div>
+        </fieldset>
+
+        <fieldset class="space-y-4">
+            <legend class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 w-full">Google OAuth</legend>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
+                {{ form.google_oauth_client_id }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Client Secret</label>
+                {{ form.google_oauth_client_secret }}
+            </div>
+        </fieldset>
+
+        <fieldset class="space-y-4">
+            <legend class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 w-full">MAX (OpenID Connect)</legend>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Issuer (базовый URL из закрытой доки)</label>
+                {{ form.max_oidc_issuer }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
+                {{ form.max_oidc_client_id }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Client Secret</label>
+                {{ form.max_oidc_client_secret }}
+            </div>
+        </fieldset>
+
+        <fieldset class="space-y-4">
+            <legend class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 w-full">Иконки на странице входа (Яндекс, Google, MAX)</legend>
+            <p class="text-sm text-gray-600">Квадратные PNG/SVG ~28×28 px; пусто — значки из <code class="bg-gray-100 px-1 rounded">identity_auth/static/identity_auth/img/oauth/</code>. На проде при необходимости: <code class="bg-gray-100 px-1 rounded">collectstatic</code>.</p>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Яндекс</label>
+                    {% if form.instance.yandex_oauth_button_icon %}
+                    <p class="text-xs text-gray-500 mb-1">Сейчас: <img src="{{ form.instance.yandex_oauth_button_icon.url }}" alt="" class="inline h-8 w-8 object-contain rounded border border-gray-200" /></p>
+                    {% endif %}
+                    {{ form.yandex_oauth_button_icon }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Google</label>
+                    {% if form.instance.google_oauth_button_icon %}
+                    <p class="text-xs text-gray-500 mb-1">Сейчас: <img src="{{ form.instance.google_oauth_button_icon.url }}" alt="" class="inline h-8 w-8 object-contain rounded border border-gray-200" /></p>
+                    {% endif %}
+                    {{ form.google_oauth_button_icon }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">MAX</label>
+                    {% if form.instance.max_oauth_button_icon %}
+                    <p class="text-xs text-gray-500 mb-1">Сейчас: <img src="{{ form.instance.max_oauth_button_icon.url }}" alt="" class="inline h-8 w-8 object-contain rounded border border-gray-200" /></p>
+                    {% endif %}
+                    {{ form.max_oauth_button_icon }}
+                </div>
+            </div>
+        </fieldset>
+
+        {% if form.non_field_errors %}
+        <div class="rounded-lg bg-red-50 text-red-800 px-4 py-3 text-sm">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="flex justify-end gap-3">
+            <a href="{% url 'home:customer_dashboard' %}" class="px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Отмена</a>
+            <button type="submit" class="px-6 py-2.5 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700">Сохранить</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

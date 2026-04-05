@@ -2,7 +2,6 @@ from django.urls import path
 from .views import *
 from django.views.generic import DetailView, TemplateView
 from .models import Rabota
-
 app_name = 'home'
 
 urlpatterns = [
@@ -40,12 +39,8 @@ urlpatterns = [
     path('legal-info/edit/', edit_legal_info, name='edit_legal_info'),
     
     # ==================== ЛИЧНЫЙ КАБИНЕТ ====================
-    # Регистрация и вход
-    path('customer/register/', customer_register, name='customer_register'),
-    path('customer/login/', customer_login, name='customer_login'),
-    path('customer/vkid/complete/', customer_vkid_complete, name='customer_vkid_complete'),
-    path('customer/logout/', customer_logout, name='customer_logout'),
-    
+    # Вход, регистрация, OAuth — см. identity_auth.urls (подключено в ALUKINTERLAB/urls.py).
+
     # Личный кабинет заказчика
     path('customer/dashboard/', customer_dashboard, name='customer_dashboard'),
     path('customer/profile/', customer_profile, name='customer_profile'),

@@ -237,7 +237,7 @@ def post_detail(request, id, slug):
         if request.method == 'POST':
             try:
                 if not request.user.is_authenticated:
-                    login_url = reverse('home:customer_login')
+                    login_url = reverse('identity_auth:customer_login')
                     next_q = quote(request.get_full_path(), safe='/')
                     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                         return JsonResponse({

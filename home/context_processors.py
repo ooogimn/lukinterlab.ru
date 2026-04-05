@@ -2,7 +2,6 @@ from .models import SEOModel, SectionBackground, LegalInfo, SiteMarketingSetting
 from django.conf import settings
 from django.core.cache import cache
 
-
 def seo_meta_tags(request):
     """Контекст-процессор для SEO мета-тегов с кэшированием"""
     current_path = request.path
@@ -138,21 +137,6 @@ def legal_info_context(request):
     # Кэшируем на 1 час (3600 секунд)
     cache.set(cache_key, result, 3600)
     return result
-
-
-def vkid_oauth(request):
-    """Параметры VK ID SDK для шаблонов (виджет 3 в 1 и др.)."""
-    fixed = (getattr(settings, 'VKID_REDIRECT_URL', None) or '').strip()
-    if fixed:
-        redirect = fixed
-    else:
-        redirect = request.build_absolute_uri('/')
-    if not redirect.endswith('/'):
-        redirect += '/'
-    return {
-        'vkid_app_id': getattr(settings, 'VKID_APP_ID', None),
-        'vkid_redirect_url': redirect,
-    }
 
 
 def site_marketing_context(request):

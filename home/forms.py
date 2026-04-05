@@ -1,5 +1,4 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from .models import (
     Otziv,
@@ -405,155 +404,6 @@ class OrderFileForm(forms.ModelForm):
         return file
 
 
-class CustomerRegistrationForm(UserCreationForm):
-    """Форма регистрации заказчика"""
-    first_name = forms.CharField(
-        max_length=30,
-        required=True,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Имя *'
-        })
-    )
-    last_name = forms.CharField(
-        max_length=30,
-        required=True,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Фамилия *'
-        })
-    )
-    email = forms.EmailField(
-        required=True,
-        widget=forms.EmailInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Email *'
-        })
-    )
-    phone = forms.CharField(
-        max_length=20,
-        required=True,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Телефон *'
-        })
-    )
-    company = forms.CharField(
-        max_length=200,
-        required=False,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Компания (необязательно)'
-        })
-    )
-    position = forms.CharField(
-        max_length=100,
-        required=False,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Должность (необязательно)'
-        })
-    )
-    address = forms.CharField(
-        required=False,
-        widget=forms.Textarea(attrs={
-            'class': 'form-control',
-            'rows': 3,
-            'placeholder': 'Адрес (необязательно)'
-        })
-    )
-    company_fax = forms.CharField(
-        required=False,
-        label='',
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'autocomplete': 'off',
-            'tabindex': '-1',
-            'aria-hidden': 'true',
-        }),
-    )
-
-    class Meta:
-        model = User
-        fields = ['first_name', 'last_name', 'email', 'username', 'password1', 'password2']
-        widgets = {
-            'username': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Логин *'
-            }),
-        }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['password1'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Пароль *'
-        })
-        self.fields['password2'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Подтвердите пароль *'
-        })
-        self.fields['company_fax'].required = False
-
-    def clean_first_name(self):
-        return validate_person_name(self.cleaned_data.get('first_name'), 'Имя')
-
-    def clean_last_name(self):
-        return validate_person_name(self.cleaned_data.get('last_name'), 'Фамилия')
-
-    def clean_username(self):
-        u = self.cleaned_data.get('username')
-        if u:
-            validate_registration_username(u)
-        return super().clean_username()
-
-    def clean_email(self):
-        email = self.cleaned_data.get('email')
-        if email:
-            validate_registration_email_domain(email)
-            if User.objects.filter(email=email).exists():
-                raise forms.ValidationError('Пользователь с таким email уже существует.')
-        return email
-
-    def clean_company_fax(self):
-        reject_honeypot(self.cleaned_data.get('company_fax'))
-        return ''
-
-    def save(self, commit=True):
-        user = super().save(commit=False)
-        user.email = self.cleaned_data['email']
-        user.first_name = self.cleaned_data['first_name']
-        user.last_name = self.cleaned_data['last_name']
-        
-        if commit:
-            user.save()
-            # Создаем профиль заказчика
-            Customer.objects.create(
-                user=user,
-                phone=self.cleaned_data['phone'],
-                company=self.cleaned_data.get('company', ''),
-                position=self.cleaned_data.get('position', ''),
-                address=self.cleaned_data.get('address', '')
-            )
-        return user
-
-
-class CustomerLoginForm(AuthenticationForm):
-    """Форма входа для заказчика"""
-    username = forms.CharField(
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Логин или Email'
-        })
-    )
-    password = forms.CharField(
-        widget=forms.PasswordInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Пароль'
-        })
-    )
-
-
 class CustomerProfileForm(forms.ModelForm):
     """Форма редактирования профиля заказчика"""
     first_name = forms.CharField(
@@ -808,3 +658,4 @@ class SiteMarketingSettingsForm(forms.ModelForm):
             'replace_builtin_counters': forms.CheckboxInput(attrs={'class': 'rounded border-gray-300 text-primary-600'}),
             'active': forms.CheckboxInput(attrs={'class': 'rounded border-gray-300 text-primary-600'}),
         }
+

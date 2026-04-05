@@ -953,3 +953,4 @@ class SiteMarketingSettings(models.Model):
     def get_solo(cls):
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
+
