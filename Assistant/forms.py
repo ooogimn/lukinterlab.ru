@@ -170,7 +170,10 @@ class AIScheduleForm(forms.ModelForm):
         model = AISchedule
         fields = [
             'name', 'prompt_template', 'is_active',
-            'frequency', 'cron_expression', 'start_time',
+            # Три отдельных поля модели (не одна строка «frequency cron_expression»)
+            'frequency',
+            'cron_expression',
+            'start_time',
             'articles_per_run', 'batch_interval',
             'category', 'tags', 'keywords', 'context_data',
             'text_model', 'image_model', 'use_image_generation',
