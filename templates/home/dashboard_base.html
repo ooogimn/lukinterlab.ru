@@ -34,6 +34,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+{% include 'includes/dashboard_pill_button.html' %}
+    </style>
     {% block extra_head %}{% endblock %}
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen font-sans antialiased">
@@ -48,7 +51,7 @@
                 </div>
                 <div class="flex flex-wrap items-center gap-2 sm:gap-3 sm:shrink-0 sm:justify-end">
                     {% block dashboard_header_actions %}{% endblock %}
-                    <a href="{% url 'home:customer_dashboard' %}" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm">
+                    <a href="{% url 'home:customer_dashboard' %}" class="dashboard-pill-btn">
                         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                         </svg>

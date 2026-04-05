@@ -1,0 +1,24 @@
+{# Кнопка-«пилюля» в шапке личного кабинета / общих дашбордов #}
+    .dashboard-pill-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 600 !important;
+        color: #312e81 !important;
+        border: 2px solid rgba(165, 180, 252, 0.9) !important;
+        background: linear-gradient(165deg, #ffffff 0%, rgba(238, 242, 255, 0.92) 50%, rgba(237, 233, 254, 0.85) 100%) !important;
+        box-shadow:
+            0 2px 6px rgba(99, 102, 241, 0.14),
+            0 4px 14px rgba(15, 23, 42, 0.06),
+            inset 0 1px 0 rgba(255, 255, 255, 0.95);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .dashboard-pill-btn:hover {
+        border-color: rgba(99, 102, 241, 0.95) !important;
+        box-shadow: 0 4px 16px rgba(99, 102, 241, 0.22);
+        transform: translateY(-1px);
+        color: #1e1b4b !important;
+    }
