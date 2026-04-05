@@ -1,4 +1,4 @@
-from django.http import HttpResponseRedirect, Http404, JsonResponse
+from django.http import HttpResponseRedirect, HttpResponsePermanentRedirect, Http404, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from urllib.parse import quote
@@ -193,6 +193,18 @@ def _singl_page_context(request, post, comment_form, show_form, **extra):
     }
     ctx.update(extra)
     return ctx
+
+
+def post_legacy_post_path_redirect(request, id):
+    """
+    Ссылки вида /blog/<id>/post/: часто ошибочно принимают «post» за тип страницы, тогда как
+    в проекте второй сегмент — это slug (/blog/<id>/<slug>/). Редирект на канонический URL.
+    Если slug статьи реально «post», отдаём страницу без редиректа (иначе 301-петля).
+    """
+    post = get_object_or_404(Post, pk=id)
+    if post.slug != 'post':
+        return HttpResponsePermanentRedirect(post.get_absolute_url())
+    return post_detail(request, id, 'post')
 
 
 def post_detail(request, id, slug):

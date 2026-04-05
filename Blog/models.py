@@ -203,7 +203,7 @@ class Post(models.Model):
         if not self.slug and self.title:
             from django.utils.text import slugify
             from django.utils import timezone
-            base_slug = slugify(self.title)
+            base_slug = slugify(self.title, allow_unicode=True)
             if not base_slug:
                 base_slug = f'post-{self.id}'
             

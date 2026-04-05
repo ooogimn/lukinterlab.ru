@@ -231,6 +231,10 @@ def send_to_vk(post):
     Публикация анонса статьи на стене сообщества VK.
     Вызывается из сигнала publish_to_social при первой публикации (vk_posted_at пустой).
     """
+    if post.status != 'published':
+        logger.warning('VK: пост id=%s не в статусе published, wall.post отменён (как у MAX)', post.pk)
+        return False
+
     if not getattr(settings, 'VK_AUTO_POST', True):
         logger.debug('VK_AUTO_POST отключён, пропуск')
         return False

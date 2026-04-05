@@ -1,6 +1,6 @@
 {% if vkid_app_id and not request.user.is_authenticated %}
-<div class="vkid-oauth-widget mt-6 pt-6 border-t border-gray-200">
-    <p class="text-center text-sm text-gray-600 mb-4">или войти через VK ID с использованием данных из сервиса</p>
+<div class="vkid-oauth-widget {{ vkid_oauth_box_class|default:'mt-6 pt-6 border-t border-gray-200' }}">
+    <p class="text-center text-sm text-gray-600 mb-4">{{ vkid_oauth_caption|default:"или войти через VK ID: ВКонтакте, Одноклассники или Mail.ru" }}</p>
     <div id="lukinterlab-vkid-oauth-list" class="flex justify-center"></div>
 </div>
 <script src="https://unpkg.com/@vkid/sdk@2/dist-sdk/umd/index.js" async></script>

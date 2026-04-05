@@ -43,6 +43,10 @@
             
             <!-- Registration Form -->
             <div class="bg-white rounded-2xl shadow-lg p-8">
+                {% include "home/customer/vkid_oauth_widget.html" with vkid_oauth_caption="Быстрая регистрация через VK ID — ВКонтакте, Одноклассники или Mail.ru (пароль для сайта не нужен)." vkid_oauth_box_class="mb-6 pb-6 border-b border-gray-200" %}
+
+                <p class="text-center text-sm text-gray-500 mb-6">или зарегистрируйтесь, заполнив форму ниже</p>
+
                 <form method="post" class="space-y-6">
                     {% csrf_token %}
                     
@@ -166,8 +170,6 @@
                     </button>
                 </form>
 
-                {% include "home/customer/vkid_oauth_widget.html" %}
-                
                 <!-- Login Link -->
                 <div class="mt-6 text-center">
                     <p class="text-gray-600">

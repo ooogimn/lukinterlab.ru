@@ -1141,6 +1141,7 @@ def customer_vkid_complete(request):
     if email_from_vk and User.objects.filter(email=email_from_vk).exclude(username=username).exists():
         email = placeholder_email
 
+    is_new_user = False
     with transaction.atomic():
         try:
             user = User.objects.get(username=username)
@@ -1151,6 +1152,7 @@ def customer_vkid_complete(request):
                 user.email = email_from_vk
             user.save()
         except User.DoesNotExist:
+            is_new_user = True
             user = User(
                 username=username,
                 email=email,
@@ -1163,10 +1165,15 @@ def customer_vkid_complete(request):
         Customer.objects.get_or_create(user=user, defaults={'phone': ''})
 
     login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-    messages.success(
-        request,
-        f'Добро пожаловать, {user.get_full_name() or user.username}!',
-    )
+    display = user.get_full_name() or user.username
+    if is_new_user:
+        messages.success(
+            request,
+            f'Регистрация выполнена. Добро пожаловать, {display}! '
+            f'Профиль можно дополнить в личном кабинете.',
+        )
+    else:
+        messages.success(request, f'Добро пожаловать, {display}!')
     return JsonResponse({'ok': True, 'redirect': reverse('home:customer_dashboard')})
 
 

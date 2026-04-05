@@ -142,9 +142,16 @@ def legal_info_context(request):
 
 def vkid_oauth(request):
     """Параметры VK ID SDK для шаблонов (виджет 3 в 1 и др.)."""
+    fixed = (getattr(settings, 'VKID_REDIRECT_URL', None) or '').strip()
+    if fixed:
+        redirect = fixed
+    else:
+        redirect = request.build_absolute_uri('/')
+    if not redirect.endswith('/'):
+        redirect += '/'
     return {
         'vkid_app_id': getattr(settings, 'VKID_APP_ID', None),
-        'vkid_redirect_url': getattr(settings, 'VKID_REDIRECT_URL', 'https://lukinterlab.ru/'),
+        'vkid_redirect_url': redirect,
     }
 
 

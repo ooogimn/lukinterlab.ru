@@ -98,7 +98,9 @@ try:
     VKID_APP_ID = int(_vkid_app_raw)
 except ValueError:
     VKID_APP_ID = 54515641
-VKID_REDIRECT_URL = env_str("VKID_REDIRECT_URL", "https://lukinterlab.ru/")
+# Пусто → redirectUrl для VK ID SDK берётся из текущего запроса (host/port схема как у открытой страницы).
+# Задайте явно, если за прокси неверный Host и нужна фиксированная строка (должна совпадать с кабинетом VK ID).
+VKID_REDIRECT_URL = env_str("VKID_REDIRECT_URL", "").strip()
 VKID_PROTECTED_KEY = env_str("VKID_PROTECTED_KEY")
 VKID_SERVICE_KEY = env_str("VKID_SERVICE_KEY")
 

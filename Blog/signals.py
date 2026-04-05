@@ -8,6 +8,7 @@ from home.seo_utils import SEOUtils
 from Moderation.services import SEOService
 import re
 import logging
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -64,12 +65,16 @@ def generate_seo_meta_tags(sender, instance, **kwargs):
     try:
         # Генерация slug если не указан
         if not instance.slug and instance.title:
-            # Генерируем slug из заголовка
-            base_slug = slugify(instance.title)
+            # allow_unicode: кириллица в slug (иначе slugify('Анализ...') → '' и раньше подставлялся «post»
+            # → ссылки /blog/<id>/post/ путали с маршрутом и совпадали у многих статей).
+            base_slug = slugify(instance.title, allow_unicode=True)
             
-            # Если slug пустой (например, только спецсимволы), используем дефолтный
             if not base_slug:
-                base_slug = 'post'
+                base_slug = (
+                    f'post-{instance.pk}'
+                    if instance.pk
+                    else f'post-{uuid.uuid4().hex[:12]}'
+                )
             
             # Проверяем уникальность (с учетом unique_for_date)
             original_slug = base_slug
