@@ -145,6 +145,24 @@ class PromptTemplateForm(forms.ModelForm):
         return cleaned_data
 
 
+# Виджеты дашборда расписаний: заметные границы и фокус (Tailwind CDN в base.html)
+_SCHEDULE_CONTROL = (
+    'schedule-dash-control w-full rounded-xl border-2 border-slate-300 bg-white px-4 py-3 '
+    'text-slate-900 shadow-sm transition placeholder:text-slate-400 '
+    'hover:border-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 '
+    'focus:ring-indigo-200'
+)
+_SCHEDULE_TEXTAREA = (
+    _SCHEDULE_CONTROL
+    + ' min-h-[8rem] resize-y leading-relaxed text-[15px] bg-slate-50/80'
+)
+_SCHEDULE_TEXTAREA_JSON = (
+    _SCHEDULE_CONTROL
+    + ' min-h-[10rem] resize-y font-mono text-sm leading-relaxed bg-indigo-50/40'
+)
+_SCHEDULE_CHECK = 'schedule-dash-check h-5 w-5 rounded border-2 border-slate-400 text-indigo-600 focus:ring-indigo-500'
+
+
 class AIScheduleForm(forms.ModelForm):
     """Форма для создания/редактирования расписания"""
     
@@ -155,71 +173,71 @@ class AIScheduleForm(forms.ModelForm):
             'frequency', 'cron_expression', 'start_time',
             'articles_per_run', 'batch_interval',
             'category', 'tags', 'keywords', 'context_data',
-            'text_model', 'image_model', 'use_image_generation'
+            'text_model', 'image_model', 'use_image_generation',
         ]
         widgets = {
             'name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Название расписания'
+                'class': _SCHEDULE_CONTROL,
+                'placeholder': 'Название расписания',
             }),
             'prompt_template': forms.Select(attrs={
-                'class': 'form-control'
+                'class': _SCHEDULE_CONTROL,
             }),
             'frequency': forms.Select(attrs={
-                'class': 'form-control',
-                'id': 'id_frequency'
+                'class': _SCHEDULE_CONTROL,
+                'id': 'id_frequency',
             }),
             'cron_expression': forms.TextInput(attrs={
-                'class': 'form-control',
+                'class': _SCHEDULE_CONTROL + ' font-mono',
                 'placeholder': '0 9 * * *',
-                'id': 'id_cron_expression'
+                'id': 'id_cron_expression',
             }),
             'start_time': forms.TimeInput(attrs={
-                'class': 'form-control',
+                'class': _SCHEDULE_CONTROL,
                 'type': 'time',
                 'id': 'id_start_time',
             }),
             'articles_per_run': forms.NumberInput(attrs={
-                'class': 'form-control',
+                'class': _SCHEDULE_CONTROL,
                 'min': 1,
-                'max': 10
+                'max': 10,
             }),
             'batch_interval': forms.NumberInput(attrs={
-                'class': 'form-control',
+                'class': _SCHEDULE_CONTROL,
                 'min': 0,
                 'max': 1440,
                 'id': 'id_batch_interval',
             }),
             'category': forms.Select(attrs={
-                'class': 'form-control'
+                'class': _SCHEDULE_CONTROL,
             }),
             'tags': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Теги через запятую'
+                'class': _SCHEDULE_CONTROL,
+                'placeholder': 'Теги через запятую',
             }),
             'keywords': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Ключевые слова через запятую'
+                'class': _SCHEDULE_TEXTAREA,
+                'rows': 5,
+                'placeholder': 'Ключевые слова через запятую',
             }),
             'context_data': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 5,
-                'placeholder': '{"topic": "красота", "tone": "дружелюбный"}'
+                'class': _SCHEDULE_TEXTAREA_JSON,
+                'rows': 8,
+                'placeholder': '{"topic": "красота", "tone": "дружелюбный"}',
             }),
             'text_model': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'GigaChat'
+                'class': _SCHEDULE_CONTROL,
+                'placeholder': 'GigaChat-2-Lite',
             }),
             'image_model': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'GigaChat-Pro'
+                'class': _SCHEDULE_CONTROL,
+                'placeholder': 'GigaChat-2-Pro',
             }),
             'use_image_generation': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
+                'class': _SCHEDULE_CHECK,
             }),
             'is_active': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
+                'class': _SCHEDULE_CHECK,
             }),
         }
         labels = {
