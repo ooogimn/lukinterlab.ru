@@ -1,7 +1,7 @@
 {
   "name": "LukInterLab",
   "short_name": "LukInterLab",
-  "description": "IT решения с ИИ: сайты, боты, приложения, интернет-магазины.",
+  "description": "Цифровая лаборатория LukInterLab: ИИ, LLM, сайты и маркетинг.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
@@ -30,11 +30,6 @@
       "src": "/static/img/favicon.png",
       "sizes": "512x512",
       "type": "image/png"
-    },
-    {
-      "src": "/static/img/favicon.ico",
-      "sizes": "48x48 32x32 16x16",
-      "type": "image/x-icon"
     }
   ]
 }

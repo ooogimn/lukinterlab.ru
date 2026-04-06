@@ -126,7 +126,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon.png' %}">
     <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/favicon.png' %}">
-    <link rel="manifest" href="/static/manifest.json">
+    <link rel="manifest" href="/manifest.json">
     
     <!-- RSS Feeds -->
     <link rel="alternate" type="application/atom+xml" title="LukInterLab.ru - Блог (Atom)" href="https://lukinterlab.ru/blog/feed/">
@@ -384,6 +384,16 @@
                 header.classList.remove('bg-white/95', 'backdrop-blur-md', 'shadow-lg');
             }
         });
+    </script>
+    <script>
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker registered!'))
+                    .catch(err => console.log('Service Worker registration failed:', err));
+            });
+        }
     </script>
     {% block extra_scripts %}{% endblock %}
     <!-- Scripts -->
