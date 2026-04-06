@@ -8,9 +8,37 @@
     <script src="https://unpkg.com/@vkid/sdk@2/dist-sdk/umd/index.js" async></script>
     <script>
     (function () {
+        var PKCE_KEY = 'lukinterlab_vkid_code_verifier';
         function getCookie(name) {
             var m = document.cookie.match(new RegExp('(^|; )' + name.replace(/[-.+*]/g, '\\$&') + '=([^;]*)'));
             return m ? decodeURIComponent(m[2]) : '';
+        }
+        function generateCodeVerifier() {
+            var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+            var arr = new Uint8Array(64);
+            crypto.getRandomValues(arr);
+            var s = '';
+            for (var i = 0; i < arr.length; i++) s += chars[arr[i] % chars.length];
+            return s;
+        }
+        /** После редиректа с id.vk.ru нужен тот же code_verifier, что до ухода со страницы. */
+        function codeVerifierForInit(urlCode, urlDeviceId) {
+            if (urlCode && urlDeviceId) {
+                return sessionStorage.getItem(PKCE_KEY) || undefined;
+            }
+            var v = generateCodeVerifier();
+            sessionStorage.setItem(PKCE_KEY, v);
+            return v;
+        }
+        function stripOAuthReturnParams() {
+            try {
+                var u = new URL(window.location.href);
+                ['code', 'device_id', 'state', 'type', 'expires_in', 'ext_id'].forEach(function (k) {
+                    u.searchParams.delete(k);
+                });
+                var q = u.searchParams.toString();
+                window.history.replaceState({}, '', u.pathname + (q ? '?' + q : '') + u.hash);
+            } catch (e) { /* IE / edge cases */ }
         }
         function initVkId() {
             if (!('VKIDSDK' in window)) return false;
@@ -19,13 +47,62 @@
             if (!container || container.dataset.vkidInit === '1') return true;
             container.dataset.vkidInit = '1';
 
-            VKID.Config.init({
+            var params = new URLSearchParams(window.location.search || '');
+            var urlCode = params.get('code');
+            var urlDeviceId = params.get('device_id');
+            var codeVerifier = codeVerifierForInit(urlCode, urlDeviceId);
+
+            var initOpts = {
                 app: {{ vkid_app_id }},
                 redirectUrl: '{{ vkid_redirect_url|escapejs }}',
                 responseMode: VKID.ConfigResponseMode.Callback,
                 source: VKID.ConfigSource.LOWCODE,
                 scope: ''
-            });
+            };
+            if (codeVerifier) initOpts.codeVerifier = codeVerifier;
+            VKID.Config.init(initOpts);
+
+            function vkExchangeThenLogin(code, deviceId) {
+                if (!code || !deviceId) return;
+                if (container.dataset.vkidCompleting === '1') return;
+                container.dataset.vkidCompleting = '1';
+                stripOAuthReturnParams();
+                return VKID.Auth.exchangeCode(code, deviceId)
+                    .then(function (data) {
+                        try { sessionStorage.removeItem(PKCE_KEY); } catch (e) { }
+                        var token = data && (data.access_token || data.accessToken);
+                        if (!token) return;
+                        return fetch('{% url "identity_auth:customer_vkid_complete" %}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken')
+                            },
+                            credentials: 'same-origin',
+                            body: JSON.stringify({ access_token: token })
+                        }).then(function (res) {
+                            return res.json().then(function (j) {
+                                if (res.ok && j.redirect) {
+                                    window.location.href = j.redirect;
+                                } else {
+                                    try { sessionStorage.removeItem(PKCE_KEY); } catch (e) { }
+                                    container.dataset.vkidCompleting = '';
+                                    if (typeof console !== 'undefined' && console.warn) console.warn('VK ID вход:', j);
+                                }
+                            });
+                        });
+                    })
+                    .catch(function (err) {
+                        try { sessionStorage.removeItem(PKCE_KEY); } catch (e) { }
+                        container.dataset.vkidCompleting = '';
+                        if (typeof console !== 'undefined' && console.warn) console.warn('VK ID exchange:', err);
+                    });
+            }
+
+            /* Редирект по умолчанию: code/device_id в query (см. документацию VK ID для OAuthList). */
+            if (urlCode && urlDeviceId) {
+                vkExchangeThenLogin(urlCode, urlDeviceId);
+            }
 
             var oauthNames = (VKID.OAuthName && VKID.OAuthName.VK)
                 ? [VKID.OAuthName.VK, VKID.OAuthName.OK, VKID.OAuthName.MAIL]
@@ -43,31 +120,7 @@
                 if (typeof console !== 'undefined' && console.warn) console.warn('VK ID:', err);
             })
             .on(VKID.OAuthListInternalEvents.LOGIN_SUCCESS, function (payload) {
-                VKID.Auth.exchangeCode(payload.code, payload.device_id)
-                    .then(function (data) {
-                        var token = data && (data.access_token || data.accessToken);
-                        if (!token) return;
-                        return fetch('{% url "identity_auth:customer_vkid_complete" %}', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': getCookie('csrftoken')
-                            },
-                            credentials: 'same-origin',
-                            body: JSON.stringify({ access_token: token })
-                        }).then(function (res) {
-                            return res.json().then(function (j) {
-                                if (res.ok && j.redirect) {
-                                    window.location.href = j.redirect;
-                                } else if (typeof console !== 'undefined' && console.warn) {
-                                    console.warn('VK ID вход:', j);
-                                }
-                            });
-                        });
-                    })
-                    .catch(function (err) {
-                        if (typeof console !== 'undefined' && console.warn) console.warn('VK ID exchange:', err);
-                    });
+                vkExchangeThenLogin(payload.code, payload.device_id);
             });
             return true;
         }
