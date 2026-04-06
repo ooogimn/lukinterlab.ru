@@ -142,7 +142,7 @@ IDENTITY_AUTH_CUSTOMER_MODEL = 'home.Customer'
 | Переменная | Для чего |
 |------------|----------|
 | `VKID_APP_ID` | ID приложения VK ID |
-| `VKID_REDIRECT_URL` | Доверенный redirect (часто корень сайта со слэшем, как в кабинете VK) |
+| `VKID_REDIRECT_URL` | Доверенный redirect: **URL страницы входа** (`…/customer/login/`), где подключён виджет VK ID; не корень сайта, иначе после согласия цепочка `exchangeCode` не выполняется |
 | `VKID_PROTECTED_KEY`, `VKID_SERVICE_KEY` | Ключи VK ID |
 | `YANDEX_OAUTH_CLIENT_ID`, `YANDEX_OAUTH_CLIENT_SECRET` | Яндекс OAuth |
 | `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth |

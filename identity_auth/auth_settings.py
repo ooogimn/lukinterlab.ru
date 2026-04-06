@@ -32,6 +32,14 @@ def get_vkid_app_id():
 
 
 def get_vkid_redirect_url(request):
+    """
+    URL возврата после экрана согласия VK / OK / Mail (должен совпадать с кабинетом VK ID).
+
+    Важно: на этой странице должен быть тот же VK ID SDK и обработчик LOGIN_SUCCESS →
+    exchangeCode → POST customer_vkid_complete. Виджет подключён на страницах входа
+    и регистрации, не на главной — поэтому по умолчанию используем /customer/login/,
+    а не корень сайта (иначе редирект на «/» обрывает цепочку и пользователь остаётся гостем).
+    """
     row = _solo()
     fixed = _strip_or_none(row.vkid_redirect_url)
     if fixed:
@@ -41,7 +49,10 @@ def get_vkid_redirect_url(request):
     env = _strip_or_none(getattr(settings, 'VKID_REDIRECT_URL', '') or '')
     if env:
         return env if env.endswith('/') else env + '/'
-    redirect = request.build_absolute_uri('/')
+    from django.urls import reverse
+
+    login_path = reverse('identity_auth:customer_login')
+    redirect = request.build_absolute_uri(login_path)
     if not redirect.endswith('/'):
         redirect += '/'
     return redirect
