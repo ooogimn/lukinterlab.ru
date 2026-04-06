@@ -1,44 +1,5 @@
 {% load static %}
 
-<style>
-/* 3D эффект для заголовка "Отзывы наших клиентов" */
-.testimonials-header-3d {
-    text-shadow: 
-        3px 3px 0px #1e40af,
-        6px 6px 0px #1e3a8a,
-        9px 9px 0px #1e3a8a,
-        12px 12px 20px rgba(0, 0, 0, 0.3);
-    transform: perspective(500px) rotateX(5deg);
-    display: inline-block;
-    transition: transform 0.3s ease;
-}
-
-.testimonials-header-3d:hover {
-    transform: perspective(500px) rotateX(0deg) scale(1.05);
-    text-shadow: 
-        3px 3px 0px #1e40af,
-        6px 6px 0px #1e3a8a,
-        9px 9px 0px #1e3a8a,
-        12px 12px 30px rgba(59, 130, 246, 0.5);
-}
-
-/* Анимация появления */
-@keyframes slideIn3D {
-    from {
-        opacity: 0;
-        transform: perspective(500px) rotateX(-10deg) translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: perspective(500px) rotateX(5deg) translateY(0);
-    }
-}
-
-.testimonials-header-3d {
-    animation: slideIn3D 0.8s ease-out;
-}
-</style>
-
 <!-- Отзывы Section -->
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <!-- Заголовок секции -->
@@ -47,11 +8,12 @@
             <i class="fas fa-star text-2xl text-primary-600"></i>
         </div>
         <a href="{% url 'home:otzivs' %}" class="inline-block">
-            <h2 class="text-4xl md:text-5xl font-extrabold text-primary-600 mb-4 testimonials-header-3d cursor-pointer hover:text-primary-700 transition-colors duration-200">
+            <h2 class="text-4xl md:text-5xl font-extrabold text-primary-600 mb-4 header-3d cursor-pointer hover:text-primary-700 transition-colors duration-200">
                 Отзывы наших клиентов
             </h2>
         </a>
     </div>
+
 
     <!-- Отзывы Grid -->
     {% if otzivs %}

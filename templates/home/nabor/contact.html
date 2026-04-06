@@ -31,43 +31,6 @@
         border-width: 2px !important;
         background-color: #fef2f2 !important;
     }
-    
-    /* 3D эффект для заголовка секции контактов */
-    .contact-header-3d {
-        text-shadow: 
-            3px 3px 0px #1e40af,
-            6px 6px 0px #1e3a8a,
-            9px 9px 0px #1e3a8a,
-            12px 12px 20px rgba(0, 0, 0, 0.3);
-        transform: perspective(500px) rotateX(5deg);
-        display: inline-block;
-        transition: transform 0.3s ease;
-    }
-    
-    .contact-header-3d:hover {
-        transform: perspective(500px) rotateX(0deg) scale(1.05);
-        text-shadow: 
-            3px 3px 0px #1e40af,
-            6px 6px 0px #1e3a8a,
-            9px 9px 0px #1e3a8a,
-            12px 12px 30px rgba(59, 130, 246, 0.5);
-    }
-    
-    /* Анимация появления */
-    @keyframes slideIn3D {
-        from {
-            opacity: 0;
-            transform: perspective(500px) rotateX(-10deg) translateY(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: perspective(500px) rotateX(5deg) translateY(0);
-        }
-    }
-    
-    .contact-header-3d {
-        animation: slideIn3D 0.8s ease-out;
-    }
 </style>
 
 <!-- Контакты Section -->
@@ -77,10 +40,11 @@
         <div class="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-6 shadow-lg">
             <i class="fas fa-envelope text-2xl text-primary-600"></i>
         </div>
-        <h2 class="text-4xl md:text-5xl font-extrabold text-primary-600 mb-4 contact-header-3d">
+        <h2 class="text-4xl md:text-5xl font-extrabold text-primary-600 mb-4 header-3d">
             Наши контакты
         </h2>
     </div>
+
 
     <div class="grid lg:grid-cols-2 gap-12 mb-16">
         <!-- Форма обратной связи -->
