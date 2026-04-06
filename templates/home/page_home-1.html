@@ -2,6 +2,51 @@
 {% load static %}
 
 
+{% block extra_head %}
+<!-- Swiper CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+<style>
+    .service-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .service-card:hover {
+        background: rgba(255, 255, 255, 0.9);
+        transform: translateY(-10px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+    .extra-swiper {
+        padding: 20px 10px 50px !important;
+    }
+    .swiper-button-next, .swiper-button-prev {
+        color: var(--primary-600) !important;
+        background: white;
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 50%;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .swiper-button-next:after, .swiper-button-prev:after {
+        font-size: 18px !important;
+    }
+    .gradient-border {
+        position: relative;
+        border-radius: 1rem;
+        padding: 1px;
+        background: linear-gradient(to right, #3b82f6, #8b5cf6, #3b82f6);
+        background-size: 200% 200%;
+        animation: gradientMove 3s linear infinite;
+    }
+    @keyframes gradientMove {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+</style>
+{% endblock extra_head %}
+
 {% block meny %}
 {% include "meny/sidibar-1.html"  %}
 {% endblock meny %}
@@ -9,3 +54,37 @@
 {% block straniza %}
 {% include "home/1.html"  %}
 {% endblock straniza %}
+
+{% block extra_scripts %}
+<!-- Swiper JS -->
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const extraSwiper = new Swiper('.extra-swiper', {
+            slidesPerView: 1,
+            spaceBetween: 30,
+            loop: true,
+            autoplay: {
+                delay: 3000,
+                disableOnInteraction: false,
+            },
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            breakpoints: {
+                640: {
+                    slidesPerView: 2,
+                },
+                1024: {
+                    slidesPerView: 3,
+                },
+            }
+        });
+    });
+</script>
+{% endblock extra_scripts %}
