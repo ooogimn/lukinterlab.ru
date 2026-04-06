@@ -128,27 +128,42 @@
 
     <div class="section-content relative z-10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <!-- Breadcrumb -->
-            <nav class="mb-12">
-                <ol class="flex items-center space-x-2 text-sm text-gray-400">
-                    <li><a href="{% url 'home:home' %}" class="hover:text-blue-400 transition-colors">Главная</a></li>
-                    <li><span class="mx-2">/</span></li>
-                    <li><a href="{% url 'home:service-list' %}" class="hover:text-blue-400 transition-colors">Услуги</a></li>
-                    <li><span class="mx-2">/</span></li>
-                    <li class="text-white font-medium">{{ service.title }}</li>
-                </ol>
-            </nav>
+            <!-- Breadcrumb & Back Button -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+                <nav>
+                    <ol class="flex items-center space-x-2 text-sm text-gray-400">
+                        <li><a href="{% url 'home:home' %}" class="hover:text-blue-400 transition-colors">Главная</a></li>
+                        <li><span class="mx-2">/</span></li>
+                        <li><a href="{% url 'home:service-list' %}" class="hover:text-blue-400 transition-colors">Услуги</a></li>
+                        <li><span class="mx-2">/</span></li>
+                        <li class="text-white font-medium">{{ service.title }}</li>
+                    </ol>
+                </nav>
+                <a href="{% url 'home:service-list' %}" class="inline-flex items-center space-x-2 bg-white/5 hover:bg-white/10 text-white px-6 py-3 rounded-2xl border border-white/10 transition-all group">
+                    <i class="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
+                    <span>Вернуться в каталог</span>
+                </a>
+            </div>
             
             <!-- Service Hero Card -->
             <div class="premium-glass-card p-12 lg:p-20 mb-20">
                 <div class="flex flex-col lg:flex-row gap-16 items-center">
                     <!-- Icon / Media -->
                     <div class="w-48 h-48 lg:w-64 lg:h-64 bg-gradient-to-br from-blue-600 to-purple-600 rounded-[3rem] p-1 flex items-center justify-center shadow-2xl shadow-blue-900/40 shrink-0">
-                        <div class="w-full h-full bg-navy-900 rounded-[2.9rem] flex items-center justify-center overflow-hidden">
+                        <div class="w-full h-full bg-navy-900 rounded-[2.9rem] flex items-center justify-center overflow-hidden border border-white/5">
                             {% if service.icon %}
-                                <img src="{{ service.icon.url }}" alt="{{ service.title }}" class="w-24 h-24 lg:w-32 lg:h-32 object-contain filter brightness-110">
+                                <img src="{{ service.icon.url }}" alt="{{ service.title }}" class="w-40 h-40 lg:w-48 lg:h-48 object-contain transform hover:scale-110 transition-transform duration-700">
                             {% else %}
-                                <i class="fas fa-microchip text-7xl text-gradient-purple"></i>
+                                <svg class="w-32 h-32 lg:w-40 lg:h-40" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="16" cy="16" r="14" fill="url(#detail-grad)" fill-opacity="0.1"/>
+                                    <path d="M10 8V24H22M10 16H20" stroke="url(#detail-grad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <defs>
+                                        <linearGradient id="detail-grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                                            <stop stop-color="#3b82f6"/>
+                                            <stop offset="1" stop-color="#8b5cf6"/>
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
                             {% endif %}
                         </div>
                     </div>
@@ -241,8 +256,12 @@
                         {% for related in related_services|slice:":3" %}
                         <div class="bg-white/5 border border-white/10 p-8 rounded-[2rem] hover:bg-white/10 transition-all cursor-pointer group"
                              onclick="window.location.href='{{ related.get_absolute_url }}'">
-                            <div class="w-16 h-16 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-2xl flex items-center justify-center mb-6 border border-white/10">
-                                <i class="fas fa-bolt text-2xl text-blue-400 group-hover:scale-125 transition-transform"></i>
+                            <div class="w-16 h-16 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-2xl flex items-center justify-center mb-6 border border-white/5">
+                                {% if related.icon %}
+                                    <img src="{{ related.icon.url }}" alt="{{ related.title }}" class="w-10 h-10 object-contain">
+                                {% else %}
+                                    <i class="fas fa-bolt text-2xl text-blue-400 group-hover:scale-125 transition-transform"></i>
+                                {% endif %}
                             </div>
                             <h4 class="text-xl font-bold text-white mb-3">{{ related.title }}</h4>
                             <p class="text-gray-400 mb-6 line-clamp-2">{{ related.description|truncatewords:10 }}</p>
@@ -264,8 +283,12 @@
                     {% for extra in standalone_extra_services %}
                     <div class="premium-glass-card !rounded-[2rem] p-8 text-center flex flex-col justify-between">
                         <div>
-                            <div class="w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center mx-auto mb-6">
-                                <i class="fas fa-rocket text-blue-400"></i>
+                            <div class="w-12 h-12 bg-blue-600/10 rounded-xl flex items-center justify-center mx-auto mb-6 border border-white/5">
+                                {% if extra.icon %}
+                                    <img src="{{ extra.icon.url }}" alt="{{ extra.title }}" class="w-7 h-7 object-contain">
+                                {% else %}
+                                    <i class="fas fa-rocket text-blue-400"></i>
+                                {% endif %}
                             </div>
                             <h4 class="text-xl font-bold text-white mb-4">{{ extra.title }}</h4>
                         </div>

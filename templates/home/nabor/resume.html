@@ -8,7 +8,7 @@
             <div class="inline-block px-4 py-1.5 mb-2 text-sm font-semibold tracking-wide text-blue-600 uppercase bg-blue-100 rounded-full">
                 Наши возможности
             </div>
-            <h2 class="text-4xl md:text-6xl font-black leading-tight header-3d">
+            <h2 class="text-4xl md:text-6xl font-black leading-tight header-3d cursor-pointer" onclick="window.location.href='{% url 'home:service-list' %}'">
                 <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-indigo-400 to-purple-500">Интеллектуальные</span> 
                 <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-500">IT-решения</span>
             </h2>
@@ -23,12 +23,19 @@
             <div class="service-card rounded-3xl p-1 shadow-2xl">
                 <div class="h-full bg-white/40 backdrop-blur-xl rounded-[1.4rem] p-8 flex flex-col border border-white/20">
                     <div class="flex items-center justify-between mb-8">
-                        <div class="w-14 h-14 bg-gradient-to-br from-primary-500 to-secondary-600 rounded-2xl flex items-center justify-center shadow-lg transform -rotate-3 hover:rotate-0 transition-transform duration-300">
+                        <div class="w-16 h-16 bg-gradient-to-br from-primary-500/20 to-secondary-600/30 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-lg border border-white/20 transform group-hover:scale-110 transition-transform duration-500">
                             {% if service.icon %}
-                                <img src="{{ service.icon.url }}" alt="{{ service.title }}" class="w-7 h-7 object-contain brightness-0 invert">
+                                <img src="{{ service.icon.url }}" alt="{{ service.title }}" class="w-10 h-10 object-contain">
                             {% else %}
-                                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                <svg class="w-10 h-10" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="16" cy="16" r="14" fill="url(#hero-grad-{{ service.id }})" fill-opacity="0.2"/>
+                                    <path d="M12 10V22H18M12 16H17" stroke="url(#hero-grad-{{ service.id }})" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <defs>
+                                        <linearGradient id="hero-grad-{{ service.id }}" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                                            <stop stop-color="#818cf8"/>
+                                            <stop offset="1" stop-color="#c084fc"/>
+                                        </linearGradient>
+                                    </defs>
                                 </svg>
                             {% endif %}
                         </div>
@@ -95,10 +102,21 @@
                     {% for extra in standalone_extra_services %}
                     <div class="swiper-slide h-auto">
                         <div class="bg-gray-800/50 backdrop-blur-lg border border-white/5 rounded-3xl p-8 h-full flex flex-col hover:bg-gray-800/80 transition-all duration-300">
-                            <div class="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center mb-6">
-                                <svg class="w-6 h-6 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                </svg>
+                            <div class="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center mb-6 border border-white/10 group-hover:bg-primary-600/20 transition-all">
+                                {% if extra.icon %}
+                                    <img src="{{ extra.icon.url }}" alt="{{ extra.title }}" class="w-9 h-9 object-contain">
+                                {% else %}
+                                    <svg class="w-8 h-8" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect x="4" y="4" width="24" height="24" rx="6" fill="url(#extra-grad-{{ extra.id }})" fill-opacity="0.15"/>
+                                        <path d="M16 10V22M10 16H22" stroke="url(#extra-grad-{{ extra.id }})" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <defs>
+                                            <linearGradient id="extra-grad-{{ extra.id }}" x1="4" y1="4" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+                                                <stop stop-color="#a855f7"/>
+                                                <stop offset="1" stop-color="#6366f1"/>
+                                            </linearGradient>
+                                        </defs>
+                                    </svg>
+                                {% endif %}
                             </div>
                             <h4 class="text-xl font-bold text-white mb-3">{{ extra.title }}</h4>
                             <p class="text-gray-400 text-sm mb-6 flex-1">{{ extra.description }}</p>
