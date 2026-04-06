@@ -36,12 +36,8 @@
                     <!-- Project Image Section -->
                     <div class="relative overflow-hidden aspect-video">
                         {% with first_media=rabota.media_items.first %}
-                        {% if first_media %}
-                            {% if first_media.is_video %}
-                                <video src="{{ first_media.file.url }}" autoplay loop muted playsinline class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none"></video>
-                            {% else %}
-                                <img src="{{ first_media.file.url }}" alt="{{ rabota.name }}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-                            {% endif %}
+                        {% if first_media and first_media.is_video %}
+                            <video src="{{ first_media.file.url }}?v={{ rabota.updated.timestamp|floatformat:0 }}" autoplay loop muted playsinline class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none"></video>
                         {% elif rabota.image %}
                             {% if rabota.thumbnail_webp %}
                                 <picture>
@@ -51,6 +47,8 @@
                             {% else %}
                                 <img src="{{ rabota.get_image_url_with_version }}" alt="{{ rabota.name }}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
                             {% endif %}
+                        {% elif first_media %}
+                            <img src="{{ first_media.file.url }}?v={{ rabota.updated.timestamp|floatformat:0 }}" alt="{{ rabota.name }}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
                         {% else %}
                             <div class="w-full h-full bg-gradient-to-br from-primary-50 to-blue-50 flex items-center justify-center">
                                 <svg class="w-12 h-12 text-primary-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
