@@ -207,9 +207,14 @@ def post_legacy_post_path_redirect(request, id):
     return post_detail(request, id, 'post')
 
 
-def post_detail(request, id, slug):
+def post_detail(request, id, slug=None):
     try:
-        post = get_object_or_404(Post, id=id, slug=slug)
+        if slug:
+            post = get_object_or_404(Post, id=id, slug=slug)
+        else:
+            post = get_object_or_404(Post, id=id)
+            if post.slug:
+                return HttpResponseRedirect(post.get_absolute_url())
         
         # Инкрементируем просмотры (только для GET запросов и не для AJAX)
         if request.method == 'GET' and request.headers.get('X-Requested-With') != 'XMLHttpRequest':

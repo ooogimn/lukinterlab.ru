@@ -13,6 +13,7 @@ urlpatterns = [
     path('<int:id>/<str:slug>/preview/', post_staff_preview, name='post_staff_preview'),
     path('<int:id>/<str:slug>/edit/', post_edit, name='post_edit'),
     path('<int:id>/<str:slug>/', post_detail, name='post_detail'),
+    path('<int:id>/', post_detail, name='post_detail_short'),
     path('<slug:category_slug>/', post_list, name='post_list_by_category'),
     path('api/filter-posts/', filter_posts_ajax, name='filter_posts_ajax'),
     path('api/post/<int:post_id>/like/', post_like, name='post_like'),

@@ -31,7 +31,8 @@ def _build_max_message(post, site_url: str) -> str:
     footer = ''
     if include_link:
         try:
-            article_url = f"{site_url.rstrip('/')}{post.get_absolute_url()}"
+            # Используем короткую ссылку по ID, чтобы избежать длинных символов кириллицы
+            article_url = f"{site_url.rstrip('/')}/blog/{post.id}/"
             footer = f"\n\nЧитать далее: {article_url}"
         except Exception:
             footer = ''

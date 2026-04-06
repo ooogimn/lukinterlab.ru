@@ -201,9 +201,8 @@ class Post(models.Model):
         """Метод получения URL-адреса объекта"""
         # Если slug пустой, генерируем его из заголовка (на случай если сигнал не сработал)
         if not self.slug and self.title:
-            from django.utils.text import slugify
-            from django.utils import timezone
-            base_slug = slugify(self.title, allow_unicode=True)
+            from pytils.translit import slugify
+            base_slug = slugify(self.title)
             if not base_slug:
                 base_slug = f'post-{self.id}'
             
