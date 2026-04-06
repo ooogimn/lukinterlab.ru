@@ -14,74 +14,120 @@
 <!-- CSRF Token for AJAX requests -->
 {% csrf_token %}
 
+{% block extra_head %}
+<style>
+    :root {
+        --extra-gradient: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+        --accent-purple: #a855f7;
+    }
+
+    .extra-card-premium {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .extra-card-premium:hover {
+        transform: translateY(-12px);
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(168, 85, 247, 0.4);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(168, 85, 247, 0.1);
+    }
+
+    .extra-icon-box {
+        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+    }
+
+    .text-gradient-purple {
+        background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .section-extra-dark {
+        background: radial-gradient(circle at bottom left, #1e1b4b, #0f172a);
+        color: #f8fafc;
+    }
+</style>
+{% endblock %}
+
+{% block straniza %}
+<!-- CSRF Token for AJAX requests -->
+{% csrf_token %}
+
 <!-- Extra Services List Section -->
-<section class="py-20 relative overflow-hidden section-background section-background-animate" 
-         style="{{ section_backgrounds.resume.background_style|default:'background: #f9fafb;' }}">
+<section class="py-24 relative overflow-hidden section-extra-dark min-h-screen">
+    <!-- Декоративные элементы фона -->
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0 opacity-20">
+        <div class="absolute top-[-10%] right-[-10%] w-[45%] h-[45%] rounded-full bg-purple-600 blur-[130px]"></div>
+        <div class="absolute bottom-[-10%] left-[-10%] w-[45%] h-[45%] rounded-full bg-indigo-600 blur-[130px]"></div>
+    </div>
     
-    <!-- Видео фон -->
-    {% if section_backgrounds.resume.type == 'video' and section_backgrounds.resume.video_url %}
-    <video class="section-video-background" autoplay muted loop playsinline>
-        <source src="{{ section_backgrounds.resume.video_url }}" type="video/mp4">
-    </video>
-    {% endif %}
-    
-    <!-- Наложение -->
-    {% if section_backgrounds.resume.has_overlay %}
-    <div class="section-overlay" style="{{ section_backgrounds.resume.overlay_style }}"></div>
-    {% endif %}
-    
-    <!-- Контент -->
-    <div class="section-content">
-        <div class="max-w-7xl mx-auto px-4">
+    <div class="section-content relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Breadcrumb -->
-            <nav class="mb-8">
-                <ol class="flex items-center space-x-2 text-sm text-gray-600">
-                    <li><a href="{% url 'home:home' %}" class="hover:text-primary-600">Главная</a></li>
+            <nav class="mb-12">
+                <ol class="flex items-center space-x-2 text-sm text-gray-400">
+                    <li><a href="{% url 'home:home' %}" class="hover:text-purple-400 transition-colors">Главная</a></li>
                     <li><span class="mx-2">/</span></li>
-                    <li class="text-primary-600">Дополнительные услуги</li>
+                    <li class="text-white font-medium">Дополнительные услуги</li>
                 </ol>
             </nav>
             
             <!-- Section Header -->
-            <div class="text-center mb-16">
-                <h1 class="text-4xl md:text-5xl font-bold text-primary-500 mb-4">
-                    Дополнительные услуги
+            <div class="text-center mb-20">
+                <h1 class="text-5xl md:text-6xl font-black text-white mb-6 header-3d">
+                    Дополнительные <span class="text-gradient-purple">Опции</span>
                 </h1>
-                <p class="text-xl text-green-500 max-w-3xl mx-auto">
-                    Поддержка, обслуживание и развитие ваших проектов
+                <p class="text-xl text-gray-300 max-w-3xl mx-auto font-medium">
+                    Профессиональное сопровождение, техническая поддержка и расширение 
+                    возможностей вашего проекта на любом этапе.
                 </p>
             </div>
             
             <!-- Extra Services Grid -->
-            <div class="grid lg:grid-cols-2 xl:grid-cols-3 gap-8 mb-16">
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
                 {% for extra_service in extra_services %}
-                <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer" 
+                <div class="extra-card-premium rounded-[2.5rem] p-10 group" 
                      onclick="window.location.href='{{ extra_service.get_absolute_url }}'">
-                    <div class="flex flex-col items-center text-center space-y-6">
-                        <div class="w-20 h-20 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl flex items-center justify-center flex-shrink-0">
-                            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                            </svg>
+                    
+                    <div class="flex flex-col items-center text-center">
+                        <div class="extra-icon-box w-20 h-20 rounded-2xl flex items-center justify-center mb-8 transform group-hover:rotate-12 transition-transform">
+                            <i class="fas fa-plus text-3xl text-white"></i>
                         </div>
-                        <div class="flex-1">
-                            <h3 class="text-2xl font-bold text-primary-500 mb-4">{{ extra_service.title }}</h3>
-                            <p class="text-green-500 mb-6 leading-relaxed">{{ extra_service.description|truncatewords:20 }}</p>
-                            {% if extra_service.price %}
-                            <div class="text-2xl font-bold text-primary-600 mb-4">{{ extra_service.price }}</div>
-                            {% endif %}
-                            
-                            <!-- Add to Cart Button -->
+                        
+                        <h3 class="text-2xl font-extrabold text-white mb-4 group-hover:text-purple-400 transition-colors">
+                            {{ extra_service.title }}
+                        </h3>
+                        
+                        <p class="text-gray-400 mb-8 line-clamp-3 leading-relaxed">
+                            {{ extra_service.description }}
+                        </p>
+                    </div>
+
+                    <div class="mt-auto text-center">
+                        {% if extra_service.price %}
+                        <div class="mb-8">
+                            <span class="text-2xl font-black text-purple-400">{{ extra_service.price }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="flex flex-col space-y-4">
                             <button onclick="event.stopPropagation(); addToCart('extra_service', {{ extra_service.id }})" 
-                                    class="inline-flex items-center bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-full font-semibold text-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 shadow-lg mb-4">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01"></path>
-                                </svg>
-                                Добавить в корзину
+                                    class="w-full bg-white text-navy-900 px-6 py-4 rounded-xl font-bold hover:bg-purple-600 hover:text-white transition-all transform active:scale-95 shadow-xl">
+                                <i class="fas fa-cart-plus mr-2"></i> В корзину
                             </button>
                             
-                            <div class="text-primary-600 font-semibold hover:text-primary-700 transition-colors">
-                                Подробнее →
-                            </div>
+                            <a href="{{ extra_service.get_absolute_url }}" class="text-purple-400 font-bold hover:text-white transition-colors flex items-center justify-center">
+                                Подробнее <i class="fas fa-chevron-right ml-2 group-hover:translate-x-2 transition-transform"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -90,83 +136,55 @@
             
             <!-- Pagination -->
             {% if is_paginated %}
-            <div class="flex justify-center mt-12">
-                <nav class="flex items-center space-x-2">
+            <div class="flex justify-center mb-32">
+                <nav class="flex items-center space-x-4 bg-white/5 p-2 rounded-2xl border border-white/10">
                     {% if page_obj.has_previous %}
-                        <a href="?page={{ page_obj.previous_page_number }}" class="px-4 py-2 bg-white rounded-lg shadow hover:shadow-md transition-shadow">
-                            ← Назад
+                        <a href="?page={{ page_obj.previous_page_number }}" class="w-12 h-12 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-white transition-all">
+                            <i class="fas fa-chevron-left"></i>
                         </a>
                     {% endif %}
                     
-                    <span class="px-4 py-2 bg-primary-600 text-white rounded-lg">
-                        Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+                    <span class="px-6 py-2 text-white font-bold">
+                        {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
                     </span>
                     
                     {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}" class="px-4 py-2 bg-white rounded-lg shadow hover:shadow-md transition-shadow">
-                            Вперед →
+                        <a href="?page={{ page_obj.next_page_number }}" class="w-12 h-12 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-white transition-all">
+                            <i class="fas fa-chevron-right"></i>
                         </a>
                     {% endif %}
                 </nav>
             </div>
             {% endif %}
             
-            <!-- Main Services -->
+            <!-- Main Services Links -->
             {% if services %}
-            <div class="bg-white rounded-3xl p-12 shadow-lg mt-16">
-                <div class="text-center mb-12">
-                    <h3 class="text-3xl font-bold text-gray-900 mb-4 cursor-pointer hover:text-primary-600 transition-colors duration-200" 
-                        onclick="window.location.href='{% url 'home:service-list' %}'">
-                        Основные услуги
-                    </h3>
-                    <p class="text-lg text-gray-600">
-                        Создание сайтов, ботов, приложений и интернет-магазинов
-                    </p>
+            <div class="bg-white/5 border border-white/10 rounded-[3rem] p-12 lg:p-20">
+                <div class="text-center mb-16">
+                    <h3 class="text-3xl md:text-4xl font-black text-white mb-6 header-3d">Основные направления</h3>
+                    <p class="text-xl text-gray-400">Комплексные AI-решения для вашего бизнеса</p>
                 </div>
                 
-                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {% for service in services %}
-                    <div class="text-center cursor-pointer hover:transform hover:scale-105 transition-all duration-300" 
-                         onclick="window.location.href='{{ service.get_absolute_url }}'">
-                        <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                            {% if service.icon %}
-                                <img src="{{ service.icon.url }}" alt="{{ service.title }}" class="w-8 h-8 object-cover">
-                            {% else %}
-                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                                </svg>
-                            {% endif %}
+                <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {% for service in services|slice:":4" %}
+                    <a href="{{ service.get_absolute_url }}" class="bg-white/5 p-8 rounded-3xl hover:bg-white/10 border border-white/5 transition-all text-center group">
+                        <div class="w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:bg-blue-600/40 transition-colors">
+                            <i class="fas fa-star text-blue-400"></i>
                         </div>
-                        <h4 class="text-xl font-semibold text-gray-900 mb-3">{{ service.title }}</h4>
-                        <p class="text-gray-600 mb-4">{{ service.description|truncatewords:10 }}</p>
-                        {% if service.price %}
-                        <div class="text-lg font-bold text-primary-600">{{ service.price }}</div>
-                        {% endif %}
-                        <div class="text-primary-600 font-semibold hover:text-primary-700 transition-colors mt-2">
-                            Подробнее →
-                        </div>
-                    </div>
+                        <h4 class="text-lg font-bold text-white mb-2">{{ service.title }}</h4>
+                        <p class="text-sm text-gray-400 line-clamp-2">Смотреть детали <i class="fas fa-arrow-right ml-1 opacity-0 group-hover:opacity-100 transition-opacity"></i></p>
+                    </a>
                     {% endfor %}
                 </div>
             </div>
             {% endif %}
-            
+
             <!-- CTA Section -->
-            <div class="text-center mt-16">
-                <h3 class="text-2xl font-bold text-primary-500 mb-4">
-                    Нужна консультация по дополнительным услугам?
-                </h3>
-                <p class="text-lg text-green-500 mb-8">
-                    Свяжитесь с нами для получения персонального предложения
-                </p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="{% url 'home:home' %}" class="inline-flex bg-gradient-to-r from-gray-600 to-gray-700 text-white px-6 py-3 rounded-full font-semibold text-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-300 transform hover:scale-105 shadow-lg">
-                        ← На главную
-                    </a>
-                    <a href="{% url 'home:service-list' %}" class="inline-flex bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-full font-semibold text-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 transform hover:scale-105 shadow-lg">
-                        Основные услуги
-                    </a>
-                    <a href="{% url 'home:home' %}#contact" class="inline-flex bg-gradient-to-r from-primary-600 to-secondary-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:from-primary-700 hover:to-secondary-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
+            <div class="text-center mt-32">
+                <h3 class="text-3xl font-black text-white mb-8">Не нашли нужную услугу?</h3>
+                <p class="text-xl text-gray-400 mb-12">Мы готовы разработать индивидуальное решение под ваши задачи</p>
+                <div class="flex flex-col sm:flex-row gap-6 justify-center">
+                    <a href="{% url 'home:home' %}#contact" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-12 py-5 rounded-2xl font-black text-xl hover:scale-105 transition-all shadow-xl shadow-purple-900/40">
                         Получить консультацию
                     </a>
                 </div>
@@ -174,6 +192,7 @@
         </div>
     </div>
 </section>
+
 
 <script>
 function addToCart(serviceType, serviceId) {
