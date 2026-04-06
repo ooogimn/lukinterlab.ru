@@ -19,8 +19,7 @@ def clear_home_cache_on_post_change(sender, instance, **kwargs):
     """Очистка кэша главной страницы при изменении постов блога"""
     if kwargs.get('raw'):
         return
-    cache.delete('home_page_data')
-    cache.delete('legal_info_active')
+    cache.delete('home_posts')
 
 
 @receiver([post_save, post_delete], sender=Otziv)
@@ -28,15 +27,15 @@ def clear_home_cache_on_otziv_change(sender, instance, **kwargs):
     """Очистка кэша главной страницы при изменении отзывов"""
     if kwargs.get('raw'):
         return
-    cache.delete('home_page_data')
+    cache.delete('home_otzivs')
 
 
 @receiver([post_save, post_delete], sender=RabotaMedia)
 def clear_home_cache_on_rabota_media_change(sender, instance, **kwargs):
+    """Очистка кэша главной страницы при изменении медиа портфолио"""
     if kwargs.get('raw'):
         return
     cache.delete('home_rabotas')
-    cache.delete('home_page_data')
 
 
 @receiver([post_save, post_delete], sender=Rabota)
@@ -44,7 +43,6 @@ def clear_home_cache_on_rabota_change(sender, instance, **kwargs):
     """Очистка кэша главной страницы при изменении работ"""
     if kwargs.get('raw'):
         return
-    cache.delete('home_page_data')
     cache.delete('home_rabotas')  # Очищаем кэш работ
     
     # Удаляем старые WebP версии при изменении изображения
@@ -73,7 +71,7 @@ def clear_home_cache_on_service_change(sender, instance, **kwargs):
     """Очистка кэша главной страницы при изменении услуг"""
     if kwargs.get('raw'):
         return
-    cache.delete('home_page_data')
+    cache.delete('home_services')
 
 
 @receiver([post_save, post_delete], sender=StandaloneExtraService)
@@ -81,7 +79,7 @@ def clear_home_cache_on_extra_service_change(sender, instance, **kwargs):
     """Очистка кэша главной страницы при изменении дополнительных услуг"""
     if kwargs.get('raw'):
         return
-    cache.delete('home_page_data')
+    cache.delete('home_extra_services')
 
 
 @receiver([post_save, post_delete], sender=LegalInfo)
@@ -90,7 +88,6 @@ def clear_legal_info_cache(sender, instance, **kwargs):
     if kwargs.get('raw'):
         return
     cache.delete('legal_info_active')
-    cache.delete('home_page_data')
 
 
 @receiver([post_save], sender=SiteMarketingSettings)
@@ -106,4 +103,3 @@ def clear_section_backgrounds_cache(sender, instance, **kwargs):
     if kwargs.get('raw'):
         return
     cache.delete('section_backgrounds_all')
-
