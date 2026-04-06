@@ -1,6 +1,6 @@
 """
-Кастомная админка django-q Schedule: колонка с человекочитаемым названием AISchedule.
-Каноническое имя записи Django-Q остаётся ai_schedule_<id> — см. Assistant.tasks.setup_schedules.
+Кастомная админка django-q Schedule: человекочитаемые подписи.
+Запуск статей: один тик ai_schedules_minute_tick (cron * * * * *); записи run_schedule_task на каждое AISchedule не создаются.
 """
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from typing import Optional
 from django.contrib import admin
 
 from .models import AISchedule
-from .tasks import SCHEDULE_TASK_FUNC
+from .tasks import SCHEDULE_TASK_FUNC, TICK_SCHEDULE_FUNC
 
 
 def _parse_aischedule_pk(args) -> Optional[int]:
@@ -65,6 +65,8 @@ class AssistantDQScheduleAdmin(admin.ModelAdmin):
 
     @admin.display(description='Название (Assistant)')
     def assistant_schedule_title(self, obj):
+        if obj.func == TICK_SCHEDULE_FUNC:
+            return 'Тик расписаний статей (каждую минуту)'
         if obj.func != SCHEDULE_TASK_FUNC:
             return '—'
         pk = _parse_aischedule_pk(obj.args)

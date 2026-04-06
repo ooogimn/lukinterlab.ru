@@ -10,6 +10,7 @@ from pathlib import Path
 from django.conf import settings
 from django.utils import timezone
 from django.db import transaction
+from django.db.models import F, Q
 from django_q.models import Schedule
 from datetime import timedelta
 
@@ -17,7 +18,10 @@ from .models import AISchedule
 
 # Имя func у расписаний автопостинга в Django-Q (единая строка для фильтров и очистки)
 SCHEDULE_TASK_FUNC = 'Assistant.tasks.run_schedule_task'
-# Префикс канонического имени расписания в ORM Django-Q
+# Единый тик: раз в минуту ставит в очередь due-расписания
+TICK_SCHEDULE_FUNC = 'Assistant.tasks.tick_ai_schedules'
+AI_TICK_SCHEDULE_NAME = 'ai_schedules_minute_tick'
+# Префикс канонического имени расписания в ORM Django-Q (легаси, для очистки)
 AI_SCHEDULE_NAME_PREFIX = 'ai_schedule_'
 # Lazy-import ArticleGeneratorService в run_schedule_task — иначе при старте тянутся bs4/lxml.
 
@@ -228,12 +232,13 @@ def _force_delete_lock_file(lock_file_path, description=""):
         return False
 
 
-def run_schedule_task(schedule_id):
+def run_schedule_task(schedule_id, force=False):
     """
     Задача для генерации статей по расписанию с блокировкой для последовательного выполнения
     
     Args:
         schedule_id: ID расписания (int или str)
+        force: если True (ручной запуск), не проверяем next_run > сейчас
     """
     lock_file_path = None
     lock_file = None
@@ -241,6 +246,7 @@ def run_schedule_task(schedule_id):
     try:
         # Преобразуем в int, если передана строка
         schedule_id = int(schedule_id)
+        force = bool(force)
         schedule_obj = AISchedule.objects.get(id=schedule_id, is_active=True)
         
         # Создаем директорию для lock файла если не существует
@@ -315,10 +321,24 @@ def run_schedule_task(schedule_id):
                 wait_seconds = min(10, max_wait_seconds - elapsed)  # Ждем максимум 10 секунд перед повтором
                 logger.info(f"[LOCK] Блокировка занята. Ожидание {int(wait_seconds)} секунд перед повтором...")
                 time.sleep(wait_seconds)
-        
+
         # Блокировка получена, выполняем задачу
         try:
             logger.info(f"[START] Запуск генерации по расписанию: {schedule_obj.name}")
+
+            schedule_obj.refresh_from_db()
+            if not schedule_obj.is_active:
+                logger.info(f"[SKIP] Расписание {schedule_id} неактивно")
+                return {'success': False, 'skipped': 'inactive'}
+            if schedule_obj.max_schedule_runs is not None:
+                if schedule_obj.completed_schedule_runs >= schedule_obj.max_schedule_runs:
+                    logger.info(f"[SKIP] Лимит запусков для {schedule_id}")
+                    return {'success': False, 'skipped': 'max_runs'}
+            now_check = timezone.now()
+            if not force and schedule_obj.next_run and schedule_obj.next_run > now_check:
+                logger.info(f"[SKIP] Ещё не время next_run={schedule_obj.next_run}")
+                return {'success': False, 'skipped': 'not_due'}
+
             from .article_generator import ArticleGeneratorService
 
             generator = ArticleGeneratorService(schedule_obj)
@@ -332,11 +352,20 @@ def run_schedule_task(schedule_id):
             logger.info(f"[DELAY] Ожидание {TASK_DELAY_MINUTES} минут перед следующей задачей...")
             time.sleep(TASK_DELAY_MINUTES * 60)
             
-            # Обновляем время следующего запуска
+            schedule_obj.refresh_from_db()
+            schedule_obj.sync_next_run_after(timezone.now())
             schedule_obj.last_run = timezone.now()
-            schedule_obj.next_run = calculate_next_run(schedule_obj)
-            schedule_obj.save(update_fields=['last_run', 'next_run'])
-            
+            schedule_obj.completed_schedule_runs += 1
+            _fields = ['next_run', 'last_run', 'completed_schedule_runs']
+            if (
+                schedule_obj.max_schedule_runs is not None
+                and schedule_obj.completed_schedule_runs >= schedule_obj.max_schedule_runs
+            ):
+                schedule_obj.is_active = False
+                _fields.append('is_active')
+                logger.info(f"[OK] Расписание {schedule_id} выключено: достигнут лимит запусков")
+            schedule_obj.save(update_fields=_fields)
+
             return {
                 'success': True,
                 'schedule_id': schedule_id,
@@ -387,102 +416,100 @@ def run_schedule_task(schedule_id):
                 pass
 
 
-def calculate_next_run(schedule_obj: AISchedule) -> timezone.datetime:
-    """Вычислить время следующего запуска"""
+def tick_ai_schedules():
+    """
+    Раз в минуту: поставить в очередь run_schedule_task для расписаний,
+    у которых наступило next_run и не исчерпан лимит запусков.
+    """
     now = timezone.now()
-    
-    if schedule_obj.frequency == 'hourly':
-        return now + timedelta(hours=1)
-    elif schedule_obj.frequency == 'daily':
-        return now + timedelta(days=1)
-    elif schedule_obj.frequency == 'weekly':
-        return now + timedelta(weeks=1)
-    elif schedule_obj.frequency == 'monthly':
-        # Приблизительно через месяц
-        return now + timedelta(days=30)
-    else:
-        # Для custom используем текущее время + 1 день (будет переопределено CRON)
-        return now + timedelta(days=1)
+    due = AISchedule.objects.filter(
+        is_active=True,
+        next_run__lte=now,
+    ).filter(
+        Q(max_schedule_runs__isnull=True) | Q(completed_schedule_runs__lt=F('max_schedule_runs'))
+    ).values_list('id', flat=True)
+    due_ids = list(due)
+    if not due_ids:
+        return {'queued': 0}
+    try:
+        from django_q.tasks import async_task
+    except ImportError:
+        async_task = None
+    if not async_task:
+        logger.error('[ERROR] django_q.async_task недоступен')
+        return {'queued': 0, 'error': 'no async_task'}
+    for sid in due_ids:
+        async_task(SCHEDULE_TASK_FUNC, sid)
+        logger.info(f"[TICK] В очереди run_schedule_task({sid})")
+    return {'queued': len(due_ids)}
+
+
+def ai_schedules_monitoring_items():
+    """Строки для таблицы мониторинга: минутный тик + активные AISchedule."""
+    items = []
+    tick = Schedule.objects.filter(name=AI_TICK_SCHEDULE_NAME).first()
+    if tick:
+        items.append({
+            'kind': 'tick',
+            'label': 'Опрос расписаний статей (каждую минуту)',
+            'cron': tick.cron or '* * * * *',
+            'last_run': tick.last_run,
+            'next_run': tick.next_run,
+            'ai_schedule': None,
+        })
+    for s in AISchedule.objects.filter(is_active=True).order_by('name'):
+        items.append({
+            'kind': 'ai',
+            'label': s.name,
+            'cron': s.get_interval_summary(),
+            'last_run': s.last_run,
+            'next_run': s.next_run,
+            'ai_schedule': s,
+        })
+    return items
 
 
 def schedules_for_monitoring():
-    """
-    Канонические расписания Django-Q для дашборда мониторинга.
-    Не включает легаси (ai_autoposting_* и т.п.).
-    """
-    qs = Schedule.objects.filter(func=SCHEDULE_TASK_FUNC).order_by('name')
-    prefix_len = len(AI_SCHEDULE_NAME_PREFIX)
-    return [
-        s
-        for s in qs
-        if (s.name or '').startswith(AI_SCHEDULE_NAME_PREFIX)
-        and (s.name[prefix_len:].isdigit())
-    ]
+    """Легаси-хук: django-q записи ai_schedule_<id> больше не используются."""
+    return []
 
 
 def setup_schedules():
     """
-    Настройка расписаний в Django-Q.
-    Перед upsert удаляет чужие строки с тем же args (легаси ai_autoposting_*).
-    Неактивные AISchedule — все связанные записи Schedule с данным args удаляются.
-    Одна транзакция на весь прогон — атомарное обновление расписаний в БД.
+    Один глобальный CRON в Django-Q: каждую минуту tick_ai_schedules.
+    Старые записи run_schedule_task на каждое AISchedule удаляются.
     """
     with transaction.atomic():
-        # Легаси: несколько CRON ai_autoposting_HHMM с одним и тем же args — лишние запуски в 8:00, 9:00 и т.д.
-        legacy_n, _ = Schedule.objects.filter(
-            func=SCHEDULE_TASK_FUNC,
-            name__startswith='ai_autoposting_',
-        ).delete()
+        legacy_n, _ = Schedule.objects.filter(name__startswith='ai_autoposting_').delete()
         if legacy_n:
             logger.info(
                 '[OK] Удалены легаси-расписания django-q ai_autoposting_* (%s шт.)',
                 legacy_n,
             )
 
-        inactive_removed = 0
-        for schedule_obj in AISchedule.objects.filter(is_active=False):
-            n, _ = Schedule.objects.filter(
-                func=SCHEDULE_TASK_FUNC,
-                args=str(schedule_obj.id),
-            ).delete()
-            inactive_removed += n
-        if inactive_removed:
+        removed, _ = Schedule.objects.filter(func=SCHEDULE_TASK_FUNC).delete()
+        if removed:
             logger.info(
-                '[OK] Удалены расписания Django-Q для неактивных AISchedule (всего записей: %s)',
-                inactive_removed,
+                '[OK] Удалены старые задачи %s (записей: %s)',
+                SCHEDULE_TASK_FUNC,
+                removed,
             )
 
-        active_schedules = AISchedule.objects.filter(is_active=True)
-        for schedule_obj in active_schedules:
-            canonical_name = f'{AI_SCHEDULE_NAME_PREFIX}{schedule_obj.id}'
-            stale_qs = Schedule.objects.filter(
-                func=SCHEDULE_TASK_FUNC,
-                args=str(schedule_obj.id),
-            ).exclude(name=canonical_name)
-            stale_count, _ = stale_qs.delete()
-            if stale_count:
-                logger.info(
-                    '[OK] Удалены устаревшие расписания Django-Q для id=%s: %s шт.',
-                    schedule_obj.id,
-                    stale_count,
-                )
-
-            cron_expr = schedule_obj.get_cron_expression()
-
-            dq_schedule, created = Schedule.objects.update_or_create(
-                func=SCHEDULE_TASK_FUNC,
-                name=canonical_name,
-                defaults={
-                    'schedule_type': Schedule.CRON,
-                    'cron': cron_expr,
-                    'args': str(schedule_obj.id),
-                },
-            )
-
-            action = 'создано' if created else 'обновлено'
-            logger.info(
-                f'[OK] Расписание Django-Q для {schedule_obj.name} {action}: {cron_expr}'
-            )
+        tick, created = Schedule.objects.update_or_create(
+            name=AI_TICK_SCHEDULE_NAME,
+            defaults={
+                'func': TICK_SCHEDULE_FUNC,
+                'schedule_type': Schedule.CRON,
+                'cron': '* * * * *',
+                'repeats': -1,
+                'args': '',
+            },
+        )
+        action = 'создано' if created else 'обновлено'
+        logger.info(
+            '[OK] Минутный опрос расписаний статей %s (CRON * * * * *)',
+            action,
+        )
 
 
 def remove_schedule(schedule_id: int):

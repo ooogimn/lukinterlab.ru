@@ -16,10 +16,17 @@ from django.db import transaction
 from datetime import timedelta
 import json
 
-from .models import PromptTemplate, AISchedule, AIGeneratedArticle, AssistantSettings, TokenUsage
+from .models import (
+    PromptTemplate,
+    AISchedule,
+    AIGeneratedArticle,
+    AssistantSettings,
+    TokenUsage,
+    NewsSearchSettings,
+)
 from .token_cost_analysis import TokenCostAnalyzer
 from . import forms
-from .tasks import run_schedule_task, schedules_for_monitoring
+from .tasks import run_schedule_task, ai_schedules_monitoring_items
 from .article_generator import ArticleGeneratorService
 from django_q.tasks import async_task
 
@@ -231,8 +238,8 @@ def dashboard_main(request):
         cost_analysis = None
         efficiency_report = None
     
-    # Только канонические расписания (без легаси ai_autoposting_*)
-    q_schedules = len(schedules_for_monitoring())
+    # Активные расписания генерации статей (интервальная модель + минутный тик в Django-Q)
+    q_schedules = AISchedule.objects.filter(is_active=True).count()
     
     # Проверка настроек GigaChat
     gigachat_configured = False
@@ -529,7 +536,7 @@ def schedule_run_now(request, pk):
     
     try:
         # Запускаем задачу асинхронно
-        async_task('Assistant.tasks.run_schedule_task', schedule.id)
+        async_task('Assistant.tasks.run_schedule_task', schedule.id, True)
         return JsonResponse({
             'success': True,
             'message': f'Генерация для расписания "{schedule.name}" запущена'
@@ -732,22 +739,7 @@ def monitoring(request):
         except:
             pass
     
-    # Статус расписаний Django-Q (только ai_schedule_<id>)
-    q_schedules_status = []
-    for q_schedule in schedules_for_monitoring():
-        # Извлекаем schedule_id из args
-        try:
-            schedule_id = int(q_schedule.args) if q_schedule.args else None
-            if schedule_id:
-                ai_schedule = AISchedule.objects.filter(id=schedule_id).first()
-                q_schedules_status.append({
-                    'q_schedule': q_schedule,
-                    'ai_schedule': ai_schedule,
-                    'next_run': q_schedule.next_run,
-                    'last_run': q_schedule.last_run,
-                })
-        except:
-            pass
+    q_schedules_status = ai_schedules_monitoring_items()
     
     # Статистика за последние 24 часа
     last_24h = timezone.now() - timedelta(hours=24)
@@ -894,6 +886,39 @@ def monitoring(request):
     }
     
     return render(request, 'assistant/dashboard/monitoring.html', context)
+
+
+@login_required
+@user_passes_test(is_superuser)
+def dashboard_news_search_settings(request):
+    """Настройки пула поиска новостей (singleton в БД)."""
+    from .news_search_config import NEWS_SEARCH_SETTINGS_DEFAULTS
+
+    instance = NewsSearchSettings.get_solo()
+    if request.method == 'POST':
+        if request.POST.get('action') == 'reset_defaults':
+            instance.reset_to_factory_defaults()
+            messages.success(
+                request,
+                'Настройки поиска новостей сброшены на заводские значения.',
+            )
+            return redirect('assistant:dashboard_news_search_settings')
+        form = forms.NewsSearchSettingsForm(request.POST, instance=instance)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Настройки поиска новостей сохранены.')
+            return redirect('assistant:dashboard_news_search_settings')
+    else:
+        form = forms.NewsSearchSettingsForm(instance=instance)
+
+    return render(
+        request,
+        'assistant/dashboard/news_search_settings.html',
+        {
+            'form': form,
+            'defaults_reference': NEWS_SEARCH_SETTINGS_DEFAULTS,
+        },
+    )
 
 
 """API для получения статистики (AJAX)"""
@@ -1493,10 +1518,18 @@ def template_test_schedule(request, post_id):
         data = json.loads(request.body)
         
         schedule_name = data.get('schedule_name', f'Расписание для статьи: {post.title[:50]}')
-        frequency = data.get('frequency', 'daily')
         articles_per_run = data.get('articles_per_run', 1)
         schedule_date = data.get('schedule_date')
         schedule_time = data.get('schedule_time')
+        interval_hours = int(data.get('interval_hours', 24) or 24)
+        interval_minutes = int(data.get('interval_minutes', 0) or 0)
+        max_runs_raw = data.get('max_schedule_runs')
+        max_schedule_runs = None
+        if max_runs_raw not in (None, '',):
+            try:
+                max_schedule_runs = max(1, int(max_runs_raw))
+            except (TypeError, ValueError):
+                max_schedule_runs = None
         
         # Находим шаблон промпта из тестовой статьи
         template = None
@@ -1520,28 +1553,29 @@ def template_test_schedule(request, post_id):
             }, status=400)
         
         # Создаем расписание
+        from datetime import datetime as dt
+
+        first_at = timezone.now()
+        if schedule_date and schedule_time:
+            schedule_datetime_str = f"{schedule_date} {schedule_time}"
+            first_at = timezone.make_aware(dt.strptime(schedule_datetime_str, '%Y-%m-%d %H:%M'))
+
         schedule = AISchedule.objects.create(
             name=schedule_name,
             prompt_template=template,
             category=post.category,
-            frequency=frequency,
+            first_run_at=first_at,
+            interval_hours=interval_hours,
+            interval_minutes=interval_minutes,
+            max_schedule_runs=max_schedule_runs,
             articles_per_run=articles_per_run,
             is_active=True,
             created_by=request.user,
             tags=', '.join([tag.name for tag in post.tags.all()]),
             keywords=post.description.replace('[TEST_ARTICLE]', '').strip() if post.description else '',
         )
-        
-        # Если указана дата и время - устанавливаем next_run
-        if schedule_date and schedule_time:
-            from datetime import datetime
-            schedule_datetime_str = f"{schedule_date} {schedule_time}"
-            schedule_datetime = datetime.strptime(schedule_datetime_str, '%Y-%m-%d %H:%M')
-            schedule_datetime = timezone.make_aware(schedule_datetime)
-            
-            if schedule_datetime > timezone.now():
-                schedule.next_run = schedule_datetime
-                schedule.save(update_fields=['next_run'])
+        schedule.sync_next_run()
+        schedule.save(update_fields=['next_run'])
         
         # Настраиваем Django-Q расписание
         from .signals import setup_ai_schedule

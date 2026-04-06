@@ -133,6 +133,8 @@ USE_ASYNC_PARSING = env_bool("USE_ASYNC_PARSING", False)
 # Целевой объём спарсенного текста новости для генерации статьи (слов). Больше — меньше «добор воды» моделью, но длиннее промпт.
 ARTICLE_PARSED_NEWS_TARGET_WORDS = env_int("ARTICLE_PARSED_NEWS_TARGET_WORDS", 480) or 480
 
+# Параметры поиска новостей (пул, DDG, свежесть и т.д.) хранятся в БД: дашборд автопостинга → «Поиск новостей».
+
 INSTALLED_APPS = [
     'ckeditor', 'ckeditor_uploader',
     'jazzmin', 

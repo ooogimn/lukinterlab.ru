@@ -67,6 +67,14 @@
             </div>
             {% endif %}
             
+            <a href="{% url 'assistant:dashboard_news_search_settings' %}"
+               class="dashboard-nav-link flex items-center px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'dashboard_news_search_settings' %}active{% endif %}">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                Поиск новостей
+            </a>
+
             <a href="{% url 'assistant:dashboard_schedules' %}" 
                class="dashboard-nav-link flex items-center px-4 py-3 rounded-lg {% if 'schedule' in request.resolver_match.url_name %}active{% endif %}">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

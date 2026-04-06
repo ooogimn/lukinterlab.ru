@@ -2,6 +2,7 @@
 Сервис для генерации статей с использованием шаблонов промптов и GigaChat API
 """
 import logging
+import random
 import time
 import re
 import base64
@@ -17,9 +18,11 @@ import requests
 from bs4 import BeautifulSoup
 
 from .models import PromptTemplate, AISchedule, AIGeneratedArticle, TokenUsage, NewsSource
+from .gigachat_article_models import GIGACHAT_IMAGE_MODEL, GIGACHAT_TEXT_MODEL
 from .ai_service import AIService, GigaChatAPIService
 from .token_utils import count_tokens_approx, estimate_prompt_tokens, check_token_limit
 from .news_parser import NewsParserService
+from .news_search_config import get_news_search_config
 from .category_rotator import CategoryRotator
 from .seo_integration import SEOArticleService
 from .search_engines_submitter import SearchEnginesSubmitter
@@ -244,7 +247,12 @@ class ArticleGeneratorService:
                 )
                 
                 target_words = getattr(settings, 'ARTICLE_PARSED_NEWS_TARGET_WORDS', 480) or 480
-                parsed_news = self._search_and_parse_news(category_for_publication, test_keywords, target_words=target_words)
+                parsed_news = self._search_and_parse_news(
+                    category_for_publication,
+                    test_keywords,
+                    target_words=target_words,
+                    refresh_attempt=0,
+                )
                 
                 # Если режим изображения - search_and_parse, парсим изображения одновременно с новостями
                 if need_image_parsing and parsed_news and parsed_news.get('image_url'):
@@ -272,7 +280,13 @@ class ArticleGeneratorService:
             # Передаем категорию в контекст только если use_category_in_context=True
             context_category_for_prompt = category_for_publication if use_category_in_context else None
             article_index = context_data.pop('_article_index', 1) if context_data else 1
-            context = self._prepare_context(context_data, parsed_news, test_category=context_category_for_prompt, test_keywords=test_keywords, article_index=article_index)
+            context = self._prepare_context(
+                context_data,
+                parsed_news,
+                test_category=context_category_for_prompt,
+                test_keywords=test_keywords,
+                article_index=article_index,
+            )
             
             # Сохраняем parsed_image_data для использования в генерации изображений
             if parsed_image_data:
@@ -335,6 +349,29 @@ class ArticleGeneratorService:
                     logger.warning(f"[WARNING] Контент слишком короткий ({word_count} слов, требуется 800-1300). Перегенерирую...")
                     # Повторный проход с усиленным требованием объёма (generate и parse_and_generate)
                     if self.prompt_template.content_generation_mode in ('generate', 'parse_and_generate'):
+                        if (
+                            get_news_search_config().NEWS_FORCE_FRESH_NEWS_ON_CONTENT_RETRY
+                            and self.prompt_template.generate_content
+                        ):
+                            prev_url = (parsed_news or {}).get('link') if parsed_news else None
+                            _tw = getattr(settings, 'ARTICLE_PARSED_NEWS_TARGET_WORDS', 480) or 480
+                            logger.info(
+                                '[NEWS_REFRESH] Новый пул новостей перед повтором генерации контента (исключаем предыдущий URL)'
+                            )
+                            parsed_news = self._search_and_parse_news(
+                                category_for_publication,
+                                test_keywords,
+                                target_words=_tw,
+                                refresh_attempt=1,
+                                extra_exclude_urls={prev_url} if prev_url else None,
+                            )
+                            context = self._prepare_context(
+                                context_data,
+                                parsed_news,
+                                test_category=context_category_for_prompt,
+                                test_keywords=test_keywords,
+                                article_index=article_index,
+                            )
                         context['min_words'] = 800
                         context['max_words'] = 1300
                         # title еще не сгенерирован, передаем None
@@ -571,8 +608,7 @@ class ArticleGeneratorService:
                         'prompt_tokens': prompt_tokens_total,
                         'completion_tokens': completion_tokens_total if completion_tokens_total > 0 else total_tokens,
                     }
-                    text_model = self.schedule.text_model if self.schedule else 'GigaChat-2-Lite'
-                    TokenUsage.record_usage(text_model, usage_data)
+                    TokenUsage.record_usage(GIGACHAT_TEXT_MODEL, usage_data)
                 except Exception as e:
                     logger.warning(f"Не удалось записать использование токенов: {str(e)}")
             
@@ -739,65 +775,100 @@ class ArticleGeneratorService:
         """Ротация категории (умная выборка)"""
         return self.category_rotator.get_next_category()
     
-    """Поиск и парсинг новостей по категории (НОВАЯ ЛОГИКА: веб-скрапинг, немедленный парсинг первой статьи)"""
-    def _search_and_parse_news(self, category: Category, keywords: str = '', target_words: int = 200) -> Optional[Dict]:
+    """Поиск и парсинг новостей по категории (веб-скрапинг + RSS, ранжирование пула)"""
+    def _search_and_parse_news(
+        self,
+        category: Category,
+        keywords: str = '',
+        target_words: int = 200,
+        *,
+        extra_exclude_urls: Optional[set] = None,
+        refresh_attempt: int = 0,
+    ) -> Optional[Dict]:
         """
-        НОВАЯ ЛОГИКА: Поиск и немедленный парсинг первой найденной статьи
-        
-        Алгоритм:
-        1. Поиск статей через веб-скрапинг (источники в рандомном порядке)
-        2. Для каждой найденной статьи:
-           - Проверка: не была ли уже спарсена в последние 24 часа
-           - Немедленный парсинг текста и изображения
-           - Если успешно - возвращаем результат и помечаем как спарсенную
-           - Если нет - переходим к следующей статье
-        3. Цикл продолжается пока не будет успешный парсинг
-        
-        Args:
-            category: Категория для поиска
-            keywords: Ключевые слова для поиска
-            target_words: Целевое количество слов для парсинга (по умолчанию 200)
+        Поиск по всем активным источникам (вкл. NewsSearchEndpoint), ранжирование пула,
+        немедленный парсинг первой подходящей статьи.
         """
         try:
-            # Используем русские запросы напрямую без перевода
             search_keywords = keywords or (self.schedule.keywords if self.schedule else '') or category.title
             search_category = category.title
-            
-            logger.info(f"[SEARCH] Поиск и немедленный парсинг статей: category='{search_category}', keywords='{search_keywords}'")
-            
-            # Поиск новостей на русском языке (streaming - возвращает результаты как только нашли 5+ статей)
-            # Не ждем все источники - начинаем парсить сразу при наличии достаточного количества статей
-            # Передаем category_id для фильтрации источников по категории блога
-            news_items = self.news_parser.search_news_streaming(
-                search_category, 
-                search_keywords, 
-                min_articles=5, 
-                limit=20,
-                category_id=category.id if category else None
+            tmpl_suffix = (
+                getattr(self.prompt_template, 'news_search_suffix', '') or ''
+            ).strip()
+
+            diversity_seed = (
+                (refresh_attempt * 1009)
+                + int(time.time() % 1_000_000)
+                + (hash(search_keywords) % 9999)
             )
-            
+
+            logger.info(
+                "[SEARCH] Парсинг: category=%r keywords=%r template_suffix=%r refresh_attempt=%s",
+                search_category,
+                search_keywords,
+                tmpl_suffix or '(нет)',
+                refresh_attempt,
+            )
+
+            exclude = {u.strip() for u in (extra_exclude_urls or set()) if u and str(u).strip()}
+
+            per_source = get_news_search_config().NEWS_SEARCH_PER_SOURCE_LIMIT or 18
+            news_items = self.news_parser.search_news_streaming(
+                search_category,
+                search_keywords,
+                min_articles=12,
+                limit=per_source,
+                category_id=category.id if category else None,
+                template_suffix=tmpl_suffix,
+                diversity_seed=diversity_seed,
+            )
+
             if not news_items:
                 logger.warning("[WARNING] Новости не найдены")
                 return None
-            
-            logger.info(f"[INFO] Найдено {len(news_items)} статей. Начинаю немедленный парсинг первой доступной статьи...")
-            
-            # Получаем статистику по источникам ДО парсинга
+
+            off_max = get_news_search_config().NEWS_TOP_LIST_RANDOM_OFFSET_MAX or 0
+            if off_max > 0 and len(news_items) > 1:
+                k = min(len(news_items), max(2, off_max + 1))
+                start = random.randint(0, k - 1)
+                news_items = news_items[start:] + news_items[:start]
+                logger.info('[SEARCH] Смещение очереди кандидатов: start_index=%s (top_k=%s)', start, k)
+
+            logger.info(
+                "[INFO] В очереди на парсинг %s статей (ранжирование + смещение)",
+                len(news_items),
+            )
+
             sources_statistics = self.news_parser.get_source_statistics(news_items)
-            
-            # НОВАЯ ЛОГИКА: Итерация по статьям с немедленным парсингом (кэш противодублирования отключен)
             parsed_count = 0
-            
+            from Blog.models import Post
+
             for news_item in news_items:
                 url = news_item.get('link', '')
                 if not url:
+                    logger.info('[NEWS_SKIP] reason=no_url')
                     continue
-                
-                # Включаем проверку дубликатов: проверяем, не была ли статья уже использована
-                from Blog.models import Post
+                if url in exclude:
+                    logger.info('[NEWS_SKIP] reason=excluded_retry url=%s', url[:100])
+                    continue
+
                 if Post.objects.filter(news_source_url=url).exists():
-                    logger.info(f"[SKIP] Статья {url[:80]}... уже публиковалась ранее, пропускаем.")
+                    logger.info(
+                        '[NEWS_SKIP] reason=already_published_post url=%s',
+                        url[:100],
+                    )
                     continue
+
+                pub = news_item.get('published')
+                dr = news_item.get('date_reliable', False)
+                if pub and dr:
+                    logger.debug(
+                        '[NEWS_TRY] url=%s date_reliable=%s published=%s source=%s',
+                        url[:90],
+                        dr,
+                        pub,
+                        news_item.get('source_name', ''),
+                    )
                 
                 parsed_count += 1
                 logger.info(f"[PARSE #{parsed_count}] Немедленный парсинг статьи: {url[:80]}...")
@@ -831,13 +902,19 @@ class ArticleGeneratorService:
                         
                         return result
                     else:
-                        logger.warning(f"[FAIL] Парсинг не удался: недостаточно текста ({len(parsed_text) if parsed_text else 0} символов)")
-                        # Продолжаем поиск следующей статьи
+                        logger.info(
+                            '[NEWS_SKIP] reason=parse_too_short chars=%s url=%s',
+                            len(parsed_text) if parsed_text else 0,
+                            url[:100],
+                        )
                         continue
-                        
+
                 except Exception as e:
-                    logger.warning(f"[FAIL] Ошибка парсинга статьи {url[:80]}...: {str(e)}")
-                    # Продолжаем поиск следующей статьи
+                    logger.info(
+                        '[NEWS_SKIP] reason=parse_exception err=%s url=%s',
+                        str(e)[:120],
+                        url[:100],
+                    )
                     continue
             
             # Если все статьи не удалось спарсить
@@ -885,7 +962,7 @@ class ArticleGeneratorService:
             
             # Временно меняем модель
             original_model = self.ai_service.model
-            text_model = self.schedule.text_model if self.schedule else 'GigaChat'
+            text_model = GIGACHAT_TEXT_MODEL
             self.ai_service.model = text_model
             
             # Генерируем дополнительную секцию БЕЗ системного промпта чат-бота
@@ -940,7 +1017,7 @@ class ArticleGeneratorService:
             
             # Временно меняем модель
             original_model = self.ai_service.model
-            text_model = self.schedule.text_model if self.schedule else 'GigaChat'
+            text_model = GIGACHAT_TEXT_MODEL
             self.ai_service.model = text_model
             
             # Генерируем теги БЕЗ системного промпта чат-бота
@@ -1063,8 +1140,8 @@ class ArticleGeneratorService:
             logger.info(f"[TITLE] Промпт для генерации из контента: {prompt[:200]}...")
             logger.info(f"[TITLE] Используются первые 100 слов контента: {content_first_100_words[:100]}...")
             
-            # Проверяем лимит токенов перед отправкой
-            text_model = self.schedule.text_model if self.schedule else 'GigaChat'
+            # Проверяем лимит токенов перед отправкой (модель текста фиксирована)
+            text_model = GIGACHAT_TEXT_MODEL
             estimated_tokens = count_tokens_approx(prompt) + 100  # +100 для ответа
             limit_check = check_token_limit(text_model, estimated_tokens)
             
@@ -1074,7 +1151,6 @@ class ArticleGeneratorService:
                     f"Осталось: {limit_check['remaining']}, требуется: {estimated_tokens}"
                 )
             
-            # Временно меняем модель на указанную в расписании
             original_model = self.ai_service.model
             self.ai_service.model = text_model
             
@@ -1147,8 +1223,7 @@ class ArticleGeneratorService:
             logger.info(f"[TITLE] Промпт для генерации: {prompt[:200]}...")
             logger.info(f"[TITLE] Контекст содержит переменные: {list(context.keys())}")
             
-            # Проверяем лимит токенов перед отправкой
-            text_model = self.schedule.text_model if self.schedule else 'GigaChat'
+            text_model = GIGACHAT_TEXT_MODEL
             estimated_tokens = count_tokens_approx(prompt) + 100  # +100 для ответа
             limit_check = check_token_limit(text_model, estimated_tokens)
             
@@ -1158,9 +1233,7 @@ class ArticleGeneratorService:
                     f"Осталось: {limit_check['remaining']}, требуется: {estimated_tokens}"
                 )
             
-            # Временно меняем модель на указанную в расписании
             original_model = self.ai_service.model
-            text_model = self.schedule.text_model if self.schedule else 'GigaChat'
             self.ai_service.model = text_model
             
             # Генерируем заголовок БЕЗ системного промпта чат-бота
@@ -1283,7 +1356,7 @@ class ArticleGeneratorService:
             
             # Временно меняем модель
             original_model = self.ai_service.model
-            text_model = self.schedule.text_model if self.schedule else 'GigaChat'
+            text_model = GIGACHAT_TEXT_MODEL
             self.ai_service.model = text_model
             
             # Генерируем контент БЕЗ системного промпта чат-бота
@@ -1395,7 +1468,11 @@ class ArticleGeneratorService:
             parsed_source = 'Unknown'
             parsed_url = ''
             
-            if 'parsed_news_content' in context and context.get('parsed_news_content'):
+            if (
+                not retry
+                and 'parsed_news_content' in context
+                and context.get('parsed_news_content')
+            ):
                 # Уже спарсенный текст; ужимаем до лимита настроек
                 _lim = getattr(settings, 'ARTICLE_PARSED_NEWS_TARGET_WORDS', 480) or 480
                 news_text = context['parsed_news_content']
@@ -1403,12 +1480,21 @@ class ArticleGeneratorService:
                 parsed_text_200_words = ' '.join(words)
                 parsed_source = context.get('news_source', 'Unknown')
                 parsed_url = context.get('news_url', '')
-                logger.info(f"[REUSE] Используются уже спарсенные новости из context: {len(parsed_text_200_words.split())} слов из источника: {parsed_source}")
+                logger.info(
+                    f"[REUSE] Используются уже спарсенные новости из context: {len(parsed_text_200_words.split())} слов из источника: {parsed_source}"
+                )
             else:
                 # Fallback: Парсим только если не были спарсены ранее
                 _lim = getattr(settings, 'ARTICLE_PARSED_NEWS_TARGET_WORDS', 480) or 480
                 logger.info(f"[PARSE] Парсинг ~{_lim} слов для категории: {category_for_search.title}, keywords: {keywords}")
-                parsed_news = self._search_and_parse_news(category_for_search, keywords, target_words=_lim)
+                prev_u = context.get('news_url') if retry else None
+                parsed_news = self._search_and_parse_news(
+                    category_for_search,
+                    keywords,
+                    target_words=_lim,
+                    refresh_attempt=1 if retry else 0,
+                    extra_exclude_urls={prev_u} if retry and prev_u else None,
+                )
                 
                 if not parsed_news or not parsed_news.get('parsed_text'):
                     logger.warning("[WARNING] Не удалось спарсить 200 слов. Используется режим generate без парсинга.")
@@ -1753,16 +1839,8 @@ class ArticleGeneratorService:
                 'Accept': 'application/json'
             }
             
-            # Используем модель для изображений из расписания или по умолчанию GigaChat-2-Pro
-            image_model = self.schedule.image_model if self.schedule else 'GigaChat-2-Pro'
-            # Проверяем, что модель поддерживает генерацию изображений (Pro или Max)
-            if 'Lite' in image_model:
-                # Lite не поддерживает генерацию изображений, используем Pro
-                image_model = 'GigaChat-2-Pro'
-                logger.warning(f"[WARNING] Модель Lite не поддерживает генерацию изображений, используется Pro")
-            
             payload = {
-                'model': image_model,
+                'model': GIGACHAT_IMAGE_MODEL,
                 'messages': [
                     {
                         'role': 'user',

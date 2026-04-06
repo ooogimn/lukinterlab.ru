@@ -1,8 +1,12 @@
 """
 Формы для управления автопостингом
 """
+from datetime import datetime, time as dt_time, timedelta
+
 from django import forms
-from .models import PromptTemplate, AISchedule
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from .models import PromptTemplate, AISchedule, NewsSearchSettings
 from Blog.models import Category
 
 
@@ -22,7 +26,7 @@ class PromptTemplateForm(forms.ModelForm):
         fields = [
             'name', 'description', 'is_active',
             'title_prompt', 'content_prompt', 'image_prompt',  # description_prompt удалено
-            'default_category', 'default_tags',
+            'default_category', 'default_tags', 'news_search_suffix',
             'content_generation_mode', 'image_generation_mode', 'image_search_criteria',
             'generate_title', 'generate_content', 'generate_image',
             'generate_additional_section', 'additional_section_prompt'
@@ -61,6 +65,10 @@ class PromptTemplateForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'Теги через запятую'
             }),
+            'news_search_suffix': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Напр.: последние события, обзор (к поиску новостей)',
+            }),
             'is_active': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
             }),
@@ -95,6 +103,7 @@ class PromptTemplateForm(forms.ModelForm):
             'image_prompt': 'Промпт для генерации изображения',
             'default_category': 'Категория по умолчанию',
             'default_tags': 'Теги по умолчанию',
+            'news_search_suffix': 'Уточнение поиска новостей',
             'content_generation_mode': 'Режим генерации контента',
             'image_generation_mode': 'Режим генерации изображения',
             'image_search_criteria': 'Критерий поиска изображения',
@@ -156,27 +165,105 @@ _SCHEDULE_TEXTAREA = (
     _SCHEDULE_CONTROL
     + ' min-h-[4.5rem] resize-y leading-snug text-[13px] bg-slate-50/80'
 )
-_SCHEDULE_TEXTAREA_JSON = (
-    _SCHEDULE_CONTROL
-    + ' min-h-[6rem] resize-y font-mono text-xs leading-snug bg-indigo-50/40'
-)
 _SCHEDULE_CHECK = 'schedule-dash-check h-5 w-5 rounded border-2 border-slate-400 text-indigo-600 focus:ring-indigo-500'
+
+
+class NewsSearchSettingsForm(forms.ModelForm):
+    """Настройки пула поиска новостей (дашборд «Поиск новостей»)."""
+
+    class Meta:
+        model = NewsSearchSettings
+        fields = [
+            'ddg_query_suffix',
+            'ddg_search_url_template',
+            'search_per_source_limit',
+            'search_max_collect',
+            'search_pool_timeout',
+            'search_parallel_max',
+            'freshness_hours',
+            'penalize_unknown_published',
+            'rank_random_jitter',
+            'query_variant_suffixes',
+            'force_fresh_news_on_content_retry',
+            'top_list_random_offset_max',
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        ctrl = _SCHEDULE_CONTROL
+        ta = _SCHEDULE_TEXTAREA
+        self.fields['ddg_query_suffix'].widget = forms.TextInput(attrs={'class': ctrl})
+        self.fields['ddg_search_url_template'].widget = forms.TextInput(attrs={'class': ctrl})
+        for name in (
+            'search_per_source_limit',
+            'search_max_collect',
+            'search_pool_timeout',
+            'search_parallel_max',
+            'freshness_hours',
+            'top_list_random_offset_max',
+        ):
+            self.fields[name].widget = forms.NumberInput(attrs={'class': ctrl, 'min': 0})
+        self.fields['query_variant_suffixes'].widget = forms.Textarea(attrs={'class': ta, 'rows': 2})
+        for name in ('penalize_unknown_published', 'rank_random_jitter', 'force_fresh_news_on_content_retry'):
+            self.fields[name].widget = forms.CheckboxInput(attrs={'class': _SCHEDULE_CHECK})
+
+    def clean_ddg_search_url_template(self):
+        v = (self.cleaned_data.get('ddg_search_url_template') or '').strip()
+        if '{query}' not in v:
+            raise ValidationError('В URL должен быть плейсхолдер {query}.')
+        return v
+
+
+def _first_run_hour_choices():
+    """Часы 0–23 в привычном 24-часовом виде (без AM/PM)."""
+    cho = []
+    for h in range(24):
+        if h == 0:
+            label = '00:00 — полночь'
+        elif h == 12:
+            label = '12:00 — полдень'
+        else:
+            label = f'{h:02d}:00'
+        cho.append((h, label))
+    return cho
 
 
 class AIScheduleForm(forms.ModelForm):
     """Форма для создания/редактирования расписания"""
+
+    first_run_date = forms.DateField(
+        label='Дата',
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': _SCHEDULE_CONTROL,
+        }),
+    )
+    first_run_hour = forms.TypedChoiceField(
+        label='Час (24 ч)',
+        coerce=int,
+        choices=_first_run_hour_choices(),
+        widget=forms.Select(attrs={'class': _SCHEDULE_CONTROL}),
+    )
+    first_run_minute = forms.IntegerField(
+        label='Минуты',
+        min_value=0,
+        max_value=59,
+        initial=0,
+        widget=forms.NumberInput(attrs={
+            'class': _SCHEDULE_CONTROL,
+            'min': 0,
+            'max': 59,
+        }),
+    )
     
     class Meta:
         model = AISchedule
         fields = [
             'name', 'prompt_template', 'is_active',
-            # Три отдельных поля модели (не одна строка «frequency cron_expression»)
-            'frequency',
-            'cron_expression',
-            'start_time',
+            'interval_hours', 'interval_minutes',
+            'max_schedule_runs',
             'articles_per_run', 'batch_interval',
-            'category', 'tags', 'keywords', 'context_data',
-            'text_model', 'image_model',
+            'category', 'tags', 'keywords',
         ]
         widgets = {
             'name': forms.TextInput(attrs={
@@ -186,19 +273,22 @@ class AIScheduleForm(forms.ModelForm):
             'prompt_template': forms.Select(attrs={
                 'class': _SCHEDULE_CONTROL,
             }),
-            'frequency': forms.Select(attrs={
+            'interval_hours': forms.NumberInput(attrs={
                 'class': _SCHEDULE_CONTROL,
-                'id': 'id_frequency',
+                'min': 0,
+                'max': 8760,
+                'id': 'id_interval_hours',
             }),
-            'cron_expression': forms.TextInput(attrs={
-                'class': _SCHEDULE_CONTROL + ' font-mono',
-                'placeholder': '0 9 * * *',
-                'id': 'id_cron_expression',
-            }),
-            'start_time': forms.TimeInput(attrs={
+            'interval_minutes': forms.NumberInput(attrs={
                 'class': _SCHEDULE_CONTROL,
-                'type': 'time',
-                'id': 'id_start_time',
+                'min': 0,
+                'max': 59,
+                'id': 'id_interval_minutes',
+            }),
+            'max_schedule_runs': forms.NumberInput(attrs={
+                'class': _SCHEDULE_CONTROL,
+                'min': 1,
+                'id': 'id_max_schedule_runs',
             }),
             'articles_per_run': forms.NumberInput(attrs={
                 'class': _SCHEDULE_CONTROL,
@@ -223,19 +313,6 @@ class AIScheduleForm(forms.ModelForm):
                 'rows': 3,
                 'placeholder': 'Ключевые слова через запятую',
             }),
-            'context_data': forms.Textarea(attrs={
-                'class': _SCHEDULE_TEXTAREA_JSON,
-                'rows': 5,
-                'placeholder': '{"topic": "красота", "tone": "дружелюбный"}',
-            }),
-            'text_model': forms.TextInput(attrs={
-                'class': _SCHEDULE_CONTROL,
-                'placeholder': 'GigaChat-2-Lite',
-            }),
-            'image_model': forms.TextInput(attrs={
-                'class': _SCHEDULE_CONTROL,
-                'placeholder': 'GigaChat-2-Pro',
-            }),
             'is_active': forms.CheckboxInput(attrs={
                 'class': _SCHEDULE_CHECK,
             }),
@@ -244,49 +321,61 @@ class AIScheduleForm(forms.ModelForm):
             'name': 'Название расписания',
             'prompt_template': 'Шаблон промпта',
             'is_active': 'Активно',
-            'frequency': 'Частота генерации',
-            'cron_expression': 'CRON выражение',
-            'start_time': 'Время старта',
+            'interval_hours': 'Интервал между запусками — часы',
+            'interval_minutes': 'Интервал — минуты',
+            'max_schedule_runs': 'Всего запусков (пусто = бесконечно)',
             'articles_per_run': 'Статей за раз',
             'batch_interval': 'Интервал между статьями в пачке (мин)',
             'category': 'Категория',
             'tags': 'Теги',
             'keywords': 'Ключевые слова',
-            'context_data': 'Дополнительные данные (JSON)',
-            'text_model': 'Модель для текста',
-            'image_model': 'Модель для изображений',
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Фильтруем только активные шаблоны
         self.fields['prompt_template'].queryset = PromptTemplate.objects.filter(is_active=True)
         self.fields['category'].queryset = Category.objects.all()
+        self.fields['max_schedule_runs'].required = False
+        self.fields['max_schedule_runs'].help_text = 'Оставьте пустым для неограниченного числа циклов.'
+        if self.instance.pk and self.instance.first_run_at:
+            lt = timezone.localtime(self.instance.first_run_at)
+            self.initial.setdefault('first_run_date', lt.date())
+            self.initial.setdefault('first_run_hour', lt.hour)
+            self.initial.setdefault('first_run_minute', lt.minute)
+        elif not self.instance.pk:
+            t = (timezone.now() + timedelta(hours=1)).replace(second=0, microsecond=0)
+            lt = timezone.localtime(t)
+            self.initial.setdefault('first_run_date', lt.date())
+            self.initial.setdefault('first_run_hour', lt.hour)
+            self.initial.setdefault('first_run_minute', lt.minute)
+            self.initial.setdefault('interval_hours', 24)
+            self.initial.setdefault('interval_minutes', 0)
     
-    def clean_context_data(self):
-        """Валидация JSON в context_data"""
-        context_data = self.cleaned_data.get('context_data')
-        if context_data:
-            try:
-                import json
-                if isinstance(context_data, str):
-                    json.loads(context_data)
-                return context_data
-            except json.JSONDecodeError:
-                raise forms.ValidationError('Некорректный JSON формат')
-        return context_data
+    def clean(self):
+        cleaned = super().clean()
+        h = cleaned.get('interval_hours') or 0
+        m = cleaned.get('interval_minutes') or 0
+        if h * 3600 + m * 60 < 60:
+            raise forms.ValidationError(
+                'Интервал между запусками должен быть не меньше 1 минуты (сумма часов и минут).'
+            )
+        return cleaned
     
-    def clean_cron_expression(self):
-        """Валидация CRON выражения"""
-        frequency = self.cleaned_data.get('frequency')
-        cron_expression = self.cleaned_data.get('cron_expression')
-        
-        if frequency == 'custom' and not cron_expression:
-            raise forms.ValidationError('Укажите CRON выражение для произвольного расписания')
-        
-        if cron_expression and frequency != 'custom':
-            # Очищаем CRON, если не используется custom
-            return ''
-        
-        return cron_expression
+    def save(self, commit=True):
+        obj = super().save(commit=False)
+        d = self.cleaned_data['first_run_date']
+        hour = self.cleaned_data['first_run_hour']
+        minute = self.cleaned_data['first_run_minute']
+        naive = datetime.combine(d, dt_time(hour, minute))
+        obj.first_run_at = timezone.make_aware(naive, timezone.get_current_timezone())
+        sched_fields = (
+            'first_run_date', 'first_run_hour', 'first_run_minute',
+            'interval_hours', 'interval_minutes', 'is_active',
+        )
+        sched_changed = any(self.has_changed(f) for f in sched_fields)
+        if obj.is_active and obj.first_run_at and (not obj.pk or sched_changed):
+            obj.sync_next_run()
+        if commit:
+            obj.save()
+        return obj
 

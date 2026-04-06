@@ -40,5 +40,10 @@ urlpatterns = [
     path('dashboard/history/clear/', dashboard_views.history_clear, name='dashboard_history_clear'),
     path('dashboard/history/delete-selected/', dashboard_views.history_delete_selected, name='dashboard_history_delete_selected'),
     path('dashboard/monitoring/', dashboard_views.monitoring, name='dashboard_monitoring'),
+    path(
+        'dashboard/news-search/',
+        dashboard_views.dashboard_news_search_settings,
+        name='dashboard_news_search_settings',
+    ),
     path('dashboard/api/statistics/', dashboard_views.api_statistics, name='dashboard_api_statistics'),
 ]

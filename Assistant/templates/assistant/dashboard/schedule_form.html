@@ -1,203 +1,385 @@
 {% extends 'assistant/dashboard/base.html' %}
 
+
+
 {% block extra_css %}
+
 {{ block.super }}
+
 <style>
+
     .schedule-form-shell {
+
         border: 2px solid rgb(199 210 254);
+
         background: linear-gradient(165deg, rgb(255 255 255) 0%, rgb(248 250 252 / 0.92) 100%);
+
         box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+
     }
+
     .schedule-form-block-title {
+
         font-size: 0.7rem;
+
         font-weight: 700;
+
         letter-spacing: 0.06em;
+
         text-transform: uppercase;
+
         color: rgb(67 56 202);
+
         border-bottom: 1px solid rgb(224 231 255);
+
         padding-bottom: 0.35rem;
+
         margin-bottom: 0.65rem;
+
     }
+
     .schedule-form-field-label {
+
         letter-spacing: 0.01em;
+
     }
+
     .schedule-dash-check-row {
+
         border: 1px solid rgb(203 213 225);
+
         background: rgb(255 255 255);
+
     }
+
     @media (min-width: 1280px) {
+
         .schedule-form-col-right {
+
             border-left: 1px solid rgb(224 231 255);
+
             padding-left: 1.5rem;
+
         }
+
     }
+
 </style>
+
 {% endblock %}
 
+
+
 {% block dashboard_content %}
+
 <div class="max-w-6xl mx-auto">
+
     <nav class="mb-2" aria-label="Breadcrumb">
+
         <ol class="flex flex-wrap items-center gap-x-2 text-xs text-gray-500">
+
             <li><a href="{% url 'assistant:dashboard_main' %}" class="hover:text-gray-700">Главная</a></li>
+
             <li class="text-gray-300">/</li>
+
             <li><a href="{% url 'assistant:dashboard_schedules' %}" class="hover:text-gray-700">Расписания</a></li>
+
             <li class="text-gray-300">/</li>
+
             <li class="text-gray-800 font-medium">{{ title }}</li>
+
         </ol>
+
     </nav>
+
+
 
     <h1 class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-600 bg-clip-text text-transparent mb-4">{{ title }}</h1>
 
+
+
     {% if form.non_field_errors %}
+
     <div class="mb-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-red-800 text-xs font-medium">
+
         {{ form.non_field_errors }}
+
     </div>
+
     {% endif %}
 
-    <form method="post" class="schedule-form-shell rounded-xl p-4 sm:p-5">
+
+
+    <form method="post" class="schedule-form-shell rounded-xl p-4 sm:p-5" lang="ru">
+
         {% csrf_token %}
 
+
+
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-5 xl:gap-0">
+
             {# ——— Левая колонка ——— #}
+
             <div class="space-y-4 xl:pr-6 min-w-0">
+
                 <div>
+
                     <h2 class="schedule-form-block-title" id="schedule-section-main">Основное</h2>
+
                     <div class="space-y-3">
+
                         <div>
+
                             <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+
                             {{ form.name }}
+
                             {% if form.name.errors %}<p class="mt-1 text-xs text-red-600">{{ form.name.errors.0 }}</p>{% endif %}
+
                         </div>
+
                         <div>
+
                             <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.prompt_template.id_for_label }}">{{ form.prompt_template.label }}</label>
+
                             {{ form.prompt_template }}
+
                             {% if form.prompt_template.errors %}<p class="mt-1 text-xs text-red-600">{{ form.prompt_template.errors.0 }}</p>{% endif %}
+
                         </div>
+
                     </div>
+
                 </div>
 
+
+
                 <div>
-                    <h2 class="schedule-form-block-title" id="schedule-section-time">Расписание</h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div class="sm:col-span-1">
-                            <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.frequency.id_for_label }}">{{ form.frequency.label }}</label>
-                            {{ form.frequency }}
-                            {% if form.frequency.errors %}<p class="mt-1 text-xs text-red-600">{{ form.frequency.errors.0 }}</p>{% endif %}
-                        </div>
-                        <div id="cron-field" class="hidden sm:col-span-1">
-                            <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.cron_expression.id_for_label }}">{{ form.cron_expression.label }}</label>
-                            {{ form.cron_expression }}
-                            <p class="text-[11px] text-slate-500 mt-1 leading-snug">м ч д м дн — пример <code class="rounded bg-white px-1 border border-slate-200">0 9 * * *</code></p>
-                            {% if form.cron_expression.errors %}<p class="mt-1 text-xs text-red-600">{{ form.cron_expression.errors.0 }}</p>{% endif %}
-                        </div>
-                        <div id="start-time-field" class="sm:col-span-1">
-                            <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.start_time.id_for_label }}">{{ form.start_time.label }}</label>
-                            {{ form.start_time }}
-                            <p class="text-[11px] text-slate-500 mt-1 leading-snug">Для пресетов — время CRON.</p>
-                            {% if form.start_time.errors %}<p class="mt-1 text-xs text-red-600">{{ form.start_time.errors.0 }}</p>{% endif %}
-                        </div>
+
+                    <h2 class="schedule-form-block-title" id="schedule-section-time">Расписание запусков</h2>
+
+                    <p class="text-[11px] text-slate-500 mb-2 leading-snug">Первый запуск задаёт начало отсчёта. Далее каждые <strong>интервал часы + минуты</strong> — новый запуск (пока расписание активно и не исчерпан лимит запусков). Фактический опрос — раз в минуту воркером Django-Q.</p>
+
+                    <div class="text-[11px] text-indigo-900 mb-2 leading-snug rounded-lg border border-indigo-200/80 bg-indigo-50/50 px-2.5 py-2 space-y-1.5">
+                        <p><strong>Раз в сутки:</strong> в «Первый запуск» — нужная дата и время; в интервале <strong>24</strong> ч и <strong>0</strong> мин. Каждый следующий запуск — через 24 часа от предыдущего слота (не от полуночи календаря).</p>
+                        <p><strong>Раз в неделю:</strong> интервал <strong>168</strong> ч и <strong>0</strong> мин (это 7×24 часа). Первый запуск задаёте сами — дальше шаг раз в семь суток.</p>
+                        <p><strong>Раз в месяц (ориентир):</strong> интервал <strong>720</strong> ч и <strong>0</strong> мин — как <strong>30</strong> полных суток (30×24). Для 31 дня можно <strong>744</strong> ч, 0 мин; для 28 дней февраля — <strong>672</strong> ч, 0 мин. Это равномерный шаг в часах, не календарные «первое число» автоматически.</p>
                     </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                        <div class="sm:col-span-2 space-y-2">
+
+                            <div class="schedule-form-field-label text-xs font-semibold text-slate-700">Первый запуск</div>
+
+                            <p class="text-[11px] text-slate-500 leading-snug">Время только в <strong>24-часовом</strong> виде: <span class="whitespace-nowrap">12:00 — полдень</span>, дальше <span class="whitespace-nowrap">13:00</span>, <span class="whitespace-nowrap">14:00</span> … до <span class="whitespace-nowrap">23:00</span>; <span class="whitespace-nowrap">00:00 — полночь</span>. Без AM/PM.</p>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+                                <div>
+
+                                    <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.first_run_date.id_for_label }}">{{ form.first_run_date.label }}</label>
+
+                                    {{ form.first_run_date }}
+
+                                    {% if form.first_run_date.errors %}<p class="mt-1 text-xs text-red-600">{{ form.first_run_date.errors.0 }}</p>{% endif %}
+
+                                </div>
+
+                                <div>
+
+                                    <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.first_run_hour.id_for_label }}">{{ form.first_run_hour.label }}</label>
+
+                                    {{ form.first_run_hour }}
+
+                                    {% if form.first_run_hour.errors %}<p class="mt-1 text-xs text-red-600">{{ form.first_run_hour.errors.0 }}</p>{% endif %}
+
+                                </div>
+
+                                <div>
+
+                                    <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.first_run_minute.id_for_label }}">{{ form.first_run_minute.label }}</label>
+
+                                    {{ form.first_run_minute }}
+
+                                    {% if form.first_run_minute.errors %}<p class="mt-1 text-xs text-red-600">{{ form.first_run_minute.errors.0 }}</p>{% endif %}
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div>
+
+                            <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.interval_hours.id_for_label }}">{{ form.interval_hours.label }}</label>
+
+                            {{ form.interval_hours }}
+
+                            {% if form.interval_hours.errors %}<p class="mt-1 text-xs text-red-600">{{ form.interval_hours.errors.0 }}</p>{% endif %}
+
+                        </div>
+
+                        <div>
+
+                            <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.interval_minutes.id_for_label }}">{{ form.interval_minutes.label }}</label>
+
+                            {{ form.interval_minutes }}
+
+                            {% if form.interval_minutes.errors %}<p class="mt-1 text-xs text-red-600">{{ form.interval_minutes.errors.0 }}</p>{% endif %}
+
+                        </div>
+
+                        <div class="sm:col-span-2">
+
+                            <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.max_schedule_runs.id_for_label }}">{{ form.max_schedule_runs.label }}</label>
+
+                            {{ form.max_schedule_runs }}
+
+                            <p class="text-[11px] text-slate-500 mt-1 leading-snug">{{ form.max_schedule_runs.help_text }}</p>
+
+                            {% if form.max_schedule_runs.errors %}<p class="mt-1 text-xs text-red-600">{{ form.max_schedule_runs.errors.0 }}</p>{% endif %}
+
+                        </div>
+
+                    </div>
+
+                    {% if schedule %}
+
+                    <p class="text-[11px] text-slate-600 mt-2">Уже выполнено запусков (пачек): <strong>{{ schedule.completed_schedule_runs }}</strong>{% if schedule.max_schedule_runs %} из {{ schedule.max_schedule_runs }}{% endif %}</p>
+
+                    {% endif %}
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+
                         <div>
+
                             <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.articles_per_run.id_for_label }}">{{ form.articles_per_run.label }}</label>
+
                             {{ form.articles_per_run }}
+
                             {% if form.articles_per_run.errors %}<p class="mt-1 text-xs text-red-600">{{ form.articles_per_run.errors.0 }}</p>{% endif %}
+
                         </div>
+
                         <div>
+
                             <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.batch_interval.id_for_label }}">{{ form.batch_interval.label }}</label>
+
                             {{ form.batch_interval }}
+
                             <p class="text-[11px] text-slate-500 mt-1 leading-snug">0 — без паузы между статьями в пачке.</p>
+
                             {% if form.batch_interval.errors %}<p class="mt-1 text-xs text-red-600">{{ form.batch_interval.errors.0 }}</p>{% endif %}
+
                         </div>
+
                     </div>
+
                 </div>
 
-                <div>
-                    <h2 class="schedule-form-block-title" id="schedule-section-models">Модели GigaChat</h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.text_model.id_for_label }}">{{ form.text_model.label }}</label>
-                            {{ form.text_model }}
-                            {% if form.text_model.errors %}<p class="mt-1 text-xs text-red-600">{{ form.text_model.errors.0 }}</p>{% endif %}
-                        </div>
-                        <div>
-                            <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.image_model.id_for_label }}">{{ form.image_model.label }}</label>
-                            {{ form.image_model }}
-                            {% if form.image_model.errors %}<p class="mt-1 text-xs text-red-600">{{ form.image_model.errors.0 }}</p>{% endif %}
-                        </div>
-                    </div>
-                </div>
+
 
                 <div>
+
                     <h2 class="schedule-form-block-title" id="schedule-section-flags">Опции</h2>
+
                     <div class="flex flex-col sm:flex-row flex-wrap gap-2">
+
                         <div class="schedule-dash-check-row flex items-center gap-2 rounded-lg px-3 py-2 flex-1 min-w-[140px]">
+
                             {{ form.is_active }}
+
                             <label class="text-xs font-medium text-slate-800 cursor-pointer leading-tight" for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label>
+
                         </div>
+
                     </div>
-                    <p class="text-[11px] text-slate-500 mt-2 leading-snug">Картинка к статье: в шаблоне промпта — «Генерировать изображение» и режим (нейросеть / поиск).</p>
+
+                    <p class="text-[11px] text-slate-500 mt-2 leading-snug">Текст статей — GigaChat, картинка по нейросети — GigaChat-Pro. Режим картинки задаётся в шаблоне промпта («Генерировать изображение», нейросеть / поиск).</p>
+
                     {% if form.is_active.errors %}<p class="mt-1 text-xs text-red-600">{{ form.is_active.errors.0 }}</p>{% endif %}
+
                 </div>
+
             </div>
+
+
 
             {# ——— Правая колонка ——— #}
+
             <div class="space-y-4 schedule-form-col-right min-w-0">
-                <div>
-                    <h2 class="schedule-form-block-title" id="schedule-section-publish">Публикация</h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div class="sm:col-span-2">
-                            <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.category.id_for_label }}">{{ form.category.label }}</label>
-                            {{ form.category }}
-                            {% if form.category.errors %}<p class="mt-1 text-xs text-red-600">{{ form.category.errors.0 }}</p>{% endif %}
-                        </div>
-                        <div class="sm:col-span-2">
-                            <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.tags.id_for_label }}">{{ form.tags.label }}</label>
-                            {{ form.tags }}
-                            {% if form.tags.errors %}<p class="mt-1 text-xs text-red-600">{{ form.tags.errors.0 }}</p>{% endif %}
-                        </div>
-                    </div>
-                    <div class="mt-3 rounded-lg border border-indigo-200/90 bg-indigo-50/30 p-3">
-                        <label class="schedule-form-field-label block text-xs font-semibold text-indigo-900 mb-1" for="{{ form.keywords.id_for_label }}">{{ form.keywords.label }}</label>
-                        {{ form.keywords }}
-                        {% if form.keywords.errors %}<p class="mt-1 text-xs text-red-600">{{ form.keywords.errors.0 }}</p>{% endif %}
-                    </div>
-                </div>
 
                 <div>
-                    <h2 class="schedule-form-block-title" id="schedule-section-json">Доп. данные (JSON)</h2>
-                    <div class="rounded-lg border border-violet-200 bg-violet-50/40 p-3">
-                        <label class="schedule-form-field-label sr-only" for="{{ form.context_data.id_for_label }}">{{ form.context_data.label }}</label>
-                        {{ form.context_data }}
-                        <p class="text-[11px] text-slate-500 mt-1.5 leading-snug">Пример: <code class="rounded bg-white px-1 border border-violet-200 text-violet-900 text-[10px]">{"topic":"…","tone":"…"}</code></p>
-                        {% if form.context_data.errors %}<p class="mt-1 text-xs text-red-600">{{ form.context_data.errors.0 }}</p>{% endif %}
+
+                    <h2 class="schedule-form-block-title" id="schedule-section-publish">Публикация</h2>
+
+                    <details class="mb-3 rounded-lg border border-slate-200 bg-slate-50/90 px-3 py-2 text-[11px] text-slate-600 leading-snug schedule-form-help-details">
+                        <summary class="cursor-pointer font-semibold text-slate-700 select-none">Зачем теги и ключевые слова</summary>
+                        <ul class="mt-2 ml-4 list-disc space-y-1">
+                            <li><strong>Теги</strong> — базовые теги поста; к ним всё равно добавятся несколько тегов по смыслу текста.</li>
+                            <li><strong>Ключевые слова</strong> — в первую очередь для поиска материала и контекста сюжета; можно оставить пустыми, если хватает категории.</li>
+                            <li>Переменные промпта (<code class="text-[10px]">topic</code>, <code class="text-[10px]">tone</code> и др.) настраиваются в <strong>шаблоне промпта</strong>, не в расписании.</li>
+                        </ul>
+                    </details>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                        <div class="sm:col-span-2">
+
+                            <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.category.id_for_label }}">{{ form.category.label }}</label>
+
+                            {{ form.category }}
+
+                            {% if form.category.errors %}<p class="mt-1 text-xs text-red-600">{{ form.category.errors.0 }}</p>{% endif %}
+
+                        </div>
+
+                        <div class="sm:col-span-2">
+
+                            <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.tags.id_for_label }}">{{ form.tags.label }}</label>
+
+                            {{ form.tags }}
+                            {% if form.tags.help_text %}
+                            <p class="mt-1 text-[11px] text-slate-500 leading-snug" id="{{ form.tags.id_for_label }}_helptext">{{ form.tags.help_text }}</p>
+                            {% endif %}
+                            {% if form.tags.errors %}<p class="mt-1 text-xs text-red-600">{{ form.tags.errors.0 }}</p>{% endif %}
+
+                        </div>
+
                     </div>
+
+                    <div class="mt-3 rounded-lg border border-indigo-200/90 bg-indigo-50/30 p-3">
+
+                        <label class="schedule-form-field-label block text-xs font-semibold text-indigo-900 mb-1" for="{{ form.keywords.id_for_label }}">{{ form.keywords.label }}</label>
+
+                        {{ form.keywords }}
+                        {% if form.keywords.help_text %}
+                        <p class="mt-1 text-[11px] text-slate-500 leading-snug" id="{{ form.keywords.id_for_label }}_helptext">{{ form.keywords.help_text }}</p>
+                        {% endif %}
+                        {% if form.keywords.errors %}<p class="mt-1 text-xs text-red-600">{{ form.keywords.errors.0 }}</p>{% endif %}
+
+                    </div>
+
                 </div>
+
             </div>
+
         </div>
+
+
 
         <div class="flex flex-wrap gap-3 mt-5 pt-4 border-t border-indigo-100">
+
             <button type="submit" class="inline-flex items-center px-5 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold shadow hover:from-indigo-700 hover:to-purple-700 transition focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1">Сохранить</button>
+
             <a href="{% url 'assistant:dashboard_schedules' %}" class="inline-flex items-center px-5 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition">Отмена</a>
+
         </div>
+
     </form>
+
 </div>
 
-<script>
-function toggleScheduleFields() {
-    const freq = document.getElementById('id_frequency');
-    const cronField = document.getElementById('cron-field');
-    const startField = document.getElementById('start-time-field');
-    if (!freq || !cronField) return;
-    if (freq.value === 'custom') {
-        cronField.classList.remove('hidden');
-        if (startField) startField.classList.add('hidden');
-    } else {
-        cronField.classList.add('hidden');
-        if (startField) startField.classList.remove('hidden');
-    }
-}
-document.getElementById('id_frequency').addEventListener('change', toggleScheduleFields);
-toggleScheduleFields();
-</script>
 {% endblock %}
+

@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.conf import settings
 from django.db.models import Sum
-from datetime import timedelta, time
+from datetime import timedelta
 from typing import Dict, Any
 import uuid
 import base64
@@ -456,6 +456,15 @@ class PromptTemplate(models.Model):
         verbose_name='Теги по умолчанию',
         help_text='Теги через запятую, которые будут добавлены к статье'
     )
+    news_search_suffix = models.CharField(
+        max_length=300,
+        blank=True,
+        verbose_name='Уточнение поиска новостей',
+        help_text=(
+            'Добавляется к категории и ключевым словам при поиске новостей '
+            '(например: «события сегодня», «обзор»). Оставьте пустым — только глобальные настройки в дашборде «Поиск новостей».'
+        ),
+    )
     
     # Режимы генерации контента
     CONTENT_GENERATION_CHOICES = [
@@ -638,14 +647,6 @@ class PromptTemplate(models.Model):
 class AISchedule(models.Model):
     """Расписание для автоматической генерации статей"""
     
-    FREQUENCY_CHOICES = [
-        ('hourly', 'Каждый час'),
-        ('daily', 'Ежедневно'),
-        ('weekly', 'Еженедельно'),
-        ('monthly', 'Ежемесячно'),
-        ('custom', 'Произвольное (CRON)'),
-    ]
-    
     name = models.CharField(max_length=200, verbose_name='Название расписания')
     prompt_template = models.ForeignKey(
         PromptTemplate,
@@ -655,23 +656,31 @@ class AISchedule(models.Model):
     )
     is_active = models.BooleanField(default=True, verbose_name='Активно')
     
-    # Расписание
-    frequency = models.CharField(
-        max_length=20,
-        choices=FREQUENCY_CHOICES,
-        default='daily',
-        verbose_name='Частота генерации'
+    # Расписание: первый запуск + шаг по интервалу (не календарный CRON)
+    first_run_at = models.DateTimeField(
+        verbose_name='Первый запуск (дата и время)',
+        help_text='От этой точки отсчитываются повторы: следующие запуски через заданный интервал.',
     )
-    cron_expression = models.CharField(
-        max_length=100,
+    interval_hours = models.PositiveIntegerField(
+        default=24,
+        verbose_name='Интервал — часы',
+        help_text='Например 24 и 0 минут — один запуск раз в сутки от счёта первого запуска.',
+    )
+    interval_minutes = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Интервал — минуты',
+        help_text='Дополнительно к часам (0–59). Минимум 1 минута суммарно с часами.',
+    )
+    max_schedule_runs = models.PositiveIntegerField(
+        null=True,
         blank=True,
-        verbose_name='CRON выражение',
-        help_text='Используется только для частоты "Произвольное". Формат: минута час день месяц день_недели'
+        verbose_name='Макс. число запусков',
+        help_text='Пусто = без ограничения. После достижения лимита расписание выключается.',
     )
-    start_time = models.TimeField(
-        default=time(9, 0),
-        verbose_name='Время старта',
-        help_text='Для пресетов (кроме «Произвольное»): час и минута срабатывания CRON',
+    completed_schedule_runs = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Выполнено запусков',
+        help_text='Счётчик завершённых запусков (пачек генерации), увеличивается после каждого успешного цикла.',
     )
     batch_interval = models.PositiveIntegerField(
         default=0,
@@ -697,12 +706,20 @@ class AISchedule(models.Model):
         max_length=500,
         blank=True,
         verbose_name='Теги',
-        help_text='Теги через запятую, которые будут добавлены к статье'
+        help_text=(
+            'Через запятую: теги, которые точно попадут в пост. '
+            'Если пусто — берутся из шаблона промпта (default_tags) или из ключа tags в JSON ниже. '
+            'Отдельно модель добавляет 3–4 тега по смыслу текста статьи.'
+        ),
     )
     keywords = models.TextField(
         blank=True,
         verbose_name='Ключевые слова',
-        help_text='Ключевые слова для генерации контента, через запятую'
+        help_text=(
+            'Через запятую: тема запроса при поиске новостей/источников и контекст промпта. '
+            'Если пусто, для поиска может использоваться название категории. '
+            'Для шаблонов без шага поиска влияние обычно слабее.'
+        ),
     )
     
     # Контекст для промптов (JSON)
@@ -710,21 +727,11 @@ class AISchedule(models.Model):
         default=dict,
         blank=True,
         verbose_name='Дополнительные данные',
-        help_text='Дополнительные данные в формате JSON, которые будут переданы в промпты. Например: {"topic": "красота", "tone": "дружелюбный"}'
-    )
-    
-    # Модели GigaChat 2
-    text_model = models.CharField(
-        max_length=50,
-        default='GigaChat-2-Lite',
-        verbose_name='Модель для текста',
-        help_text='Модель GigaChat для генерации текста. Рекомендации: Lite - простые задачи, Pro - сбалансированная, Max - сложные задачи'
-    )
-    image_model = models.CharField(
-        max_length=50,
-        default='GigaChat-2-Pro',
-        verbose_name='Модель для изображений',
-        help_text='Модель GigaChat для генерации изображений. Pro или Max поддерживают генерацию изображений'
+        help_text=(
+            'JSON с дополнительными переменными для промптов (например topic, tone). '
+            'Сливается с контекстом генерации: ключи из этого поля дополняют шаблон; '
+            'необязательно, если всё задано в шаблоне.'
+        ),
     )
     
     # Статистика
@@ -750,30 +757,44 @@ class AISchedule(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"{self.name} ({self.get_frequency_display()})"
+        return f"{self.name} ({self.get_interval_summary()})"
     
-    def get_cron_expression(self):
-        """Получить CRON выражение для расписания (формат: минута час день месяц день_недели)."""
-        if self.frequency == 'custom' and self.cron_expression:
-            return self.cron_expression
+    def get_interval_timedelta(self) -> timedelta:
+        return timedelta(hours=self.interval_hours or 0, minutes=self.interval_minutes or 0)
+    
+    def get_interval_summary(self) -> str:
+        parts = []
+        if self.interval_hours:
+            parts.append(f'{self.interval_hours} ч')
+        if self.interval_minutes:
+            parts.append(f'{self.interval_minutes} мин')
+        base = ' '.join(parts) if parts else '0'
+        return f'каждые {base}'
+    
+    def get_runs_limit_display(self) -> str:
+        if self.max_schedule_runs is None:
+            return f'{self.completed_schedule_runs} (∞)'
+        return f'{self.completed_schedule_runs} / {self.max_schedule_runs}'
+    
+    def sync_next_run(self):
+        """Ближайший запуск >= текущего момента (для сохранения формы)."""
+        self.sync_next_run_after(timezone.now())
 
-        st = self.start_time or time(9, 0)
-        m, h = st.minute, st.hour
-
-        # Пресеты: время из start_time; custom по-прежнему из cron_expression
-        if self.frequency == 'hourly':
-            # Каждый час, в ту же минуту часа (как раньше « :00 », если start_time 09:00)
-            return f'{m} * * * *'
-        if self.frequency == 'daily':
-            return f'{m} {h} * * *'
-        if self.frequency == 'weekly':
-            # Понедельник (1), как в прежней логике
-            return f'{m} {h} * * 1'
-        if self.frequency == 'monthly':
-            # 1-е число месяца
-            return f'{m} {h} 1 * *'
-
-        return f'{m} {h} * * *'
+    def sync_next_run_after(self, after_ts):
+        """Следующий слот строго после after_ts по сетке first_run_at + n·interval."""
+        delta = self.get_interval_timedelta()
+        if delta.total_seconds() < 60:
+            delta = timedelta(minutes=1)
+        anchor = self.first_run_at
+        if anchor is None:
+            anchor = after_ts
+        elif timezone.is_naive(anchor):
+            anchor = timezone.make_aware(anchor, timezone.get_current_timezone())
+        t = anchor
+        while t <= after_ts:
+            t += delta
+        self.next_run = t
+    
 
 
 class AIGeneratedArticle(models.Model):
@@ -861,6 +882,8 @@ class TokenUsage(models.Model):
     # Примечание: реальные лимиты получаются из API /balance, здесь - fallback значения
     # Для подписок (subscription) лимиты могут быть меньше, чем для пакетов
     TOKEN_LIMITS = {
+        # Статьи: фиксированные имена в коде (см. gigachat_article_models)
+        'GigaChat': 50_000,
         # Лимиты для подписки Freemium (по умолчанию)
         'GigaChat-2-Lite': 50_000,  # Freemium: 50,000 токенов
         'GigaChat-2-Pro': 44_400,  # Freemium: 44,400 токенов (примерно)
@@ -880,6 +903,7 @@ class TokenUsage(models.Model):
     # Тарифы для расчета стоимости (руб за токен)
     # Обновлено на основе актуальных тарифов GigaChat 2 (2025)
     TOKEN_RATES = {
+        'GigaChat': 0.0002,
         'GigaChat-2-Lite': 0.0002,  # 1,000 ₽ / 5,000,000 токенов (или 5,820 ₽ / 30,000,000 = 0.000194)
         'GigaChat-2-Pro': 0.0015,  # 1,500 ₽ / 1,000,000 токенов
         'GigaChat-2-Max': 0.00195,  # 1,950 ₽ / 1,000,000 токенов
@@ -1161,6 +1185,136 @@ class TokenUsage(models.Model):
             requests=Sum('requests_count'),
             cost=Sum('cost'),
         ).order_by('date')
+
+
+class NewsSearchEndpoint(models.Model):
+    """
+    Настраиваемый источник для сбора ссылок на новости (HTML-скрапинг или RSS).
+    Подмешивается к встроенным источникам в NewsParserService.
+    """
+    KIND_CHOICES = [
+        ('html', 'HTML (скрапинг списка статей)'),
+        ('rss', 'RSS / Atom'),
+    ]
+    name = models.CharField(max_length=200, verbose_name='Название')
+    is_active = models.BooleanField(default=True, verbose_name='Активен')
+    category = models.ForeignKey(
+        'Blog.Category',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='news_search_endpoints',
+        verbose_name='Категория блога',
+        help_text='Пусто — использовать для всех категорий',
+    )
+    kind = models.CharField(max_length=10, choices=KIND_CHOICES, default='html', verbose_name='Тип')
+    sort_order = models.IntegerField(default=0, verbose_name='Порядок')
+    # HTML
+    base_url = models.URLField(blank=True, max_length=500, verbose_name='Базовый URL')
+    search_url = models.CharField(
+        max_length=1000,
+        blank=True,
+        verbose_name='URL поиска / ленты',
+        help_text='Для HTML: можно использовать плейсхолдеры {query} и {category}. Для RSS с динамикой — {query} в URL ленты.',
+    )
+    article_selector = models.CharField(max_length=500, blank=True, verbose_name='CSS селектор ссылок на статьи')
+    title_selector = models.CharField(max_length=500, blank=True, verbose_name='CSS селектор заголовка (опционально)')
+    # RSS
+    rss_feed_url = models.URLField(blank=True, max_length=1000, verbose_name='URL RSS (если kind=rss)')
+    notes = models.CharField(max_length=500, blank=True, verbose_name='Заметки')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Создано')
+
+    class Meta:
+        verbose_name = 'Источник поиска новостей'
+        verbose_name_plural = 'Источники поиска новостей'
+        ordering = ['sort_order', 'name']
+
+    def __str__(self):
+        return f"{self.name} ({self.get_kind_display()})"
+
+
+class NewsSearchSettings(models.Model):
+    """
+    Singleton (id=1): параметры пула поиска новостей для автопостинга.
+    Редактируются в дашборде «Поиск новостей».
+    """
+
+    id = models.PositiveSmallIntegerField(primary_key=True, default=1)
+    ddg_query_suffix = models.CharField(
+        max_length=200,
+        blank=True,
+        default='новости',
+        verbose_name='Суффикс запроса (DuckDuckGo)',
+        help_text='Добавляется к фразе поиска. Пусто — не добавлять.',
+    )
+    ddg_search_url_template = models.CharField(
+        max_length=600,
+        default='https://html.duckduckgo.com/html/?q={query}',
+        verbose_name='Шаблон URL DuckDuckGo',
+        help_text='Обязательно включите плейсхолдер {query}',
+    )
+    search_per_source_limit = models.PositiveIntegerField(
+        default=18,
+        verbose_name='Ссылок с одного источника (макс.)',
+    )
+    search_max_collect = models.PositiveIntegerField(
+        default=48,
+        verbose_name='Размер пула после ранжирования',
+    )
+    search_pool_timeout = models.PositiveIntegerField(
+        default=35,
+        verbose_name='Таймаут ожидания источников (сек)',
+    )
+    search_parallel_max = models.PositiveIntegerField(
+        default=6,
+        verbose_name='Параллельных потоков поиска',
+    )
+    freshness_hours = models.PositiveIntegerField(
+        default=72,
+        verbose_name='Свежесть (часы), 0 = выкл.',
+        help_text='Отсев по дате, если она надёжно известна (RSS и т.д.)',
+    )
+    penalize_unknown_published = models.BooleanField(
+        default=True,
+        verbose_name='Штрафовать неизвестную дату в ранжировании',
+    )
+    rank_random_jitter = models.BooleanField(
+        default=True,
+        verbose_name='Случайный джиттер в ранжировании',
+    )
+    query_variant_suffixes = models.TextField(
+        blank=True,
+        verbose_name='Варианты уточнения через |',
+        help_text='Например: последние новости|сегодня|обзор — один вариант выбирается случайно.',
+    )
+    force_fresh_news_on_content_retry = models.BooleanField(
+        default=True,
+        verbose_name='При коротком тексте — новый поиск новостей',
+    )
+    top_list_random_offset_max = models.PositiveIntegerField(
+        default=4,
+        verbose_name='Случайный сдвиг в топе кандидатов (0 = нет)',
+    )
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Обновлено')
+
+    class Meta:
+        verbose_name = 'Настройки поиска новостей'
+        verbose_name_plural = 'Настройки поиска новостей'
+
+    def __str__(self):
+        return 'Настройки поиска новостей'
+
+    @classmethod
+    def get_solo(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def reset_to_factory_defaults(self):
+        from .news_search_config import NEWS_SEARCH_SETTINGS_DEFAULTS
+
+        for key, value in NEWS_SEARCH_SETTINGS_DEFAULTS.items():
+            setattr(self, key, value)
+        self.save()
 
 
 class NewsSource(models.Model):

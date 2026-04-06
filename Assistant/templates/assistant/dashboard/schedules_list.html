@@ -49,7 +49,8 @@
                 <tr>
                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Название</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Шаблон</th>
-                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Частота</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Интервал</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Запуски</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Статей</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Сгенерировано</th>
                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Статус</th>
@@ -62,12 +63,13 @@
                     <td class="px-6 py-4">
                         <div class="text-sm font-semibold text-gray-900">{{ schedule.name }}</div>
                         <div class="text-xs text-gray-500 mt-1 space-y-0.5">
-                            <div>CRON: <code class="bg-gray-100 px-1 rounded text-gray-700">{{ schedule.get_cron_expression }}</code></div>
-                            <div>Django-Q: <code class="bg-gray-100 px-1 rounded text-gray-700">ai_schedule_{{ schedule.pk }}</code></div>
+                            <div>Первый запуск: {{ schedule.first_run_at|date:"d.m.Y H:i" }}</div>
+                            <div>Следующий: {% if schedule.next_run %}{{ schedule.next_run|date:"d.m.Y H:i" }}{% else %}—{% endif %}</div>
                         </div>
                     </td>
                     <td class="px-6 py-4 text-sm text-gray-600 font-medium">{{ schedule.prompt_template.name }}</td>
-                    <td class="px-6 py-4 text-sm text-gray-600 font-medium">{{ schedule.get_frequency_display }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-600 font-medium">{{ schedule.get_interval_summary }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-600 font-medium">{{ schedule.get_runs_limit_display }}</td>
                     <td class="px-6 py-4 text-sm text-gray-600 font-medium">{{ schedule.articles_per_run }}</td>
                     <td class="px-6 py-4 text-sm text-purple-600 font-bold">{{ schedule.total_generated }}</td>
                     <td class="px-6 py-4">
@@ -85,7 +87,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">Нет расписаний</td>
+                    <td colspan="8" class="px-6 py-4 text-center text-gray-500">Нет расписаний</td>
                 </tr>
                 {% endfor %}
             </tbody>

@@ -1,0 +1,131 @@
+{% extends 'assistant/dashboard/base.html' %}
+
+{% block dashboard_content %}
+<div class="max-w-4xl mx-auto">
+    <nav class="mb-6" aria-label="Breadcrumb">
+        <ol class="flex items-center space-x-2 text-sm">
+            <li>
+                <a href="{% url 'assistant:dashboard_main' %}" class="text-slate-500 hover:text-slate-700">Главная</a>
+            </li>
+            <li><span class="text-slate-400">/</span></li>
+            <li class="text-slate-900 font-medium">Поиск новостей</li>
+        </ol>
+    </nav>
+
+    <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Поиск новостей</h1>
+    <p class="text-sm text-slate-600 mb-6 leading-relaxed">
+        Параметры пула ссылок и ранжирования для автопостинга (DuckDuckGo, лимиты, свежесть, случайные уточнения запроса).
+        Источники RSS/HTML по категориям настраиваются отдельно в админке «Источники поиска новостей».
+    </p>
+
+    {% if messages %}
+    <ul class="mb-4 space-y-2">
+        {% for message in messages %}
+        <li class="rounded-lg px-4 py-2 text-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-900 border border-emerald-200{% elif message.tags == 'error' %}bg-red-50 text-red-900 border border-red-200{% else %}bg-slate-50 text-slate-800 border border-slate-200{% endif %}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <div class="schedule-form-shell rounded-xl p-4 sm:p-5 border border-indigo-100/80 bg-white/90 shadow-sm mb-6">
+        <form method="post" action="" class="space-y-5">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="text-sm text-red-600">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                    <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.ddg_search_url_template.id_for_label }}">{{ form.ddg_search_url_template.label }}</label>
+                    {{ form.ddg_search_url_template }}
+                    {% if form.ddg_search_url_template.errors %}<p class="mt-1 text-xs text-red-600">{{ form.ddg_search_url_template.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.ddg_query_suffix.id_for_label }}">{{ form.ddg_query_suffix.label }}</label>
+                    {{ form.ddg_query_suffix }}
+                    <p class="mt-1 text-[11px] text-slate-500">Пусто — не добавлять суффикс к фразе для DDG.</p>
+                    {% if form.ddg_query_suffix.errors %}<p class="mt-1 text-xs text-red-600">{{ form.ddg_query_suffix.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.query_variant_suffixes.id_for_label }}">{{ form.query_variant_suffixes.label }}</label>
+                    {{ form.query_variant_suffixes }}
+                    {% if form.query_variant_suffixes.help_text %}<p class="mt-1 text-[11px] text-slate-500">{{ form.query_variant_suffixes.help_text }}</p>{% endif %}
+                    {% if form.query_variant_suffixes.errors %}<p class="mt-1 text-xs text-red-600">{{ form.query_variant_suffixes.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+
+            <h2 class="schedule-form-block-title text-base mt-2">Лимиты пула</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.search_per_source_limit.id_for_label }}">{{ form.search_per_source_limit.label }}</label>
+                    {{ form.search_per_source_limit }}
+                    {% if form.search_per_source_limit.errors %}<p class="mt-1 text-xs text-red-600">{{ form.search_per_source_limit.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.search_max_collect.id_for_label }}">{{ form.search_max_collect.label }}</label>
+                    {{ form.search_max_collect }}
+                    {% if form.search_max_collect.errors %}<p class="mt-1 text-xs text-red-600">{{ form.search_max_collect.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.search_pool_timeout.id_for_label }}">{{ form.search_pool_timeout.label }}</label>
+                    {{ form.search_pool_timeout }}
+                    {% if form.search_pool_timeout.errors %}<p class="mt-1 text-xs text-red-600">{{ form.search_pool_timeout.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.search_parallel_max.id_for_label }}">{{ form.search_parallel_max.label }}</label>
+                    {{ form.search_parallel_max }}
+                    {% if form.search_parallel_max.errors %}<p class="mt-1 text-xs text-red-600">{{ form.search_parallel_max.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.freshness_hours.id_for_label }}">{{ form.freshness_hours.label }}</label>
+                    {{ form.freshness_hours }}
+                    {% if form.freshness_hours.help_text %}<p class="mt-1 text-[11px] text-slate-500">{{ form.freshness_hours.help_text }}</p>{% endif %}
+                    {% if form.freshness_hours.errors %}<p class="mt-1 text-xs text-red-600">{{ form.freshness_hours.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="schedule-form-field-label block text-xs font-semibold text-slate-700 mb-1" for="{{ form.top_list_random_offset_max.id_for_label }}">{{ form.top_list_random_offset_max.label }}</label>
+                    {{ form.top_list_random_offset_max }}
+                    {% if form.top_list_random_offset_max.errors %}<p class="mt-1 text-xs text-red-600">{{ form.top_list_random_offset_max.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+
+            <h2 class="schedule-form-block-title text-base">Поведение</h2>
+            <div class="space-y-3">
+                <div class="flex items-start gap-3">
+                    {{ form.penalize_unknown_published }}
+                    <label class="text-sm text-slate-800" for="{{ form.penalize_unknown_published.id_for_label }}">{{ form.penalize_unknown_published.label }}</label>
+                </div>
+                {% if form.penalize_unknown_published.errors %}<p class="text-xs text-red-600">{{ form.penalize_unknown_published.errors.0 }}</p>{% endif %}
+                <div class="flex items-start gap-3">
+                    {{ form.rank_random_jitter }}
+                    <label class="text-sm text-slate-800" for="{{ form.rank_random_jitter.id_for_label }}">{{ form.rank_random_jitter.label }}</label>
+                </div>
+                {% if form.rank_random_jitter.errors %}<p class="text-xs text-red-600">{{ form.rank_random_jitter.errors.0 }}</p>{% endif %}
+                <div class="flex items-start gap-3">
+                    {{ form.force_fresh_news_on_content_retry }}
+                    <label class="text-sm text-slate-800" for="{{ form.force_fresh_news_on_content_retry.id_for_label }}">{{ form.force_fresh_news_on_content_retry.label }}</label>
+                </div>
+                {% if form.force_fresh_news_on_content_retry.errors %}<p class="text-xs text-red-600">{{ form.force_fresh_news_on_content_retry.errors.0 }}</p>{% endif %}
+            </div>
+
+            <div class="flex flex-wrap gap-3 pt-4 border-t border-indigo-100">
+                <button type="submit" class="inline-flex items-center px-5 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold shadow hover:from-indigo-700 hover:to-purple-700 transition">Сохранить</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="rounded-xl border border-amber-200/90 bg-amber-50/50 p-4 mb-6">
+        <h2 class="text-sm font-semibold text-amber-950 mb-2">Сброс к значениям по умолчанию</h2>
+        <p class="text-xs text-amber-900/90 mb-3">Восстановит заводские значения (как при первом запуске):</p>
+        <ul class="text-[11px] text-amber-900/80 font-mono space-y-0.5 mb-3">
+            {% for key, val in defaults_reference.items %}
+            <li><span class="text-slate-600">{{ key }}</span> = {{ val }}</li>
+            {% endfor %}
+        </ul>
+        <form method="post" action="" onsubmit="return confirm('Сбросить все поля к значениям по умолчанию?');">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reset_defaults">
+            <button type="submit" class="px-4 py-2 rounded-lg border border-amber-400 bg-white text-amber-900 text-sm font-medium hover:bg-amber-100 transition">Сбросить к умолчанию</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

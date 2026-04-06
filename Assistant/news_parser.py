@@ -18,15 +18,20 @@ import time
 import hashlib
 import random
 from typing import Dict, List, Optional, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone as dt_timezone
 from urllib.parse import urljoin, urlparse, quote
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed, wait
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.utils import timezone
 from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
+
+
+def _news_search_cfg():
+    from .news_search_config import get_news_search_config
+    return get_news_search_config()
 
 # Попытка импортировать newspaper4k, если не доступен - используем fallback
 try:
@@ -48,7 +53,28 @@ except ImportError:
 class NewsParserService:
     """Инициализация сервиса"""
     def __init__(self):
-        self.sources = [
+        # Встроенные источники (копия для auto_update_source_config и совместимости)
+        self.sources = self._builtin_sources()
+
+        # User-Agent для веб-скрапинга
+        self.headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+        
+        # Настройка newspaper4k если доступен
+        if NEWSPAPER_AVAILABLE:
+            self.newspaper_config = Config()
+            self.newspaper_config.browser_user_agent = self.headers['User-Agent']
+            self.newspaper_config.request_timeout = 10
+            self.newspaper_config.memoize_articles = False  # Отключаем кэширование newspaper (используем Django cache)
+    
+        # Индекс для циклического перебора источников в рандомном порядке
+        self._source_rotation_index = {}
+
+    def _builtin_sources(self) -> List[Dict]:
+        """Встроенные HTML-источники (шаблон DDG — из БД / дашборда)."""
+        ddg_tpl = _news_search_cfg().NEWS_DDG_SEARCH_URL_TEMPLATE
+        return [
             {
                 'name': 'VC.ru',
                 'type': 'html',
@@ -56,7 +82,7 @@ class NewsParserService:
                 'search_url': 'https://vc.ru/search',
                 'article_selector': 'a.content-link',
                 'title_selector': '.content-title',
-                'enabled': False,  # Отключен - 404 ошибка при поиске
+                'enabled': False,
                 'language': 'ru'
             },
             {
@@ -83,11 +109,12 @@ class NewsParserService:
                 'name': 'DuckDuckGo (Глобальный поиск)',
                 'type': 'html',
                 'base_url': 'https://html.duckduckgo.com',
-                'search_url': 'https://html.duckduckgo.com/html/?q={query} новости IT AI',
+                'search_url': ddg_tpl,
                 'article_selector': '.result__title a.result__url',
                 'title_selector': 'h2',
                 'enabled': True,
-                'language': 'ru'
+                'language': 'ru',
+                'apply_ddg_suffix': True,
             },
             {
                 'name': 'IXBT.com',
@@ -96,25 +123,229 @@ class NewsParserService:
                 'search_url': 'https://www.ixbt.com/news/',
                 'article_selector': 'a.item-news__title, .news-list a',
                 'title_selector': '.item-news__title, h2',
-                'enabled': False,  # Отключен - не находит статьи (0 результатов)
+                'enabled': False,
                 'language': 'ru'
             },
         ]
-        
-        # User-Agent для веб-скрапинга
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        }
-        
-        # Настройка newspaper4k если доступен
-        if NEWSPAPER_AVAILABLE:
-            self.newspaper_config = Config()
-            self.newspaper_config.browser_user_agent = self.headers['User-Agent']
-            self.newspaper_config.request_timeout = 10
-            self.newspaper_config.memoize_articles = False  # Отключаем кэширование newspaper (используем Django cache)
-    
-        # Индекс для циклического перебора источников в рандомном порядке
-        self._source_rotation_index = {}
+
+    def _merge_db_endpoints(self, category_id: Optional[int]) -> List[Dict]:
+        """Активные источники из модели NewsSearchEndpoint."""
+        try:
+            from .models import NewsSearchEndpoint
+        except Exception:
+            return []
+        out: List[Dict] = []
+        qs = NewsSearchEndpoint.objects.filter(is_active=True).order_by('sort_order', 'name')
+        for ep in qs:
+            if category_id and ep.category_id and ep.category_id != category_id:
+                continue
+            if ep.kind == 'rss':
+                url = (ep.rss_feed_url or ep.search_url or '').strip()
+                if not url:
+                    continue
+                out.append({
+                    'name': ep.name,
+                    'type': 'rss',
+                    'rss_url': url,
+                    'enabled': True,
+                    'category_id': ep.category_id,
+                })
+            else:
+                base = (ep.base_url or '').strip().rstrip('/')
+                search = (ep.search_url or base or '').strip()
+                if not search:
+                    continue
+                sel_a = (ep.article_selector or 'article a, a[href*="/"]').strip()
+                sel_t = (ep.title_selector or 'h2, h3, .title').strip()
+                out.append({
+                    'name': ep.name,
+                    'type': 'html',
+                    'base_url': base or search,
+                    'search_url': search,
+                    'article_selector': sel_a,
+                    'title_selector': sel_t,
+                    'enabled': True,
+                    'language': 'ru',
+                    'category_id': ep.category_id,
+                })
+        return out
+
+    def _merge_enabled_sources(self, category_id: Optional[int]) -> List[Dict]:
+        """Встроенные + БД; фильтр по category_id для источников с привязкой."""
+        merged: List[Dict] = [s.copy() for s in self._builtin_sources() if s.get('enabled', True)]
+        merged.extend(self._merge_db_endpoints(category_id))
+        if category_id:
+            filtered = []
+            for source in merged:
+                scid = source.get('category_id')
+                if scid is None or scid == category_id:
+                    filtered.append(source)
+            merged = filtered
+        return merged
+
+    @staticmethod
+    def _compose_search_query(category: str, keywords: str, template_suffix: str) -> str:
+        parts = [category or '', keywords or '', template_suffix or '']
+        return ' '.join(p for p in parts if p).strip()
+
+    def _apply_query_variant(self, base_query: str, diversity_seed: int) -> str:
+        """Случайное уточнение из NEWS_QUERY_VARIANT_SUFFIXES для разнообразия тем."""
+        raw = _news_search_cfg().NEWS_QUERY_VARIANT_SUFFIXES or ''
+        opts = [x.strip() for x in raw.split('|') if x.strip()]
+        if not opts:
+            return base_query
+        rng = random.Random(diversity_seed or int(time.time()))
+        extra = opts[rng.randint(0, len(opts) - 1)]
+        return f'{base_query} {extra}'.strip() if base_query else extra
+
+    def _effective_query_for_source(self, source: Dict, query: str) -> str:
+        """Для DuckDuckGo добавляем глобальный суффикс из settings (тематика без IT-only)."""
+        q = (query or '').strip()
+        if source.get('apply_ddg_suffix'):
+            suf = _news_search_cfg().NEWS_DDG_QUERY_SUFFIX or ''
+            if suf:
+                q = f'{q} {suf}'.strip()
+        return q
+
+    def _dedupe_news_items(self, items: List[Dict]) -> List[Dict]:
+        seen = set()
+        out = []
+        for it in items:
+            u = (it.get('link') or '').strip()
+            if not u or u in seen:
+                if u:
+                    logger.debug('[NEWS_SKIP] reason=duplicate_url_in_pool url=%s', u[:100])
+                continue
+            seen.add(u)
+            out.append(it)
+        return out
+
+    def _filter_stale_items(self, items: List[Dict]) -> List[Dict]:
+        """Отсев по возрасту, если дата надёжна (см. NEWS_FRESHNESS_HOURS)."""
+        fh = _news_search_cfg().NEWS_FRESHNESS_HOURS or 0
+        if fh <= 0:
+            return items
+        now = timezone.now()
+        out = []
+        for it in items:
+            if not it.get('date_reliable'):
+                out.append(it)
+                continue
+            pub = it.get('published')
+            if not pub:
+                out.append(it)
+                continue
+            if timezone.is_naive(pub):
+                pub = timezone.make_aware(pub, timezone.get_current_timezone())
+            age_h = (now - pub).total_seconds() / 3600.0
+            if age_h > fh:
+                logger.info(
+                    '[NEWS_SKIP] reason=stale age_h=%.1f freshness_h=%s title=%s url=%s',
+                    age_h, fh, (it.get('title') or '')[:60], (it.get('link') or '')[:100],
+                )
+                continue
+            out.append(it)
+        return out
+
+    def _rank_news_pool(self, items: List[Dict], query: str) -> List[Dict]:
+        """Ранжирование: пересечение с запросом, свежесть, штраф за неизвестную дату, джиттер."""
+        cfg = _news_search_cfg()
+        now = timezone.now()
+        freshness_h = cfg.NEWS_FRESHNESS_HOURS or 0
+        tokens = [t for t in re.findall(r'[а-яёa-z0-9]{3,}', (query or '').lower())]
+        scored = []
+        for it in items:
+            title = (it.get('title') or '').lower()
+            overlap = sum(1 for t in tokens if t in title) if tokens else 0
+            reliable = it.get('date_reliable', False)
+            pub = it.get('published')
+            recency = 0.0
+            if reliable and pub:
+                if timezone.is_naive(pub):
+                    pub = timezone.make_aware(pub, timezone.get_current_timezone())
+                age_h = max(0.0, (now - pub).total_seconds() / 3600.0)
+                denom = max((freshness_h * 2) if freshness_h else 48.0, 24.0)
+                recency = max(0.0, 1.0 - (age_h / denom))
+            elif cfg.NEWS_PENALIZE_UNKNOWN_PUBLISHED:
+                recency = -0.35
+            score = overlap * 0.45 + recency * 0.55
+            if cfg.NEWS_RANK_RANDOM_JITTER:
+                score += random.uniform(0, 0.12)
+            scored.append((score, it))
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return [t[1] for t in scored]
+
+    def _search_rss(self, source: Dict, query: str, category: str, limit: int) -> List[Dict]:
+        """RSS/Atom: стабильные даты, фильтр по токенам запроса (мягкий)."""
+        import feedparser
+        tmpl = (source.get('rss_url') or '').strip()
+        if not tmpl:
+            return []
+        cat = (category or '').strip().lower()
+        qenc = quote(query, safe='')
+        cenc = quote(cat, safe='')
+        try:
+            feed_url = tmpl.format(query=qenc, category=cenc) if ('{query}' in tmpl or '{category}' in tmpl) else tmpl
+        except (KeyError, ValueError):
+            feed_url = tmpl
+        logger.info('[RSS] Лента=%s query_log=%s', feed_url[:160], (query or '')[:80])
+        try:
+            parsed = feedparser.parse(feed_url)
+        except Exception as e:
+            logger.error('[RSS] Ошибка parse: %s', e)
+            return []
+        items: List[Dict] = []
+        tokens = [t for t in re.findall(r'[а-яёa-z0-9]{4,}', (query or '').lower())] if query else []
+        entries_list = list(getattr(parsed, 'entries', []) or [])
+
+        def _append_entry(entry, link: str, title: str) -> None:
+            published = timezone.now()
+            date_reliable = False
+            try:
+                if hasattr(entry, 'published_parsed') and entry.published_parsed:
+                    published = datetime(*entry.published_parsed[:6], tzinfo=dt_timezone.utc)
+                    published = timezone.localtime(published)
+                    date_reliable = True
+                elif hasattr(entry, 'updated_parsed') and entry.updated_parsed:
+                    published = datetime(*entry.updated_parsed[:6], tzinfo=dt_timezone.utc)
+                    published = timezone.localtime(published)
+                    date_reliable = True
+            except Exception:
+                pass
+            desc = ''
+            if entry.get('summary'):
+                desc = str(entry.summary)[:200]
+            items.append({
+                'title': title[:200],
+                'link': link,
+                'description': desc,
+                'published': published,
+                'date_reliable': date_reliable,
+                'author': (entry.get('author') or '')[:100],
+            })
+
+        def _consume(entries, use_token_filter: bool) -> None:
+            nonlocal items
+            for entry in entries:
+                if len(items) >= limit:
+                    return
+                link = (entry.get('link') or '').strip()
+                title = (entry.get('title') or '').strip()
+                if not link or len(title) < 5:
+                    continue
+                if use_token_filter and tokens:
+                    tl = title.lower()
+                    if not any(t in tl for t in tokens[:12]):
+                        continue
+                _append_entry(entry, link, title)
+
+        _consume(entries_list, use_token_filter=True)
+        if not items and tokens:
+            logger.info('[RSS] Ослабляю фильтр по токенам (0 совпадений)')
+            _consume(entries_list, use_token_filter=False)
+
+        logger.info('[RSS] %s: отобрано %s записей', source.get('name'), len(items))
+        return items
     
     """Проверка и пометка URL как спарсенного (на 24 часа) - ОТКЛЮЧЕНО"""
     def _is_url_parsed_recently(self, url: str) -> bool:
@@ -144,7 +375,7 @@ class NewsParserService:
         pass
     
     """Получение источников в рандомном порядке с циклической ротацией"""
-    def _get_shuffled_sources(self) -> List[Dict]:
+    def _get_shuffled_sources(self, category_id: Optional[int] = None) -> List[Dict]:
         """
         Возвращает источники в рандомном порядке с циклической ротацией
         Каждый раз порядок будет другой, но используется ротационный индекс
@@ -153,8 +384,8 @@ class NewsParserService:
         Returns:
             Список источников в рандомном порядке
         """
-        enabled_sources = [s.copy() for s in self.sources if s.get('enabled', True)]
-        
+        enabled_sources = [s.copy() for s in self._merge_enabled_sources(category_id)]
+
         # Получаем текущий индекс ротации для этой категории источников
         sources_hash = hash(tuple(sorted(s['name'] for s in enabled_sources)))
         rotation_index = self._source_rotation_index.get(sources_hash, 0)
@@ -175,101 +406,105 @@ class NewsParserService:
         
         return shuffled
     
-    """Поиск новостей с немедленной отдачей результатов (для ускоренного парсинга)"""
-    def search_news_streaming(self, category: str, keywords: str = '', min_articles: int = 5, limit: int = 10, category_id: Optional[int] = None) -> List[Dict]:
-        """
-        Поиск новостей с немедленной отдачей результатов по мере поступления
-        НОВАЯ ЛОГИКА: возвращает результаты как только нашли достаточно статей (min_articles)
-        
-        Args:
-            category: Название категории блога
-            keywords: Ключевые слова для поиска
-            min_articles: Минимальное количество статей для начала парсинга (по умолчанию 5)
-            limit: Максимальное количество новостей из каждого источника
-            category_id: ID категории блога (для фильтрации источников по категории)
-            
-        Returns:
-            Список новостей с информацией об источнике (как только нашли min_articles)
-        """
-        query = f"{category} {keywords}".strip()
-        
-        logger.info(f"[SEARCH] Поиск новостей (streaming): категория='{category}', keywords='{keywords}', category_id={category_id}, min_articles={min_articles}")
-        
-        # Получаем источники в рандомном порядке
-        enabled_sources = self._get_shuffled_sources()
-        
-        # Фильтруем источники по категории блога, если указана
-        if category_id:
-            # Оставляем только источники, привязанные к этой категории, или общие источники (без привязки)
-            filtered_sources = []
-            for source in enabled_sources:
-                source_category_id = source.get('category_id')
-                if source_category_id is None or source_category_id == category_id:
-                    filtered_sources.append(source)
-            enabled_sources = filtered_sources
-            logger.info(f"[SEARCH] Отфильтровано источников по категории {category_id}: {len(enabled_sources)} источников")
-        
-        all_news = []
-        
-        if len(enabled_sources) > 1:
-            # Параллельный поиск для нескольких источников
-            start_time = time.time()
-            
-            with ThreadPoolExecutor(max_workers=min(len(enabled_sources), 4)) as executor:
-                future_to_source = {
-                    executor.submit(self._search_source, source, query, category, limit): source
-                    for source in enabled_sources
-                }
-                
-                completion_count = 0
-                for future in as_completed(future_to_source):
-                    source = future_to_source[future]
-                    source_start = time.time()
-                    try:
-                        news_items = future.result()
-                        elapsed = time.time() - source_start
-                        all_news.extend(news_items)
-                        completion_count += 1
-                        
-                        logger.info(f"[OK #{completion_count}] {source['name']}: найдено {len(news_items)} новостей (время: {elapsed:.2f}с)")
-                        
-                        # КРИТИЧНО: Если нашли достаточно статей - сразу возвращаем результаты
-                        # Не ждем остальные источники
-                        if len(all_news) >= min_articles:
-                            total_time = time.time() - start_time
-                            logger.info(f"[FAST] Найдено достаточно статей ({len(all_news)} >= {min_articles}). Прерываю поиск для немедленного парсинга (время: {total_time:.2f}с)")
-                            # Отменяем оставшиеся задачи (опционально)
-                            # Но уже начатые задачи продолжат выполняться в фоне
-                            break
-                            
-                    except Exception as e:
-                        elapsed = time.time() - source_start
-                        completion_count += 1
-                        logger.error(f"[ERROR #{completion_count}] Ошибка в {source['name']}: {str(e)} (время: {elapsed:.2f}с)")
-                        # Продолжаем даже при ошибке, может другие источники уже вернули результаты
-                        if len(all_news) >= min_articles:
-                            break
+    """Поиск новостей: параллельный опрос источников, дедуп, фильтр свежести, ранжирование."""
+    def search_news_streaming(
+        self,
+        category: str,
+        keywords: str = '',
+        min_articles: int = 5,
+        limit: int = 10,
+        category_id: Optional[int] = None,
+        template_suffix: str = '',
+        diversity_seed: int = 0,
+    ) -> List[Dict]:
+        _cfg = _news_search_cfg()
+        c_per_source = _cfg.NEWS_SEARCH_PER_SOURCE_LIMIT
+        c_max_collect = _cfg.NEWS_SEARCH_MAX_COLLECT
+        c_pool_timeout = _cfg.NEWS_SEARCH_POOL_TIMEOUT
+        c_parallel_max = _cfg.NEWS_SEARCH_PARALLEL_MAX
+
+        per_source = max(limit, c_per_source or 18)
+        max_collect = c_max_collect or 48
+        pool_timeout = float(c_pool_timeout or 35)
+        parallel_max = max(1, c_parallel_max or 6)
+
+        base_q = self._compose_search_query(category, keywords, template_suffix)
+        query = self._apply_query_variant(base_q, diversity_seed)
+
+        logger.info(
+            "[SEARCH] Пул новостей: category=%r keywords=%r category_id=%s variant_query=%r per_source=%s timeout=%ss",
+            category,
+            keywords,
+            category_id,
+            query[:200],
+            per_source,
+            pool_timeout,
+        )
+
+        enabled_sources = self._get_shuffled_sources(category_id)
+        if not enabled_sources:
+            logger.warning('[SEARCH] Нет активных источников после фильтра')
+            return []
+
+        def _run_source(src: Dict) -> List[Dict]:
+            q_for = self._effective_query_for_source(src, query)
+            return self._search_source(src, q_for, category, per_source)
+
+        all_news: List[Dict] = []
+        start_time = time.time()
+        if len(enabled_sources) == 1:
+            try:
+                all_news = _run_source(enabled_sources[0])
+            except Exception as e:
+                logger.error('[ERROR] Поиск в %s: %s', enabled_sources[0].get('name'), e)
         else:
-            # Последовательный поиск для одного источника
-            for idx, source in enumerate(enabled_sources, 1):
-                source_start = time.time()
-                try:
-                    news_items = self._search_source(source, query, category, limit)
-                    elapsed = time.time() - source_start
-                    all_news.extend(news_items)
-                    logger.info(f"[OK #{idx}] {source['name']}: найдено {len(news_items)} новостей (время: {elapsed:.2f}с)")
-                    if len(all_news) >= min_articles:
-                        break
-                except Exception as e:
-                    elapsed = time.time() - source_start
-                    logger.error(f"[ERROR #{idx}] Ошибка при поиске в {source['name']}: {str(e)} (время: {elapsed:.2f}с)")
-                    continue
-        
-        # Сортируем по дате (новые первыми)
-        all_news.sort(key=lambda x: x.get('published', datetime.min), reverse=True)
-        
-        logger.info(f"[INFO] Найдено {len(all_news)} статей (достаточно для начала парсинга)")
-        
+            with ThreadPoolExecutor(max_workers=min(len(enabled_sources), parallel_max)) as executor:
+                future_map = {executor.submit(_run_source, s): s for s in enabled_sources}
+                done, not_done = wait(future_map.keys(), timeout=pool_timeout)
+                for fut in not_done:
+                    src = future_map[fut]
+                    logger.warning(
+                        '[NEWS_POOL] source=%s reason=timeout after=%ss',
+                        src.get('name'),
+                        pool_timeout,
+                    )
+                    fut.cancel()
+                for fut in done:
+                    src = future_map[fut]
+                    t0 = time.time()
+                    try:
+                        chunk = fut.result()
+                        logger.info(
+                            '[NEWS_POOL] source=%s articles=%s elapsed=%.2fs',
+                            src.get('name'),
+                            len(chunk),
+                            time.time() - t0,
+                        )
+                        all_news.extend(chunk)
+                    except Exception as e:
+                        logger.error('[NEWS_POOL] source=%s reason=error err=%s', src.get('name'), e)
+
+        all_news = self._dedupe_news_items(all_news)
+        before_stale = len(all_news)
+        all_news = self._filter_stale_items(all_news)
+        if before_stale != len(all_news):
+            logger.info('[SEARCH] После фильтра свежести: %s → %s', before_stale, len(all_news))
+
+        all_news = self._rank_news_pool(all_news, query)
+        all_news = all_news[:max_collect]
+
+        if len(all_news) < min_articles:
+            logger.warning(
+                '[SEARCH] В пуле меньше min_articles (%s < %s) — продолжим с тем что есть',
+                len(all_news),
+                min_articles,
+            )
+
+        logger.info(
+            '[INFO] Пул новостей готов: %s ссылок (ранжирование, ~%.2fs)',
+            len(all_news),
+            time.time() - start_time,
+        )
         return all_news
     
     """Поиск новостей по категории и ключевым словам через все источники (НОВАЯ ЛОГИКА)"""
@@ -293,11 +528,17 @@ class NewsParserService:
     """Вспомогательный метод для поиска в одном источнике (для параллелизации)"""
     def _search_source(self, source: Dict, query: str, category: str, limit: int) -> List[Dict]:
         try:
-            # Работаем только с HTML источниками
-            if source['type'] == 'html':
+            stype = source.get('type', 'html')
+            if stype == 'html':
                 news_items = self._search_html(source, query, category, limit)
+            elif stype == 'rss':
+                news_items = self._search_rss(source, query, category, limit)
             else:
-                logger.warning(f"[WARNING] Неподдерживаемый тип источника: {source.get('type', 'unknown')} для {source.get('name', 'Unknown')}")
+                logger.warning(
+                    "[WARNING] Неподдерживаемый тип источника: %s для %s",
+                    stype,
+                    source.get('name', 'Unknown'),
+                )
                 news_items = []
             
             # Добавляем информацию об источнике
@@ -343,7 +584,12 @@ class NewsParserService:
                 encoded_category = quote(category.lower() if category else '', safe='')
                 search_url = search_url.format(category=encoded_category, query=query if query else '')
             
-            logger.info(f"[HTML] Поиск статей на {source['name']}: {search_url}")
+            logger.info(
+                "[HTML] Источник=%s url=%s effective_query=%s",
+                source['name'],
+                search_url[:220],
+                (query or '')[:120],
+            )
             
             # Загружаем HTML страницу (таймаут уменьшен до 5 секунд для ускорения)
             response = requests.get(search_url, headers=self.headers, timeout=5)
@@ -415,20 +661,25 @@ class NewsParserService:
                         if desc_elem:
                             description = desc_elem.get_text(strip=True)[:200]
                     
-                    # Извлекаем дату публикации
-                        published = timezone.now()
+                    published = timezone.now()
+                    date_reliable = False
                     date_elem = link.find_parent(['article', 'div', 'li'])
                     if date_elem:
                         date_text = date_elem.get_text()
-                        # Простая попытка найти дату в тексте
                         date_pattern = r'(\d{1,2}[.\-/]\d{1,2}[.\-/]\d{2,4})'
                         date_match = re.search(date_pattern, date_text)
                         if date_match:
                             try:
                                 from dateutil import parser as date_parser
-                                published = date_parser.parse(date_match.group(1))
-                            except:
-                                pass
+                                published = date_parser.parse(date_match.group(1), dayfirst=True)
+                                if timezone.is_naive(published):
+                                    published = timezone.make_aware(
+                                        published, timezone.get_current_timezone()
+                                    )
+                                date_reliable = True
+                            except Exception:
+                                published = timezone.now()
+                                date_reliable = False
                     
                     # Извлекаем изображение
                     image_url = None
@@ -443,6 +694,7 @@ class NewsParserService:
                         'link': href,
                         'description': description,
                         'published': published,
+                        'date_reliable': date_reliable,
                         'author': '',
                     }
                     
@@ -482,6 +734,7 @@ class NewsParserService:
                                         'link': href,
                                         'description': '',
                                         'published': timezone.now(),
+                                        'date_reliable': False,
                                         'author': '',
                                     })
             

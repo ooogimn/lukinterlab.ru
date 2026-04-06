@@ -59,13 +59,13 @@
     
     <!-- Django-Q Schedules -->
     <div class="bg-white rounded-xl shadow-md p-6 mb-6">
-        <h2 class="text-xl font-bold text-gray-900 mb-4">Расписания Django-Q</h2>
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Расписания генерации (Django-Q + AISchedule)</h2>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Расписание</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">CRON</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Интервал / CRON</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Последний запуск</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Следующий запуск</th>
                     </tr>
@@ -74,9 +74,9 @@
                     {% for item in q_schedules_status %}
                     <tr>
                         <td class="px-6 py-4 text-sm font-medium text-gray-900">
-                            {{ item.ai_schedule.name|default:"Не найдено" }}
+                            {{ item.label }}
                         </td>
-                        <td class="px-6 py-4 text-sm text-gray-500">{{ item.q_schedule.cron }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">{{ item.cron }}</td>
                         <td class="px-6 py-4 text-sm text-gray-500">
                             {% if item.last_run %}{{ item.last_run|localtime|date:"d.m.Y H:i" }}{% else %}—{% endif %}
                         </td>

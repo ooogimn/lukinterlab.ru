@@ -4,8 +4,11 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from .models import (
     ChatSession, ChatMessage, AssistantKnowledge, AssistantSettings, ChatAnalytics,
-    PromptTemplate, AISchedule, AIGeneratedArticle, TokenUsage, NewsSource, CategoryStats
+    PromptTemplate, AISchedule, AIGeneratedArticle, TokenUsage, NewsSource, CategoryStats,
+    NewsSearchEndpoint,
+    NewsSearchSettings,
 )
+from . import forms as assistant_forms
 
 
 @admin.register(ChatSession)
@@ -162,7 +165,8 @@ class PromptTemplateAdmin(admin.ModelAdmin):
             'description': 'Промпты для генерации каждого элемента статьи. Используйте {topic}, {category}, {keywords}, {title}, {content} для подстановки значений.'
         }),
         ('Настройки по умолчанию', {
-            'fields': ('default_category', 'default_tags')
+            'fields': ('default_category', 'default_tags', 'news_search_suffix'),
+            'description': 'news_search_suffix — доп. фраза к запросу поиска для этого шаблона (глобальные параметры — дашборд «Поиск новостей»).',
         }),
     )
     
@@ -174,26 +178,34 @@ class PromptTemplateAdmin(admin.ModelAdmin):
 
 @admin.register(AISchedule)
 class AIScheduleAdmin(admin.ModelAdmin):
-    list_display = ['name', 'prompt_template', 'frequency', 'is_active', 'articles_per_run', 'total_generated', 'last_run', 'next_run']
-    list_filter = ['is_active', 'frequency', 'created_at', 'prompt_template']
+    form = assistant_forms.AIScheduleForm
+    list_display = [
+        'name', 'prompt_template', 'interval_hours', 'interval_minutes',
+        'is_active', 'articles_per_run', 'completed_schedule_runs', 'max_schedule_runs',
+        'total_generated', 'last_run', 'next_run',
+    ]
+    list_filter = ['is_active', 'created_at', 'prompt_template']
     search_fields = ['name', 'keywords', 'tags']
-    readonly_fields = ['created_at', 'updated_at', 'total_generated', 'last_run']
+    readonly_fields = [
+        'created_at', 'updated_at', 'created_by', 'total_generated', 'last_run',
+        'next_run', 'completed_schedule_runs',
+    ]
     
     fieldsets = (
         ('Основная информация', {
-            'fields': ('name', 'prompt_template', 'is_active', 'created_by')
+            'fields': ('name', 'prompt_template', 'is_active', 'created_by'),
         }),
         ('Расписание', {
-            'fields': ('frequency', 'start_time', 'cron_expression'),
-            'description': 'Частота и время старта (для пресетов). Произвольное — только CRON.'
+            'fields': (
+                'first_run_date', 'first_run_hour', 'first_run_minute',
+                'interval_hours', 'interval_minutes',
+                'max_schedule_runs', 'completed_schedule_runs',
+            ),
+            'description': 'Дата и время первого запуска (часы 0–23 в списке, без AM/PM). Пустой лимит запусков = бесконечно.',
         }),
         ('Параметры генерации', {
             'fields': ('articles_per_run', 'batch_interval', 'category', 'tags', 'keywords', 'context_data'),
-            'description': 'Параметры, которые будут использоваться при генерации статей.'
-        }),
-        ('Настройки моделей GigaChat', {
-            'fields': ('text_model', 'image_model'),
-            'description': 'Модели для текста и для шага изображения (если в шаблоне включена генерация картинки). Режим картинки задаётся в шаблоне промпта.'
+            'description': 'Параметры, которые будут использоваться при генерации статей. Текст — GigaChat, изображение — GigaChat-Pro (без выбора в расписании).'
         }),
         ('Статистика', {
             'fields': ('total_generated', 'last_run', 'next_run'),
@@ -214,7 +226,7 @@ class AIScheduleAdmin(admin.ModelAdmin):
         from django_q.tasks import async_task
         
         for schedule in queryset:
-            async_task('Assistant.tasks.run_schedule_task', schedule.id)
+            async_task('Assistant.tasks.run_schedule_task', schedule.id, True)
             self.message_user(request, f"Запущена генерация для расписания: {schedule.name}")
     
     run_schedule_now.short_description = "Запустить генерацию сейчас"
@@ -331,6 +343,64 @@ class TokenUsageAdmin(admin.ModelAdmin):
     
     def has_delete_permission(self, request, obj=None):
         return request.user.is_superuser
+
+
+@admin.register(NewsSearchSettings)
+class NewsSearchSettingsAdmin(admin.ModelAdmin):
+    """Одна запись id=1; основной UI — дашборд «Поиск новостей»."""
+
+    list_display = ['id', 'updated_at']
+    readonly_fields = ['id', 'updated_at']
+    fieldsets = (
+        ('DuckDuckGo', {'fields': ('ddg_search_url_template', 'ddg_query_suffix')}),
+        (
+            'Пул и таймауты',
+            {'fields': ('search_per_source_limit', 'search_max_collect', 'search_pool_timeout', 'search_parallel_max')},
+        ),
+        (
+            'Ранжирование и повтор',
+            {
+                'fields': (
+                    'freshness_hours',
+                    'penalize_unknown_published',
+                    'rank_random_jitter',
+                    'query_variant_suffixes',
+                    'top_list_random_offset_max',
+                    'force_fresh_news_on_content_retry',
+                )
+            },
+        ),
+        ('Служебное', {'fields': ('updated_at',), 'classes': ('collapse',)}),
+    )
+
+    def has_add_permission(self, request):
+        return not NewsSearchSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(NewsSearchEndpoint)
+class NewsSearchEndpointAdmin(admin.ModelAdmin):
+    list_display = ['name', 'kind', 'is_active', 'category', 'sort_order', 'created_at']
+    list_filter = ['is_active', 'kind', 'category']
+    search_fields = ['name', 'notes', 'search_url', 'rss_feed_url']
+    list_editable = ['sort_order', 'is_active']
+    ordering = ['sort_order', 'name']
+
+    fieldsets = (
+        ('Общее', {
+            'fields': ('name', 'is_active', 'category', 'sort_order', 'notes'),
+        }),
+        ('HTML-скрапинг', {
+            'fields': ('base_url', 'search_url', 'article_selector', 'title_selector'),
+            'description': 'Для type=HTML: в search_url допустимы {query} и {category}.',
+        }),
+        ('RSS', {
+            'fields': ('rss_feed_url',),
+            'description': 'Для type=RSS: укажите rss_feed_url или search_url с {query}.',
+        }),
+    )
 
 
 @admin.register(NewsSource)
