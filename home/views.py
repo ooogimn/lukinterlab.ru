@@ -20,7 +20,8 @@ from django.db import transaction
 from yookassa import Payment
 from django.urls import reverse
 import uuid
-from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth import login, authenticate, logout, update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.admin.views.decorators import staff_member_required
@@ -38,6 +39,7 @@ import requests
 
 from django.core.cache import cache
 
+from identity_auth.models import LinkedSocialAccount
 from identity_auth.services import linked_labels_for_user
 
 def home(request):
@@ -1073,7 +1075,8 @@ def customer_profile(request):
     context = {
         'customer': customer,
         'orders': orders,
-        'title': 'Личный кабинет'
+        'title': 'Личный кабинет',
+        'linked_auth_labels': linked_labels_for_user(request.user),
     }
     return render(request, 'home/customer/profile.html', context)
 
@@ -1085,22 +1088,51 @@ def customer_edit_profile(request):
         customer = request.user.customer
     except Customer.DoesNotExist:
         customer = Customer.objects.create(user=request.user)
-    
-    if request.method == 'POST':
-        form = CustomerProfileForm(request.POST, instance=customer, user=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Профиль успешно обновлен!')
-            return redirect('home:customer_profile')
+
+    if request.user.has_usable_password():
+        password_form = PasswordChangeForm(request.user)
     else:
-        form = CustomerProfileForm(instance=customer, user=request.user)
-    
+        password_form = SetPasswordForm(request.user)
+
+    form = CustomerProfileForm(instance=customer, user=request.user)
+
+    if request.method == 'POST':
+        if request.POST.get('form_name') == 'password':
+            if request.user.has_usable_password():
+                password_form = PasswordChangeForm(request.user, request.POST)
+            else:
+                password_form = SetPasswordForm(request.user, request.POST)
+            if password_form.is_valid():
+                user = password_form.save()
+                update_session_auth_hash(request, user)
+                messages.success(request, 'Пароль обновлён.')
+                return redirect('home:customer_edit_profile')
+        else:
+            form = CustomerProfileForm(
+                request.POST,
+                request.FILES,
+                instance=customer,
+                user=request.user,
+            )
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Профиль успешно обновлён!')
+                return redirect('home:customer_edit_profile')
+
     context = {
         'form': form,
+        'password_form': password_form,
         'customer': customer,
-        'title': 'Редактирование профиля'
+        'title': 'Редактирование профиля',
+        'linked_auth_labels': linked_labels_for_user(request.user),
+        'linked_oauth_providers': set(
+            LinkedSocialAccount.objects.filter(user=request.user).values_list(
+                'provider', flat=True
+            )
+        ),
+        'oauth_link_next': request.build_absolute_uri(reverse('home:customer_edit_profile')),
     }
-    
+
     return render(request, 'home/customer/edit_profile.html', context)
 
 
@@ -1159,6 +1191,139 @@ def customer_order_detail(request, order_id):
         'title': f'Заказ №{order.order_number}'
     }
     return render(request, 'home/customer/order_detail.html', context)
+
+
+@login_required
+def customer_support(request):
+    """Список обращений в поддержку и создание нового."""
+    try:
+        customer = request.user.customer
+    except Customer.DoesNotExist:
+        customer = Customer.objects.create(user=request.user)
+
+    threads = CustomerSupportThread.objects.filter(user=request.user)
+
+    if request.method == 'POST':
+        form = CustomerSupportNewThreadForm(request.POST)
+        if form.is_valid():
+            th = CustomerSupportThread.objects.create(
+                user=request.user,
+                subject=form.cleaned_data['subject'].strip()[:200],
+            )
+            CustomerSupportMessage.objects.create(
+                thread=th,
+                author=request.user,
+                is_staff=False,
+                body=form.cleaned_data['body'],
+            )
+            messages.success(request, 'Обращение отправлено. Ответ появится здесь.')
+            return redirect('home:customer_support_thread', thread_id=th.pk)
+    else:
+        form = CustomerSupportNewThreadForm()
+
+    return render(
+        request,
+        'home/customer/support_list.html',
+        {
+            'customer': customer,
+            'threads': threads,
+            'new_thread_form': form,
+            'title': 'Поддержка',
+        },
+    )
+
+
+@login_required
+def customer_support_thread(request, thread_id):
+    try:
+        customer = request.user.customer
+    except Customer.DoesNotExist:
+        customer = Customer.objects.create(user=request.user)
+
+    thread = get_object_or_404(CustomerSupportThread, pk=thread_id, user=request.user)
+    msg_list = thread.messages.select_related('author').all()
+
+    if request.method == 'POST':
+        reply = CustomerSupportReplyForm(request.POST)
+        if reply.is_valid():
+            CustomerSupportMessage.objects.create(
+                thread=thread,
+                author=request.user,
+                is_staff=False,
+                body=reply.cleaned_data['body'],
+            )
+            thread.status = CustomerSupportThread.Status.OPEN
+            thread.save()
+            messages.success(request, 'Сообщение отправлено.')
+            return redirect('home:customer_support_thread', thread_id=thread.pk)
+    else:
+        reply = CustomerSupportReplyForm()
+
+    return render(
+        request,
+        'home/customer/support_thread.html',
+        {
+            'customer': customer,
+            'thread': thread,
+            'messages_list': msg_list,
+            'reply_form': reply,
+            'title': thread.subject,
+        },
+    )
+
+
+@staff_member_required
+def admin_support_list(request):
+    threads = CustomerSupportThread.objects.select_related('user').order_by('-updated_at')
+    st = request.GET.get('status')
+    if st in {x[0] for x in CustomerSupportThread.Status.choices}:
+        threads = threads.filter(status=st)
+    return render(
+        request,
+        'home/admin/support_list.html',
+        {
+            'threads': threads,
+            'status_filter': st,
+            'title': 'Поддержка клиентов',
+            'support_status_choices': CustomerSupportThread.Status.choices,
+        },
+    )
+
+
+@staff_member_required
+def admin_support_thread(request, thread_id):
+    thread = get_object_or_404(
+        CustomerSupportThread.objects.select_related('user'),
+        pk=thread_id,
+    )
+    msg_list = thread.messages.select_related('author').all()
+
+    if request.method == 'POST':
+        reply = CustomerSupportReplyForm(request.POST)
+        if reply.is_valid():
+            CustomerSupportMessage.objects.create(
+                thread=thread,
+                author=request.user,
+                is_staff=True,
+                body=reply.cleaned_data['body'],
+            )
+            thread.status = CustomerSupportThread.Status.ANSWERED
+            thread.save()
+            messages.success(request, 'Ответ отправлен.')
+            return redirect('home:admin_support_thread', thread_id=thread.pk)
+    else:
+        reply = CustomerSupportReplyForm()
+
+    return render(
+        request,
+        'home/admin/support_thread.html',
+        {
+            'thread': thread,
+            'messages_list': msg_list,
+            'reply_form': reply,
+            'title': f'Поддержка: {thread.subject}',
+        },
+    )
 
 
 # ==================== АДМИН ПАНЕЛЬ ДЛЯ ЗАКАЗОВ ====================

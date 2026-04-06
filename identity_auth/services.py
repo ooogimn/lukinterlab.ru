@@ -191,6 +191,37 @@ def resolve_linked_user(
         return user, True
 
 
+def attach_oauth_to_user(user, *, provider: str, provider_user_id: str, email=None, first_name: str = '', last_name: str = ''):
+    """
+    Привязать OAuth-провайдера к уже авторизованному пользователю.
+    ValueError — если этот provider_user_id уже закреплён за другим User.
+    """
+    uid = str(provider_user_id).strip()
+    if not uid:
+        raise ValueError('provider_user_id пустой')
+
+    email_norm = (email or '').strip() or None
+
+    with transaction.atomic():
+        link = (
+            LinkedSocialAccount.objects.select_related('user')
+            .filter(provider=provider, provider_user_id=uid)
+            .first()
+        )
+        if link and link.user_id != user.pk:
+            raise ValueError('already_linked_elsewhere')
+
+        LinkedSocialAccount.objects.update_or_create(
+            provider=provider,
+            provider_user_id=uid,
+            defaults={'user': user},
+        )
+        _apply_profile(user, email_norm, first_name, last_name)
+        _ensure_oauth_password_policy(user)
+        user.save()
+        _ensure_customer(user)
+
+
 def linked_labels_for_user(user):
     labels = {
         LinkedSocialProvider.VKID: 'VK ID (ВК, ОК, Mail)',

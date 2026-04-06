@@ -28,15 +28,15 @@
                 </div>
             </a>
             
-            <!-- Navigation Links -->
+            <!-- Navigation Links (вне главной — на главную с якорем или на целевые разделы) -->
             <div class="hidden lg:flex items-center space-x-8">
-                <a href="#home" class="font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-200">Главная</a>
-                <a href="#about" class="font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-200">О нас</a>
-                <a href="#resume" class="font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-200">Услуги</a>
-                <a href="#portfolio" class="font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-200">Портфолио</a>
-                <a href="#testimonials" class="font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-200">Отзывы</a>
-                <a href="#blog" class="font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-200">Блог</a>
-                <a href="#contact" class="font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-200">Контакты</a>
+                <a href="{% url 'home:home' %}" class="font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-200">Главная</a>
+                <a href="{% url 'home:home' %}#about" class="font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-200">О нас</a>
+                <a href="{% url 'home:service-list' %}" class="font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-200">Услуги</a>
+                <a href="{% url 'home:home' %}#portfolio" class="font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-200">Портфолио</a>
+                <a href="{% url 'home:home' %}#testimonials" class="font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-200">Отзывы</a>
+                <a href="{% url 'Blog:post_list' %}" class="font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-200">Блог</a>
+                <a href="{% url 'home:home' %}#contact" class="font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-200">Контакты</a>
             </div>
             
             <!-- Cart Icon -->
@@ -47,25 +47,15 @@
                 </span>
             </a>
             
-            <!-- Личный кабинет / Вход -->
+            <!-- Аватар → ЛК / Вход -->
             {% if user.is_authenticated %}
-                {% if request.path|slice:":9" == "/customer/" %}
-                    <!-- На странице личного кабинета: показываем только "Выйти" -->
-                    <div class="hidden lg:flex items-center space-x-4">
-                        <a href="{% url 'identity_auth:customer_logout' %}" class="text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200">
-                            Выйти
-                        </a>
-                    </div>
-                {% else %}
-                    <!-- На главной и других страницах: показываем только "Личный кабинет" -->
-                    <div class="hidden lg:flex items-center space-x-4">
-                        <a href="{% url 'home:customer_dashboard' %}" class="bg-gradient-to-r from-primary-600 to-secondary-600 text-white px-6 py-2 rounded-full font-semibold hover:from-primary-700 hover:to-secondary-700 transition-all duration-300 transform hover:scale-105">
-                            Личный кабинет
-                        </a>
-                    </div>
-                {% endif %}
+                <div class="hidden lg:flex items-center space-x-3">
+                    <a href="{% url 'home:customer_dashboard' %}" class="flex-shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500" title="Личный кабинет">
+                        <img src="{{ header_customer_avatar_url }}" alt="" class="w-10 h-10 rounded-full object-cover border-2 border-primary-200 shadow-sm bg-white" width="40" height="40" decoding="async" />
+                    </a>
+                    <a href="{% url 'identity_auth:customer_logout' %}" class="text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200">Выйти</a>
+                </div>
             {% else %}
-                <!-- Для неавторизованных: показываем только "Войти" -->
                 <div class="hidden lg:flex items-center space-x-4">
                     <a href="{% url 'identity_auth:customer_login' %}" class="text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200">
                         Войти
@@ -96,13 +86,13 @@
             
             <!-- Mobile Navigation Links -->
             <nav class="space-y-4">
-                <a href="#home" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100">Главная</a>
-                <a href="#about" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100">О нас</a>
-                <a href="#resume" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100">Услуги</a>
-                <a href="#portfolio" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100">Портфолио</a>
-                <a href="#testimonials" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100">Отзывы</a>
-                <a href="#blog" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100">Блог</a>
-                <a href="#contact" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100">Контакты</a>
+                <a href="{% url 'home:home' %}" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100">Главная</a>
+                <a href="{% url 'home:home' %}#about" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100">О нас</a>
+                <a href="{% url 'home:service-list' %}" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100">Услуги</a>
+                <a href="{% url 'home:home' %}#portfolio" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100">Портфолио</a>
+                <a href="{% url 'home:home' %}#testimonials" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100">Отзывы</a>
+                <a href="{% url 'Blog:post_list' %}" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100">Блог</a>
+                <a href="{% url 'home:home' %}#contact" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100">Контакты</a>
                 
                 <!--Корзина-->  
                 <a id="cart-button-mobile" href="{% url 'home:cart' %}" class="{% if cart_items_count > 0 %}block{% else %}hidden{% endif %} py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100 flex items-center justify-between">
@@ -117,25 +107,17 @@
                     </span>
                 </a>
                 
-                <!-- Mobile Personal Cabinet Links -->
                 {% if user.is_authenticated %}
-                    {% if request.path|slice:":9" == "/customer/" %}
-                        <!-- На странице личного кабинета: показываем только "Выйти" -->
-                        <a href="{% url 'identity_auth:customer_logout' %}" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100 flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                            </svg>
-                            Выйти
-                        </a>
-                    {% else %}
-                        <!-- На главной и других страницах: показываем только "Личный кабинет" -->
-                        <a href="{% url 'home:customer_dashboard' %}" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100 flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                            </svg>
-                            Личный кабинет
-                        </a>
-                    {% endif %}
+                    <a href="{% url 'home:customer_dashboard' %}" class="flex items-center py-3 border-b border-gray-100 gap-3">
+                        <img src="{{ header_customer_avatar_url }}" alt="" class="w-10 h-10 rounded-full object-cover border border-gray-200" width="40" height="40" decoding="async" />
+                        <span class="text-gray-700 font-medium">Личный кабинет</span>
+                    </a>
+                    <a href="{% url 'identity_auth:customer_logout' %}" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        Выйти
+                    </a>
                 {% else %}
                     <!-- Для неавторизованных: показываем только "Войти" -->
                     <a href="{% url 'identity_auth:customer_login' %}" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100 flex items-center">

@@ -14,7 +14,7 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from identity_auth import auth_settings
-from identity_auth.services import resolve_linked_user
+from identity_auth.services import attach_oauth_to_user, resolve_linked_user
 
 OAUTH_PROVIDERS = frozenset({'yandex', 'google', 'max'})
 
@@ -72,7 +72,8 @@ def _callback_url(request, provider):
 
 
 def customer_oauth_start(request, provider):
-    if request.user.is_authenticated:
+    link_mode = request.GET.get('link') == '1' and request.user.is_authenticated
+    if request.user.is_authenticated and not link_mode:
         return redirect('home:customer_dashboard')
     if provider not in OAUTH_PROVIDERS:
         messages.error(request, 'Неизвестный способ входа.')
@@ -80,6 +81,11 @@ def customer_oauth_start(request, provider):
 
     callback = _callback_url(request, provider)
     next_url = _oauth_safe_next(request)
+    if link_mode:
+        request.session['oauth_link_user_pk'] = request.user.pk
+    else:
+        request.session.pop('oauth_link_user_pk', None)
+
     state = secrets.token_urlsafe(24)
     verifier, challenge = _pkce_pair()
 
@@ -302,6 +308,54 @@ def _upsert_oauth_user(
         messages.success(request, f'Добро пожаловать, {display}!')
 
 
+def _redirect_after_oauth(request, next_url: str):
+    if next_url:
+        return redirect(next_url)
+    return redirect('home:customer_dashboard')
+
+
+def _finish_oauth(request, *, next_url: str, provider: str, uid, email, fn, ln):
+    """Вход/регистрация или привязка провайдера к текущему пользователю (oauth_link_user_pk в сессии)."""
+    link_pk = request.session.pop('oauth_link_user_pk', None)
+    if link_pk:
+        if not request.user.is_authenticated or request.user.pk != link_pk:
+            messages.error(
+                request,
+                'Сессия привязки устарела. Войдите в аккаунт и нажмите «Привязать» снова.',
+            )
+            return redirect('identity_auth:customer_login')
+        try:
+            attach_oauth_to_user(
+                request.user,
+                provider=provider,
+                provider_user_id=uid,
+                email=email,
+                first_name=fn,
+                last_name=ln,
+            )
+        except ValueError:
+            messages.error(
+                request,
+                'Этот аккаунт уже привязан к другому пользователю сайта.',
+            )
+            return redirect('home:customer_edit_profile')
+        prov_names = {'yandex': 'Яндекс', 'google': 'Google', 'max': 'MAX'}
+        messages.success(
+            request,
+            f'{prov_names.get(provider, provider)} привязан к вашему профилю.',
+        )
+    else:
+        _upsert_oauth_user(
+            provider=provider,
+            provider_user_id=uid,
+            email=email,
+            first_name=fn,
+            last_name=ln,
+            request=request,
+        )
+    return _redirect_after_oauth(request, next_url)
+
+
 def customer_oauth_callback(request, provider):
     if provider not in OAUTH_PROVIDERS:
         messages.error(request, 'Неизвестный способ входа.')
@@ -314,12 +368,14 @@ def customer_oauth_callback(request, provider):
 
     err = request.GET.get('error')
     if err:
+        request.session.pop('oauth_link_user_pk', None)
         messages.error(request, f'Вход отменён или ошибка провайдера: {err}')
         return redirect('identity_auth:customer_login')
 
     code = request.GET.get('code')
     state_q = request.GET.get('state')
     if not code or state_q != state_sess or sess_prov != provider or not verifier:
+        request.session.pop('oauth_link_user_pk', None)
         messages.error(request, 'Сессия входа устарела. Попробуйте снова.')
         return redirect('identity_auth:customer_login')
 
@@ -341,13 +397,14 @@ def customer_oauth_callback(request, provider):
         email = (info.get('default_email') or info.get('email') or '') or None
         fn = info.get('first_name') or ''
         ln = info.get('last_name') or ''
-        _upsert_oauth_user(
+        return _finish_oauth(
+            request,
+            next_url=next_url,
             provider='yandex',
-            provider_user_id=uid,
+            uid=uid,
             email=email,
-            first_name=fn,
-            last_name=ln,
-            request=request,
+            fn=fn,
+            ln=ln,
         )
 
     elif provider == 'google':
@@ -366,13 +423,14 @@ def customer_oauth_callback(request, provider):
         email = info.get('email') or None
         fn = info.get('given_name') or ''
         ln = info.get('family_name') or ''
-        _upsert_oauth_user(
+        return _finish_oauth(
+            request,
+            next_url=next_url,
             provider='google',
-            provider_user_id=uid,
+            uid=uid,
             email=email,
-            first_name=fn,
-            last_name=ln,
-            request=request,
+            fn=fn,
+            ln=ln,
         )
 
     else:
@@ -399,15 +457,12 @@ def customer_oauth_callback(request, provider):
             parts = str(info['name']).strip().split(None, 1)
             fn = (parts[0] if parts else '')[:30]
             ln = (parts[1] if len(parts) > 1 else '')[:30]
-        _upsert_oauth_user(
+        return _finish_oauth(
+            request,
+            next_url=next_url,
             provider='max',
-            provider_user_id=uid,
+            uid=uid,
             email=email,
-            first_name=fn,
-            last_name=ln,
-            request=request,
+            fn=fn,
+            ln=ln,
         )
-
-    if next_url:
-        return redirect(next_url)
-    return redirect('home:customer_dashboard')

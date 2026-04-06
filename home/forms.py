@@ -405,73 +405,87 @@ class OrderFileForm(forms.ModelForm):
 
 
 class CustomerProfileForm(forms.ModelForm):
-    """Форма редактирования профиля заказчика"""
+    """Форма редактирования профиля заказчика (User + Customer)."""
+    username = forms.CharField(
+        max_length=150,
+        required=True,
+        label='Логин',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Логин *',
+            'autocomplete': 'username',
+        }),
+    )
     first_name = forms.CharField(
         max_length=30,
         required=True,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Имя *'
-        })
+            'placeholder': 'Имя *',
+        }),
     )
     last_name = forms.CharField(
         max_length=30,
         required=True,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Фамилия *'
-        })
+            'placeholder': 'Фамилия *',
+        }),
     )
     email = forms.EmailField(
         required=True,
         widget=forms.EmailInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Email *'
-        })
+            'placeholder': 'Email для входа и уведомлений *',
+            'autocomplete': 'email',
+        }),
     )
-    
+    avatar = forms.ImageField(
+        required=False,
+        label='Аватар',
+        widget=forms.FileInput(attrs={
+            'class': 'block w-full text-sm text-gray-600',
+            'accept': 'image/*',
+        }),
+    )
+
     class Meta:
         model = Customer
-        fields = ['first_name', 'last_name', 'email', 'phone', 'company', 'position', 'address']
+        fields = ['phone', 'company', 'position', 'address', 'avatar']
         widgets = {
-            'first_name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Имя *'
-            }),
-            'last_name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Фамилия *'
-            }),
-            'email': forms.EmailInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Email *'
-            }),
             'phone': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Телефон *'
+                'placeholder': 'Телефон *',
             }),
             'company': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Компания'
+                'placeholder': 'Компания',
             }),
             'position': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Должность'
+                'placeholder': 'Должность',
             }),
             'address': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3,
-                'placeholder': 'Адрес'
+                'placeholder': 'Адрес',
             }),
         }
-    
+
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         if self.user:
+            self.fields['username'].initial = self.user.username
             self.fields['first_name'].initial = self.user.first_name
             self.fields['last_name'].initial = self.user.last_name
             self.fields['email'].initial = self.user.email
+
+    def clean_username(self):
+        u = validate_registration_username(self.cleaned_data.get('username'))
+        if self.user and User.objects.filter(username__iexact=u).exclude(pk=self.user.pk).exists():
+            raise forms.ValidationError('Пользователь с таким логином уже существует.')
+        return u
 
     def clean_first_name(self):
         return validate_person_name(self.cleaned_data.get('first_name'), 'Имя')
@@ -483,11 +497,20 @@ class CustomerProfileForm(forms.ModelForm):
         email = self.cleaned_data.get('email')
         if email:
             validate_registration_email_domain(email)
+            if self.user and User.objects.filter(email__iexact=email.strip()).exclude(pk=self.user.pk).exists():
+                raise forms.ValidationError('Этот email уже используется другим пользователем.')
         return email
+
+    def clean_avatar(self):
+        f = self.cleaned_data.get('avatar')
+        if f and f.size > 2 * 1024 * 1024:
+            raise forms.ValidationError('Аватар: не более 2 МБ.')
+        return f
 
     def save(self, commit=True):
         customer = super().save(commit=False)
         if self.user:
+            self.user.username = self.cleaned_data['username']
             self.user.first_name = self.cleaned_data['first_name']
             self.user.last_name = self.cleaned_data['last_name']
             self.user.email = self.cleaned_data['email']
@@ -495,6 +518,41 @@ class CustomerProfileForm(forms.ModelForm):
         if commit:
             customer.save()
         return customer
+
+
+class CustomerSupportNewThreadForm(forms.Form):
+    subject = forms.CharField(
+        label='Тема',
+        max_length=200,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Кратко, о чём обращение',
+        }),
+    )
+    body = forms.CharField(
+        label='Сообщение',
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 5,
+            'placeholder': 'Опишите вопрос или проблему',
+        }),
+    )
+
+    def clean_body(self):
+        return validate_comment_plaintext(self.cleaned_data.get('body'), 'Сообщение')
+
+
+class CustomerSupportReplyForm(forms.Form):
+    body = forms.CharField(
+        label='Ответ',
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 4,
+        }),
+    )
+
+    def clean_body(self):
+        return validate_comment_plaintext(self.cleaned_data.get('body'), 'Сообщение')
 
 
 class OrderCommentForm(forms.ModelForm):

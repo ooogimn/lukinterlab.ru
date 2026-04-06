@@ -160,3 +160,20 @@ def site_marketing_context(request):
         }
         cache.set(cache_key, data, 1800)
     return {'site_marketing': data}
+
+
+def header_customer_avatar(request):
+    """URL аватара заказчика для шапки (публичный сайт)."""
+    from django.templatetags.static import static
+
+    if not request.user.is_authenticated:
+        return {'header_customer_avatar_url': None}
+    try:
+        from .models import Customer
+
+        c = Customer.objects.filter(user=request.user).only('avatar').first()
+        if c and c.avatar:
+            return {'header_customer_avatar_url': c.avatar.url}
+    except Exception:
+        pass
+    return {'header_customer_avatar_url': static('img/favicon.svg')}

@@ -1,0 +1,40 @@
+{% extends "home/dashboard_base.html" %}
+
+{% block title %}{{ thread.subject }}{% endblock %}
+{% block dashboard_header %}Обращение #{{ thread.pk }}{% endblock %}
+{% block dashboard_subtitle %}
+<p class="text-sm text-gray-600 mt-1">{{ thread.user.username }} — {{ thread.user.email }}</p>
+{% endblock %}
+
+{% block content %}
+{% if messages %}
+<div class="mb-6 space-y-2">
+  {% for message in messages %}
+  <div class="rounded-lg px-4 py-3 text-sm {% if message.tags == 'error' %}bg-red-50 text-red-800{% else %}bg-green-50 text-green-800{% endif %}">{{ message }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<p class="mb-4"><a href="{% url 'home:admin_support_list' %}" class="text-primary-600 hover:underline">← К списку</a></p>
+
+<div class="space-y-4 mb-8">
+  {% for m in messages_list %}
+    <div class="rounded-lg p-4 {% if m.is_staff %}bg-blue-50 border border-blue-100{% else %}bg-gray-50 border border-gray-200{% endif %}">
+      <p class="text-xs text-gray-500 mb-2">
+        {% if m.is_staff %}Вы (поддержка){% else %}Клиент{% endif %} · {{ m.author.username }} · {{ m.created_at|date:"d.m.Y H:i" }}
+      </p>
+      <div class="text-gray-800 whitespace-pre-wrap">{{ m.body }}</div>
+    </div>
+  {% endfor %}
+</div>
+
+<div class="bg-white rounded-xl shadow p-6 max-w-2xl">
+  <h2 class="text-lg font-semibold mb-4">Ответ клиенту</h2>
+  <form method="post" class="space-y-4">
+    {% csrf_token %}
+    {{ reply_form.body }}
+    {% if reply_form.body.errors %}<p class="text-red-600 text-sm">{{ reply_form.body.errors.0 }}</p>{% endif %}
+    <button type="submit" class="px-6 py-2.5 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700">Отправить ответ</button>
+  </form>
+</div>
+{% endblock %}

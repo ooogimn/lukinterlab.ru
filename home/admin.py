@@ -6,7 +6,7 @@ from .models import (
     Otziv, Rabota, OtzivComment, ContactMessage, SEOModel, SectionBackground,
     Service, ExtraService, StandaloneExtraService,
     Customer, Cart, CartItem, Order, OrderItem, OrderQuestionnaire, OrderFile, OrderComment,
-    LegalInfo, SiteMarketingSettings,
+    LegalInfo, SiteMarketingSettings, CustomerSupportThread, CustomerSupportMessage,
 )
 
 
@@ -388,7 +388,7 @@ class CustomerAdmin(admin.ModelAdmin):
             'fields': ('user',)
         }),
         ('Контактная информация', {
-            'fields': ('phone', 'company')
+            'fields': ('phone', 'company', 'avatar')
         }),
         ('Система', {
             'fields': ('created', 'updated'),
@@ -411,6 +411,21 @@ class CustomerAdmin(admin.ModelAdmin):
             return format_html('<a href="{}">{} заказ(ов)</a>', url, count)
         return '0 заказов'
     total_orders.short_description = 'Заказов'
+
+
+class CustomerSupportMessageInline(admin.TabularInline):
+    model = CustomerSupportMessage
+    extra = 0
+    readonly_fields = ('created_at', 'author', 'is_staff')
+
+
+@admin.register(CustomerSupportThread)
+class CustomerSupportThreadAdmin(admin.ModelAdmin):
+    list_display = ('id', 'subject', 'user', 'status', 'updated_at')
+    list_filter = ('status',)
+    search_fields = ('subject', 'user__username', 'user__email')
+    readonly_fields = ('created_at', 'updated_at')
+    inlines = [CustomerSupportMessageInline]
 
 
 # ==================== УПРАВЛЕНИЕ КОРЗИНАМИ ====================

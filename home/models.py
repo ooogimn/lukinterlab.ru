@@ -587,6 +587,13 @@ class CartItem(models.Model):
 class Customer(models.Model):
     """Модель заказчика для личного кабинета"""
     user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name="Пользователь", null=True, blank=True)
+    avatar = models.ImageField(
+        "Аватар",
+        upload_to="customer_avatars/",
+        blank=True,
+        null=True,
+        help_text="Отображается в шапке сайта и в кабинете (рекомендуем квадрат, до 2 МБ).",
+    )
     phone = models.CharField("Телефон", max_length=20, blank=True)
     company = models.CharField("Компания", max_length=200, blank=True)
     position = models.CharField("Должность", max_length=100, blank=True)
@@ -953,4 +960,59 @@ class SiteMarketingSettings(models.Model):
     def get_solo(cls):
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
+
+
+class CustomerSupportThread(models.Model):
+    """Обращение клиента в поддержку (переписка — CustomerSupportMessage)."""
+
+    class Status(models.TextChoices):
+        OPEN = 'open', 'Открыт'
+        ANSWERED = 'answered', 'Есть ответ'
+        CLOSED = 'closed', 'Закрыт'
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='support_threads',
+        verbose_name='Клиент',
+    )
+    subject = models.CharField('Тема', max_length=200)
+    status = models.CharField(
+        'Статус',
+        max_length=16,
+        choices=Status.choices,
+        default=Status.OPEN,
+        db_index=True,
+    )
+    created_at = models.DateTimeField('Создано', auto_now_add=True)
+    updated_at = models.DateTimeField('Обновлено', auto_now=True)
+
+    class Meta:
+        verbose_name = 'Обращение в поддержку'
+        verbose_name_plural = 'Обращения в поддержку'
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f'#{self.pk} {self.subject}'
+
+
+class CustomerSupportMessage(models.Model):
+    thread = models.ForeignKey(
+        CustomerSupportThread,
+        on_delete=models.CASCADE,
+        related_name='messages',
+        verbose_name='Обращение',
+    )
+    author = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Автор')
+    is_staff = models.BooleanField('Сообщение поддержки', default=False)
+    body = models.TextField('Текст', max_length=8000)
+    created_at = models.DateTimeField('Дата', auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Сообщение поддержки'
+        verbose_name_plural = 'Сообщения поддержки'
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f'#{self.pk} в треде {self.thread_id}'
 

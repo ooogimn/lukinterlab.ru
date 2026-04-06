@@ -47,8 +47,12 @@ urlpatterns = [
     path('customer/profile/edit/', customer_edit_profile, name='customer_edit_profile'),
     path('customer/orders/', customer_orders, name='customer_orders'),
     path('customer/order/<int:order_id>/', customer_order_detail, name='customer_order_detail'),
+    path('customer/support/', customer_support, name='customer_support'),
+    path('customer/support/<int:thread_id>/', customer_support_thread, name='customer_support_thread'),
     
     # Внутренние дашборды под /manage/ — не использовать префикс /admin/ (коллизия с Django Admin).
+    path('manage/support/', admin_support_list, name='admin_support_list'),
+    path('manage/support/<int:thread_id>/', admin_support_thread, name='admin_support_thread'),
     path('manage/orders/', admin_orders, name='admin_orders'),
     path('manage/order/<int:order_id>/', admin_order_detail, name='admin_order_detail'),
 

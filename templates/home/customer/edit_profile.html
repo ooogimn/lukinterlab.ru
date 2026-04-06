@@ -10,155 +10,169 @@
 {% block straniza %}
 <section class="py-20 relative overflow-hidden" style="background: #f9fafb;">
     <div class="max-w-4xl mx-auto px-4">
-        <!-- Breadcrumb -->
         <nav class="mb-8">
             <ol class="flex items-center space-x-2 text-sm text-gray-600">
                 <li><a href="{% url 'home:home' %}" class="hover:text-primary-600">Главная</a></li>
                 <li><span class="mx-2">/</span></li>
-                <li><a href="{% url 'home:customer_profile' %}" class="hover:text-primary-600">Личный кабинет</a></li>
+                <li><a href="{% url 'home:customer_dashboard' %}" class="hover:text-primary-600">Личный кабинет</a></li>
                 <li><span class="mx-2">/</span></li>
-                <li class="text-primary-600">Редактирование профиля</li>
+                <li class="text-primary-600">Настройки профиля</li>
             </ol>
         </nav>
-        
-        <!-- Header -->
+
+        {% include "home/customer/_cabinet_nav.html" %}
+
         <div class="text-center mb-12">
-            <h1 class="text-4xl font-bold text-gray-900 mb-4">Редактирование профиля</h1>
-            <p class="text-xl text-gray-600">Обновите вашу личную информацию</p>
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">Настройки профиля</h1>
+            <p class="text-xl text-gray-600">Логин, email, пароль, аватар и привязка аккаунтов</p>
         </div>
-        
-        <!-- Form Card -->
-        <div class="bg-white rounded-2xl shadow-lg p-8">
-            <form method="post" class="space-y-6">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mb-4 rounded-lg px-4 py-3 text-sm {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-green-50 text-green-800 border border-green-200{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">Данные профиля</h2>
+            <form method="post" enctype="multipart/form-data" class="space-y-6">
                 {% csrf_token %}
-                
+
                 {% if form.non_field_errors %}
                     <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                        {% for error in form.non_field_errors %}
-                            <p>{{ error }}</p>
-                        {% endfor %}
+                        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
                     </div>
                 {% endif %}
-                
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
+
+                {% if customer.avatar %}
+                <div class="flex items-center gap-4">
+                    <img src="{{ customer.avatar.url }}" alt="" class="h-20 w-20 rounded-full object-cover border border-gray-200"/>
+                    <p class="text-sm text-gray-600">Текущий аватар. Загрузите новый файл, чтобы заменить.</p>
+                </div>
                 {% endif %}
 
                 <div class="grid md:grid-cols-2 gap-6">
-                    <!-- Имя -->
                     <div>
-                        <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                            Имя *
-                        </label>
+                        <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Логин *</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}<p class="mt-1 text-sm text-red-600">{% for e in form.username.errors %}{{ e }}{% endfor %}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.avatar.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Аватар</label>
+                        {{ form.avatar }}
+                        {% if form.avatar.errors %}<p class="mt-1 text-sm text-red-600">{% for e in form.avatar.errors %}{{ e }}{% endfor %}</p>{% endif %}
+                        <p class="mt-1 text-xs text-gray-500">JPG, PNG, WebP до 2 МБ</p>
+                    </div>
+                    <div>
+                        <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Имя *</label>
                         {{ form.first_name }}
-                        {% if form.first_name.errors %}
-                            <p class="mt-1 text-sm text-red-600">
-                                {% for error in form.first_name.errors %}{{ error }}{% endfor %}
-                            </p>
-                        {% endif %}
+                        {% if form.first_name.errors %}<p class="mt-1 text-sm text-red-600">{% for e in form.first_name.errors %}{{ e }}{% endfor %}</p>{% endif %}
                     </div>
-                    
-                    <!-- Фамилия -->
                     <div>
-                        <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                            Фамилия *
-                        </label>
+                        <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Фамилия *</label>
                         {{ form.last_name }}
-                        {% if form.last_name.errors %}
-                            <p class="mt-1 text-sm text-red-600">
-                                {% for error in form.last_name.errors %}{{ error }}{% endfor %}
-                            </p>
-                        {% endif %}
+                        {% if form.last_name.errors %}<p class="mt-1 text-sm text-red-600">{% for e in form.last_name.errors %}{{ e }}{% endfor %}</p>{% endif %}
                     </div>
-                    
-                    <!-- Email -->
-                    <div>
-                        <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                            Email *
-                        </label>
+                    <div class="md:col-span-2">
+                        <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Email для входа и уведомлений *</label>
                         {{ form.email }}
-                        {% if form.email.errors %}
-                            <p class="mt-1 text-sm text-red-600">
-                                {% for error in form.email.errors %}{{ error }}{% endfor %}
-                            </p>
-                        {% endif %}
+                        {% if form.email.errors %}<p class="mt-1 text-sm text-red-600">{% for e in form.email.errors %}{{ e }}{% endfor %}</p>{% endif %}
                     </div>
-                    
-                    <!-- Телефон -->
                     <div>
-                        <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                            Телефон *
-                        </label>
+                        <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Телефон *</label>
                         {{ form.phone }}
-                        {% if form.phone.errors %}
-                            <p class="mt-1 text-sm text-red-600">
-                                {% for error in form.phone.errors %}{{ error }}{% endfor %}
-                            </p>
-                        {% endif %}
+                        {% if form.phone.errors %}<p class="mt-1 text-sm text-red-600">{% for e in form.phone.errors %}{{ e }}{% endfor %}</p>{% endif %}
                     </div>
-                    
-                    <!-- Компания -->
                     <div>
-                        <label for="{{ form.company.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                            Компания
-                        </label>
+                        <label for="{{ form.company.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Компания</label>
                         {{ form.company }}
-                        {% if form.company.errors %}
-                            <p class="mt-1 text-sm text-red-600">
-                                {% for error in form.company.errors %}{{ error }}{% endfor %}
-                            </p>
-                        {% endif %}
+                        {% if form.company.errors %}<p class="mt-1 text-sm text-red-600">{% for e in form.company.errors %}{{ e }}{% endfor %}</p>{% endif %}
                     </div>
-                    
-                    <!-- Должность -->
                     <div>
-                        <label for="{{ form.position.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                            Должность
-                        </label>
+                        <label for="{{ form.position.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Должность</label>
                         {{ form.position }}
-                        {% if form.position.errors %}
-                            <p class="mt-1 text-sm text-red-600">
-                                {% for error in form.position.errors %}{{ error }}{% endfor %}
-                            </p>
-                        {% endif %}
+                        {% if form.position.errors %}<p class="mt-1 text-sm text-red-600">{% for e in form.position.errors %}{{ e }}{% endfor %}</p>{% endif %}
                     </div>
                 </div>
-                
-                <!-- Адрес -->
                 <div>
-                    <label for="{{ form.address.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                        Адрес
-                    </label>
+                    <label for="{{ form.address.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Адрес</label>
                     {{ form.address }}
-                    {% if form.address.errors %}
-                        <p class="mt-1 text-sm text-red-600">
-                            {% for error in form.address.errors %}{{ error }}{% endfor %}
-                        </p>
-                    {% endif %}
+                    {% if form.address.errors %}<p class="mt-1 text-sm text-red-600">{% for e in form.address.errors %}{{ e }}{% endfor %}</p>{% endif %}
                 </div>
-                
-                <!-- Buttons -->
                 <div class="flex items-center justify-end space-x-4 pt-6 border-t">
-                    <a href="{% url 'home:customer_profile' %}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
-                        Отмена
-                    </a>
-                    <button type="submit" class="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
-                        Сохранить изменения
-                    </button>
+                    <a href="{% url 'home:customer_profile' %}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">Отмена</a>
+                    <button type="submit" class="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">Сохранить профиль</button>
                 </div>
             </form>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-2">Пароль</h2>
+            {% if user.has_usable_password %}
+                <p class="text-sm text-gray-600 mb-6">Смена пароля для входа по логину и email.</p>
+            {% else %}
+                <p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6">
+                    У аккаунта пока нет пароля (например, вход только через соцсеть). Задайте пароль — тогда сможете входить ещё и по email/логину.
+                </p>
+            {% endif %}
+            <form method="post" class="space-y-4 max-w-md">
+                {% csrf_token %}
+                <input type="hidden" name="form_name" value="password"/>
+                {% if password_form.non_field_errors %}
+                    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                        {% for error in password_form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+                    </div>
+                {% endif %}
+                {% for field in password_form %}
+                    <div>
+                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}<p class="mt-1 text-sm text-red-600">{% for e in field.errors %}{{ e }}{% endfor %}</p>{% endif %}
+                        {% if field.help_text %}<p class="mt-1 text-xs text-gray-500">{{ field.help_text|safe }}</p>{% endif %}
+                    </div>
+                {% endfor %}
+                <button type="submit" class="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                    {% if user.has_usable_password %}Сменить пароль{% else %}Установить пароль{% endif %}
+                </button>
+            </form>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-2">Привязка входа</h2>
+            <p class="text-sm text-gray-600 mb-4">
+                Привяжите Яндекс, Google или MAX к этому аккаунту — можно входить любым из способов.
+                VK ID обычно привязывается при регистрации или входе через виджет VK на странице входа.
+            </p>
+            {% if linked_auth_labels %}
+                <p class="text-sm text-gray-800 mb-4"><span class="font-medium">Уже привязано:</span> {{ linked_auth_labels|join:", " }}</p>
+            {% endif %}
+            <div class="flex flex-wrap gap-3">
+                {% if 'yandex' not in linked_oauth_providers %}
+                <a href="{% url 'identity_auth:customer_oauth_start' 'yandex' %}?link=1&amp;next={{ oauth_link_next|urlencode }}"
+                   class="inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 text-sm font-medium">Привязать Яндекс</a>
+                {% endif %}
+                {% if 'google' not in linked_oauth_providers %}
+                <a href="{% url 'identity_auth:customer_oauth_start' 'google' %}?link=1&amp;next={{ oauth_link_next|urlencode }}"
+                   class="inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 text-sm font-medium">Привязать Google</a>
+                {% endif %}
+                {% if 'max' not in linked_oauth_providers %}
+                <a href="{% url 'identity_auth:customer_oauth_start' 'max' %}?link=1&amp;next={{ oauth_link_next|urlencode }}"
+                   class="inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 text-sm font-medium">Привязать MAX</a>
+                {% endif %}
+                {% if 'yandex' in linked_oauth_providers and 'google' in linked_oauth_providers and 'max' in linked_oauth_providers %}
+                <p class="text-sm text-gray-600">Все перечисленные провайдеры уже привязаны.</p>
+                {% endif %}
+            </div>
         </div>
     </div>
 </section>
 
 <style>
-    /* Дополнительные стили для формы */
     input[type="text"],
     input[type="email"],
+    input[type="password"],
     textarea {
         width: 100%;
         padding: 0.75rem;
@@ -166,35 +180,23 @@
         border-radius: 0.5rem;
         font-size: 0.875rem;
         transition: border-color 0.15s ease-in-out;
+        box-sizing: border-box;
     }
-    
     input[type="text"]:focus,
     input[type="email"]:focus,
+    input[type="password"]:focus,
     textarea:focus {
         outline: none;
         border-color: #3b82f6;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
-    
     textarea {
         min-height: 100px;
         resize: vertical;
     }
-    
-    .bg-primary-600 {
-        background-color: #3b82f6;
-    }
-    
-    .bg-primary-700 {
-        background-color: #2563eb;
-    }
-    
-    .text-primary-600 {
-        color: #3b82f6;
-    }
-    
-    .hover\:text-primary-600:hover {
-        color: #3b82f6;
-    }
+    .bg-primary-600 { background-color: #3b82f6; }
+    .bg-primary-700 { background-color: #2563eb; }
+    .text-primary-600 { color: #3b82f6; }
+    .hover\:text-primary-600:hover { color: #3b82f6; }
 </style>
-{% endblock straniza %} 
+{% endblock straniza %}

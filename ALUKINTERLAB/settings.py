@@ -195,6 +195,7 @@ TEMPLATES = [
                 'home.context_processors.legal_info_context',
                 'identity_auth.context_processors.vkid_oauth',
                 'home.context_processors.site_marketing_context',
+                'home.context_processors.header_customer_avatar',
             ],
         },
     },
