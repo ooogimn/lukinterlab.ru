@@ -25,7 +25,10 @@
             </button>
             <button class="portfolio-filter-btn px-6 py-3 rounded-full bg-gray-100 text-gray-700 font-semibold transition-all duration-300 hover:bg-primary-100 hover:text-primary-600" data-filter="shop">
                 Магазины
-           <!-- Portfolio Grid -->
+            </button>
+        </div>
+        
+        <!-- Portfolio Grid -->
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-10" id="portfolio-grid">
             {% for rabota in rabotas %}
             <div class="portfolio-item group h-full" data-category="{{ rabota.category }}">
