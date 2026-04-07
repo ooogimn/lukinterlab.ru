@@ -2,64 +2,7 @@
 {% load static %}
 
 {% block meny %}
-<!-- Modern Navigation -->
-<nav class="bg-white shadow-lg border-b border-gray-200">
-    <div class="max-w-7xl mx-auto px-4">
-        <div class="flex justify-between items-center h-16">
-            <!-- Logo -->
-            <div class="flex items-center">
-                <a href="{% url 'home:home' %}" class="flex items-center space-x-3">
-                    <img src="{% static 'img/favicon.svg' %}" alt="LukInterLab" class="w-10 h-10 rounded-full">
-                    <span class="text-xl font-bold text-gray-900">LukInterLab</span>
-                </a>
-            </div>
-
-            <!-- Desktop Navigation -->
-            <div class="hidden md:flex items-center space-x-8">
-                <a href="{% url 'home:home' %}" class="text-gray-700 hover:text-primary-600 font-medium transition-colors duration-300">
-                    Главная
-                </a>
-                <a href="{% url 'Blog:post_list' %}" class="text-gray-700 hover:text-primary-600 font-medium transition-colors duration-300">
-                    Блог
-                </a>
-                <a href="{% url 'Blog:post_search' %}" class="text-primary-600 font-semibold border-b-2 border-primary-600">
-                    Поиск
-                </a>
-            </div>
-
-            <!-- Mobile menu button -->
-            <div class="md:hidden">
-                <button id="mobile-menu-button" class="text-gray-700 hover:text-primary-600 focus:outline-none">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                    </svg>
-                </button>
-            </div>
-        </div>
-
-        <!-- Mobile Navigation -->
-        <div id="mobile-menu" class="md:hidden hidden">
-            <div class="px-2 pt-2 pb-3 space-y-1 bg-white border-t border-gray-200">
-                <a href="{% url 'home:home' %}" class="block px-3 py-2 text-gray-700 hover:text-primary-600 font-medium">
-                    Главная
-                </a>
-                <a href="{% url 'Blog:post_list' %}" class="block px-3 py-2 text-gray-700 hover:text-primary-600 font-medium">
-                    Блог
-                </a>
-                <a href="{% url 'Blog:post_search' %}" class="block px-3 py-2 text-primary-600 font-semibold bg-primary-50 rounded-md">
-                    Поиск
-                </a>
-            </div>
-        </div>
-    </div>
-</nav>
-
-<script>
-document.getElementById('mobile-menu-button').addEventListener('click', function() {
-    const mobileMenu = document.getElementById('mobile-menu');
-    mobileMenu.classList.toggle('hidden');
-});
-</script>
+{% include "meny/sidibar-1.html" %}
 {% endblock %}
 
 {% block straniza %}
@@ -67,26 +10,30 @@ document.getElementById('mobile-menu-button').addEventListener('click', function
 <section class="py-12 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4">
         <!-- Search Header -->
-        <div class="text-center mb-16">
+        <div class="text-center mb-12">
             <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                {% if query %}Поиск: "{{ query }}"{% else %}Поиск по блогу{% endif %}
+                {% if query %}Поиск: «{{ query }}»{% else %}Поиск по сайту{% endif %}
             </h1>
             <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                Найдите интересующие вас статьи и материалы
+                Найдите статьи, услуги и проекты на нашем сайте
             </p>
         </div>
 
         <!-- Search Form -->
         <div class="max-w-2xl mx-auto mb-12">
-            <form method="get" action="{% url 'Blog:post_search' %}" class="flex gap-4">
-                <div class="flex-1">
-                    {{ form.query }}
-                </div>
-                <button type="submit" class="px-8 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors duration-300 flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <form method="get" action="{% url 'Blog:post_search' %}" class="flex gap-3">
+                <div class="flex-1 relative">
+                    <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
-                    Поиск
+                    <input type="text" name="query" value="{{ query|default:'' }}" placeholder="Введите запрос..." 
+                           class="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-2xl text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all duration-300 hover:border-gray-300" autocomplete="off">
+                </div>
+                <button type="submit" class="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <span class="hidden sm:inline">Найти</span>
                 </button>
             </form>
         </div>
@@ -95,102 +42,159 @@ document.getElementById('mobile-menu-button').addEventListener('click', function
         {% if query %}
         <div class="max-w-6xl mx-auto">
             <div class="mb-8">
-                <h2 class="text-2xl font-bold text-gray-900 mb-2">
-                    Результаты поиска
-                </h2>
-                <p class="text-gray-600">
-                    {% if results %}
-                        Найдено {{ results.count }} статей по запросу "{{ query }}"
+                <p class="text-gray-600 text-lg">
+                    {% if total_count %}
+                        Найдено <span class="font-bold text-gray-900">{{ total_count }}</span> результатов по запросу «<span class="font-semibold">{{ query }}</span>»
                     {% else %}
-                        По запросу "{{ query }}" ничего не найдено
+                        По запросу «{{ query }}» ничего не найдено
                     {% endif %}
                 </p>
             </div>
 
             {% if results %}
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {% for post in results %}
-                <article class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden group">
-                    <!-- Post Image -->
-                    <div class="relative overflow-hidden">
-                        {% if post.video_file %}
-                            <video src="{{ post.video_file.url }}" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110" autoplay muted loop playsinline></video>
-                        {% elif post.kartinka %}
-                            <img src="{{ post.kartinka.url }}" alt="{{ post.title }}" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" width="400" height="300">
-                        {% elif post.video %}
-                            <div class="w-full h-64 bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center">
-                                <div class="text-center">
-                                    <svg class="w-16 h-16 text-primary-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            <!-- Статьи -->
+            <div class="mb-12">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                    <span class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+                        </svg>
+                    </span>
+                    Статьи блога <span class="text-lg text-gray-400 font-normal">({{ results|length }})</span>
+                </h2>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for post in results %}
+                    <article class="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group">
+                        <div class="relative overflow-hidden">
+                            {% if post.kartinka %}
+                                <img src="{{ post.kartinka.url }}" alt="{{ post.title }}" class="w-full h-52 object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" width="400" height="300">
+                            {% else %}
+                                <div class="w-full h-52 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                                    <svg class="w-12 h-12 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                     </svg>
-                                    <p class="text-primary-600 font-semibold">Видео контент</p>
                                 </div>
+                            {% endif %}
+                            {% if post.category %}
+                            <div class="absolute top-3 left-3">
+                                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-white/90 text-blue-700 backdrop-blur-sm shadow-sm">
+                                    {{ post.category.title }}
+                                </span>
                             </div>
-                        {% else %}
-                            <div class="w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                                <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                </svg>
-                            </div>
-                        {% endif %}
-                        
-                        <!-- Category Badge -->
-                        <div class="absolute top-4 left-4">
-                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-primary-100 text-primary-800">
-                                {{ post.category.title }}
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Post Content -->
-                    <div class="p-6">
-                        <div class="flex items-center text-sm text-gray-500 mb-3">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
-                            {{ post.created|date:"d.m.Y" }}
-                            {% if post.comments_count %}
-                            <a href="{{ post.get_absolute_url }}#comments" class="ml-4 flex items-center hover:text-primary-600 transition-colors">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                                </svg>
-                                {{ post.comments_count }}
-                            </a>
                             {% endif %}
                         </div>
-
-                        <h3 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-primary-600 transition-colors duration-300 line-clamp-2">
-                            {{ post.title }}
-                        </h3>
-
-                        {# Описание не отображается на сайте - используется только для Telegram #}
-
-                        <!-- Read More Button -->
-                        <a href="{{ post.get_absolute_url }}" class="inline-flex items-center text-primary-600 hover:text-primary-700 font-semibold transition-colors duration-300">
-                            Читать далее
-                            <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </a>
-                    </div>
-                </article>
-                {% endfor %}
+                        <div class="p-5">
+                            <div class="flex items-center text-sm text-gray-400 mb-2">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                {{ post.created|date:"d.m.Y" }}
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2">
+                                {{ post.title }}
+                            </h3>
+                            <a href="{{ post.get_absolute_url }}" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold text-sm transition-colors">
+                                Читать
+                                <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
             </div>
-            {% else %}
+            {% endif %}
+
+            {% if services %}
+            <!-- Услуги -->
+            <div class="mb-12">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                    <span class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                    </span>
+                    Услуги <span class="text-lg text-gray-400 font-normal">({{ services|length }})</span>
+                </h2>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for service in services %}
+                    <a href="{{ service.get_absolute_url }}" class="block bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 p-6 group">
+                        {% if service.icon %}
+                        <img src="{{ service.icon.url }}" alt="{{ service.title }}" class="w-16 h-16 object-contain mb-4 rounded-xl" loading="lazy">
+                        {% else %}
+                        <div class="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-xl flex items-center justify-center mb-4">
+                            <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </div>
+                        {% endif %}
+                        <h3 class="text-lg font-bold text-gray-900 group-hover:text-green-600 transition-colors mb-2">{{ service.title }}</h3>
+                        {% if service.description %}
+                        <p class="text-gray-600 text-sm line-clamp-3">{{ service.description|truncatewords:25 }}</p>
+                        {% endif %}
+                        {% if service.price %}
+                        <p class="mt-3 text-green-600 font-bold">{{ service.price }}</p>
+                        {% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if rabotas %}
+            <!-- Портфолио -->
+            <div class="mb-12">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                    <span class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        </svg>
+                    </span>
+                    Портфолио <span class="text-lg text-gray-400 font-normal">({{ rabotas|length }})</span>
+                </h2>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for rabota in rabotas %}
+                    <a href="{{ rabota.get_absolute_url }}" class="block bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group">
+                        {% if rabota.image %}
+                        <img src="{{ rabota.image.url }}" alt="{{ rabota.name }}" class="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy">
+                        {% else %}
+                        <div class="w-full h-48 bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
+                            <svg class="w-12 h-12 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        {% endif %}
+                        <div class="p-5">
+                            <h3 class="text-lg font-bold text-gray-900 group-hover:text-purple-600 transition-colors mb-2">{{ rabota.name }}</h3>
+                            {% if rabota.technologies %}
+                            <p class="text-sm text-gray-500 mb-2">{{ rabota.technologies|truncatewords:10 }}</p>
+                            {% endif %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                                {{ rabota.get_category_display_name }}
+                            </span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if not results and not services and not rabotas %}
             <!-- No Results -->
-            <div class="text-center py-12">
+            <div class="text-center py-16">
                 <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                     <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
                 </div>
-                <h3 class="text-xl font-semibold text-gray-900 mb-2">Ничего не найдено</h3>
-                <p class="text-gray-600 mb-6">Попробуйте изменить поисковый запрос или использовать другие ключевые слова</p>
-                <a href="{% url 'Blog:post_list' %}" class="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors duration-300">
+                <h3 class="text-2xl font-bold text-gray-900 mb-3">Ничего не найдено</h3>
+                <p class="text-gray-600 mb-8 max-w-md mx-auto">Попробуйте изменить поисковый запрос, использовать другие ключевые слова или проверить правописание</p>
+                <a href="{% url 'Blog:post_list' %}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
-                    Вернуться к блогу
+                    Перейти в блог
                 </a>
             </div>
             {% endif %}
@@ -206,32 +210,11 @@ document.getElementById('mobile-menu-button').addEventListener('click', function
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
-
 .line-clamp-3 {
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
-
-/* Стили для выпадающего меню */
-.dropdown-menu.show {
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
-.dropdown-toggle.active svg {
-    transform: rotate(180deg);
-}
-
-/* Закрытие меню при клике вне его */
-.dropdown-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 40;
-}
 </style>
-{% endblock %} 
+{% endblock %}

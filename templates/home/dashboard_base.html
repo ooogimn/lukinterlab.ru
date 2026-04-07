@@ -1,71 +1,51 @@
+{% extends 'base/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Панель управления | LukInterLab{% endblock %}</title>
-    <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#eff6ff',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                            900: '#1e3a8a'
-                        },
-                        secondary: {
-                            500: '#8b5cf6',
-                            600: '#7c3aed'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                }
-            }
-        };
-    </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
+
+{% block title %}{% block dashboard_title %}Панель управления{% endblock %} | LukInterLab{% endblock %}
+
+{% block meny %}
+{% include "meny/sidibar-1.html" %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
 {% include 'includes/dashboard_pill_button.html' %}
-    </style>
-    {% block extra_head %}{% endblock %}
-</head>
-<body class="bg-gray-50 text-gray-800 min-h-screen font-sans antialiased">
-    <header class="bg-white border-b border-gray-200 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div class="min-w-0 flex-1">
-                    <h1 class="text-xl font-bold text-gray-900 sm:text-2xl">
-                        {% block dashboard_header %}Панель управления{% endblock %}
-                    </h1>
-                    {% block dashboard_subtitle %}{% endblock %}
-                </div>
-                <div class="flex flex-wrap items-center gap-2 sm:gap-3 sm:shrink-0 sm:justify-end">
-                    {% block dashboard_header_actions %}{% endblock %}
-                    <a href="{% url 'home:customer_dashboard' %}" class="dashboard-pill-btn">
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                        </svg>
-                        В личный кабинет
-                    </a>
-                </div>
+</style>
+{% block dashboard_extra_css %}{% endblock %}
+{% endblock %}
+
+{% block extra_head %}
+{% block dashboard_extra_head %}{% endblock %}
+{% endblock %}
+
+{% block straniza %}
+<header class="bg-white border-b border-gray-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div class="min-w-0 flex-1">
+                <h1 class="text-xl font-bold text-gray-900 sm:text-2xl">
+                    {% block dashboard_header %}Панель управления{% endblock %}
+                </h1>
+                {% block dashboard_subtitle %}{% endblock %}
+            </div>
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3 sm:shrink-0 sm:justify-end">
+                {% block dashboard_header_actions %}{% endblock %}
+                <a href="{% url 'home:customer_dashboard' %}" class="dashboard-pill-btn">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    В личный кабинет
+                </a>
             </div>
         </div>
-    </header>
+    </div>
+</header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-12">
-        {% block content %}{% endblock %}
-    </main>
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-12">
+    {% block content %}{% endblock %}
+</main>
+{% endblock %}
 
-    {% block extra_scripts %}{% endblock %}
-</body>
-</html>
+{% block extra_scripts %}
+{% block dashboard_extra_scripts %}{% endblock %}
+{% endblock %}

@@ -473,6 +473,8 @@ def post_search(request):
     form = SearchForm()
     query = None
     results = []
+    services = []
+    rabotas = []
     
     # Получаем все категории с подсчетом статей
     all_categories = Category.objects.annotate(
@@ -485,30 +487,49 @@ def post_search(request):
     
     for cat in all_categories:
         if cat.is_leaf_node():
-            # Если это дочерняя категория, добавляем её в список дочерних
             child_categories.append(cat)
         else:
-            # Если это родительская категория
             parent_categories.append(cat)
     
     if 'query' in request.GET:
         form = SearchForm(request.GET)
         if form.is_valid():
             query = form.cleaned_data['query']
-            # Search in title, content, and description
+            # 1. Поиск по блогу (title, content, description, tags)
             results = Post.objects.filter(
                 Q(title__icontains=query) |
                 Q(content__icontains=query) |
-                Q(description__icontains=query)
+                Q(description__icontains=query) |
+                Q(tags__name__icontains=query)
             ).filter(status='published').annotate(
                 comments_count=Count('comments', filter=Q(comments__active=True))
             ).distinct()
+            
+            # 2. Поиск по услугам
+            from home.models import Service
+            services = Service.objects.filter(
+                Q(title__icontains=query) |
+                Q(description__icontains=query)
+            ).filter(is_active=True)
+            
+            # 3. Поиск по портфолио (Rabota)
+            from home.models import Rabota
+            rabotas = Rabota.objects.filter(
+                Q(name__icontains=query) |
+                Q(body__icontains=query) |
+                Q(technologies__icontains=query)
+            ).filter(status='completed')
+    
+    total_count = len(results) + len(services) + len(rabotas)
     
     return render(request,
                  'blog/search.html',
                  {'form': form,
                   'query': query,
                   'results': results,
+                  'services': services,
+                  'rabotas': rabotas,
+                  'total_count': total_count,
                   'parent_categories': parent_categories,
                   'child_categories': child_categories,
                   'all_categories': all_categories,
