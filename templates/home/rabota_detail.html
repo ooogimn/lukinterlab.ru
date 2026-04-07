@@ -11,11 +11,14 @@
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 {% endblock %}
 
+{% block meny %}
+{% include "meny/sidibar-1.html" %}
+{% endblock meny %}
 
-{% block straniza %}
+
 <!-- ═══ HERO: Главное изображение ═══ -->
 {% if rabota.image %}
-<div class="relative w-full mt-16 overflow-hidden bg-gray-900" style="max-height: 560px;">
+<div class="relative w-full overflow-hidden bg-gray-900" style="max-height: 560px;">
     <img src="{{ rabota.image.url }}" alt="{{ rabota.name }}" class="w-full h-full object-cover" style="max-height: 560px;">
     <!-- Gradient overlay -->
     <div class="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-transparent to-gray-900/20"></div>

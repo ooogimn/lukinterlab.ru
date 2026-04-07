@@ -83,7 +83,7 @@ def home(request):
     rabotas = cache.get(cache_key_rabotas)
     if rabotas is None:
         rabotas = list(
-            Rabota.objects.filter(status='completed')
+            Rabota.objects.filter(is_visible=True, status='completed')
             .prefetch_related('media_items')
             .only(
                 'id', 'name', 'category', 'image', 'adres', 'body',

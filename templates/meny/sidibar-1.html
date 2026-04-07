@@ -39,10 +39,11 @@
                 <a href="{% url 'home:home' %}#contact" class="font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-200">Контакты</a>
                 <!-- Поиск -->
                 <div class="relative" id="desktop-search-wrapper">
-                    <button id="desktop-search-toggle" class="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200" title="Поиск по сайту">
-                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button id="desktop-search-toggle" class="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 group/search" title="Поиск по сайту">
+                        <svg class="w-5 h-5 text-gray-600 group-hover/search:text-primary-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
+                        <span class="text-sm font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">Поиск</span>
                     </button>
                     <form id="desktop-search-form" method="get" action="{% url 'Blog:post_search' %}" class="absolute right-0 top-full mt-2 hidden bg-white rounded-xl shadow-2xl border border-gray-200 p-3 w-80 z-50">
                         <div class="flex items-center gap-2">

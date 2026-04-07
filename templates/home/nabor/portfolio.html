@@ -199,25 +199,16 @@ document.addEventListener('DOMContentLoaded', function() {
         return shuffled;
     }
     
-    // При загрузке страницы показываем 9 случайных карточек (кнопка "Все работы" активна)
-    function showRandomItems(count = 9) {
-        // Сначала скрываем все
+    // Показываем ВСЕ карточки при загрузке (по запросу пользователя)
+    function showAllItems() {
         portfolioItems.forEach(item => {
-            item.style.display = 'none';
-        });
-        
-        // Перемешиваем и показываем первые count
-        const shuffled = shuffleArray(portfolioItems);
-        const itemsToShow = shuffled.slice(0, count);
-        
-        itemsToShow.forEach(item => {
             item.style.display = 'block';
             item.style.animation = 'fadeInUp 0.6s ease-out';
         });
     }
     
-    // Показываем 9 случайных карточек при загрузке
-    showRandomItems(9);
+    // Изначально показываем все
+    showAllItems();
     
     filterButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -232,8 +223,7 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.remove('bg-gray-100', 'text-gray-700');
             
             if (filter === 'all') {
-                // Для "Все работы" - показываем только 9 случайных карточек
-                showRandomItems(9);
+                showAllItems();
             } else {
                 // Для конкретных категорий - показываем все работы этой категории
                 portfolioItems.forEach(item => {
