@@ -1,9 +1,9 @@
 {% extends 'base/base.html' %}
 {% load static %}
 
-{% block page_title %}{{ rabota.name }} | Портфолио LukInterLab{% endblock %}
-{% block description %}{{ rabota.body|truncatewords:25 }}{% endblock %}
-{% block keywords %}{{ rabota.technologies }}, {{ rabota.category }}, LukInterLab, портфолио, кейсы{% endblock %}
+{% block page_title %}{% if rabota.meta_title %}{{ rabota.meta_title }}{% else %}{{ rabota.name }} | Портфолио LukInterLab{% endif %}{% endblock %}
+{% block description %}{% if rabota.meta_description %}{{ rabota.meta_description }}{% else %}{{ rabota.body|truncatewords:25 }}{% endif %}{% endblock %}
+{% block keywords %}{% if rabota.meta_keywords %}{{ rabota.meta_keywords }}{% else %}{{ rabota.technologies }}, {{ rabota.category }}, LukInterLab, портфолио, кейсы{% endif %}{% endblock %}
 
 {% block extra_head %}
 <!-- Swiper JS for Media Carousel -->
@@ -197,18 +197,36 @@
                 {% endif %}
             </div>
 
-            {% if rabota.tariffs_text %}
+            {% if rabota.tariffs_text or rabota.related_service %}
             <div class="bg-gradient-to-br from-primary-600 to-indigo-700 rounded-2xl p-6 shadow-xl text-white">
                 <h3 class="text-xl font-bold mb-4 flex items-center">
                     <svg class="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     Тарифы и стоимость
                 </h3>
                 <div class="prose prose-sm prose-invert prose-headings:text-white text-primary-50">
-                    {{ rabota.tariffs_text|safe }}
+                    {% if rabota.tariffs_text %}
+                        {{ rabota.tariffs_text|safe }}
+                    {% elif rabota.related_service %}
+                        <p>Данный проект выполнен на базе услуги: <strong>{{ rabota.related_service.title }}</strong>.</p>
+                        <p class="text-lg font-bold mt-2">Стоимость: {{ rabota.related_service.get_display_price }}</p>
+                    {% endif %}
                 </div>
+                
+                {% if rabota.related_service %}
+                <form action="{% url 'home:add-to-cart' %}" method="POST" class="mt-6">
+                    {% csrf_token %}
+                    <input type="hidden" name="service_id" value="{{ rabota.related_service.id }}">
+                    <input type="hidden" name="service_type" value="service">
+                    <input type="hidden" name="quantity" value="1">
+                    <button type="submit" class="w-full text-center inline-block px-4 py-3 bg-white text-primary-700 font-bold rounded-xl shadow-md hover:bg-gray-50 hover:shadow-lg transition-all">
+                        Заказать такой проект
+                    </button>
+                </form>
+                {% else %}
                 <a href="#order" class="mt-6 w-full text-center inline-block px-4 py-3 bg-white text-primary-700 font-bold rounded-xl shadow-md hover:bg-gray-50 hover:shadow-lg transition-all">
                     Заказать подобный проект
                 </a>
+                {% endif %}
             </div>
             {% endif %}
             

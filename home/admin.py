@@ -73,10 +73,15 @@ class RabotaAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Основная информация', {
-            'fields': ('name', 'category', 'status', 'featured', 'order')
+            'fields': ('name', 'category', 'status', 'featured', 'order', 'related_service')
         }),
         ('Контент', {
             'fields': ('body', 'technologies', 'image')
+        }),
+        ('SEO Оптимизация', {
+            'fields': ('meta_title', 'meta_description', 'meta_keywords', 'focus_keyword', 'seo_score'),
+            'classes': ('collapse',),
+            'description': 'Настройки для поискового продвижения (AI может сгенерировать их автоматически)'
         }),
         ('Ссылки', {
             'fields': ('adres',)

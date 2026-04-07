@@ -96,6 +96,94 @@ class AIService:
         except Exception as e:
             logger.error(f"AI API error: {str(e)}")
             return self._generate_local_response(message, context)
+
+    def generate_image(self, prompt: str) -> str | None:
+        """
+        Генерировать изображение через AI (GigaChat text2image)
+        Возвращает ID изображения или base64 данные (в зависимости от реализации)
+        """
+        if self.provider != 'gigachat':
+            logger.warning("Генерация изображений пока поддерживается только для GigaChat")
+            return None
+
+        try:
+            access_token = self._get_gigachat_access_token()
+            if not access_token:
+                return None
+
+            headers = {
+                'Authorization': f'Bearer {access_token}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+            
+            # GigaChat использует модель GigaChat-Pro (или специализированную) для генерации картинок через function call
+            # Или напрямую через промпт "Нарисуй..."
+            payload = {
+                'model': 'GigaChat-Pro',  # Обычно GigaChat-Pro умеет в картинки
+                'messages': [
+                    {
+                        'role': 'user',
+                        'content': f"Нарисуй изображение: {prompt}"
+                    }
+                ],
+                'function_call': 'auto',
+                'temperature': 0.7
+            }
+            
+            response = requests.post(
+                'https://gigachat.devices.sberbank.ru/api/v1/chat/completions',
+                headers=headers,
+                json=payload,
+                verify=self.gigachat_verify_ssl,
+                timeout=120
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                content = data.get('choices', [{}])[0].get('message', {}).get('content', '')
+                # GigaChat возвращает <img src="...ID..."> в контенте если сработал text2image
+                import re
+                img_match = re.search(r'<img src="([^"]+)"', content)
+                if img_match:
+                    return img_match.group(1)
+            return None
+        except Exception as e:
+            logger.error(f"Ошибка генерации изображения: {str(e)}")
+            return None
+
+    def generate_seo_metadata(self, name: str, description: str) -> Dict[str, str]:
+        """
+        Генерировать SEO метаданные на основе названия и описания проекта
+        """
+        prompt = f"""
+        На основе следующего проекта в портфолио разработай SEO-метаданные:
+        Название: {name}
+        Описание: {description}
+        
+        Верни ответ строго в формате JSON:
+        {{
+            "meta_title": "Заголовок до 60 символов",
+            "meta_description": "Описание до 160 символов",
+            "meta_keywords": "Ключевые слова через запятую",
+            "focus_keyword": "Основное ключевое слово"
+        }}
+        """
+        
+        response = self.generate_response(prompt, use_system_prompt=False)
+        content = response.get('content', '')
+        
+        # Парсим JSON из ответа
+        try:
+            # Находим JSON в тексте (на случай если AI добавил лишний текст)
+            import re
+            json_match = re.search(r'\{.*\}', content, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group(0))
+            return {}
+        except Exception as e:
+            logger.error(f"Ошибка парсинга SEO метаданных: {str(e)}")
+            return {}
     
     def _generate_gigachat_response(self, message: str, context: List[Dict] = None, conversation_history: List[Dict] = None, use_system_prompt: bool = True) -> Dict[str, Any]:
         """Генерировать ответ через GigaChat API"""

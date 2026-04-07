@@ -630,25 +630,29 @@ def add_to_cart(request):
             quantity = form.cleaned_data['quantity']
             
             # Получаем информацию об услуге
+            price_value = None
             if service_type == 'service':
                 try:
                     service = Service.objects.get(id=service_id, is_active=True)
                     title = service.title
                     price = service.price
+                    price_value = service.price_value
                 except Service.DoesNotExist:
                     return JsonResponse({'success': False, 'message': 'Услуга не найдена'})
             elif service_type == 'extra_service':
                 try:
-                    service = StandaloneExtraService.objects.get(id=service_id, is_active=True)
+                    service = ExtraService.objects.get(id=service_id, is_active=True)
                     title = service.title
                     price = service.price
-                except StandaloneExtraService.DoesNotExist:
+                    price_value = service.price_value
+                except ExtraService.DoesNotExist:
                     return JsonResponse({'success': False, 'message': 'Дополнительная услуга не найдена'})
             elif service_type == 'standalone_extra_service':
                 try:
                     service = StandaloneExtraService.objects.get(id=service_id, is_active=True)
                     title = service.title
                     price = service.price
+                    price_value = service.price_value
                 except StandaloneExtraService.DoesNotExist:
                     return JsonResponse({'success': False, 'message': 'Дополнительная услуга не найдена'})
             else:
@@ -668,6 +672,7 @@ def add_to_cart(request):
                 defaults={
                     'title': title,
                     'price': price,
+                    'price_value': price_value,
                     'quantity': quantity
                 }
             )
@@ -951,10 +956,46 @@ def pay_order(request, order_id):
 
 @csrf_exempt
 def yookassa_webhook(request):
-    """Webhook для обработки уведомлений от YooKassa"""
+    """Webhook для обработки уведомлений от YooKassa с проверкой IP"""
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
+    # 1. Проверка IP-адреса отправителя (Security Hardening)
+    # YooKassa IPs: 185.71.76.0/27, 185.71.77.0/27, 77.75.153.0/25, 77.75.154.128/25
+    def is_yookassa_ip(ip):
+        import ipaddress
+        yookassa_ranges = [
+            '185.71.76.0/27',
+            '185.71.77.0/27',
+            '77.75.153.0/25',
+            '77.75.154.128/25',
+        ]
+        if not ip: return False
+        try:
+            ip_obj = ipaddress.ip_address(ip)
+            for net in yookassa_ranges:
+                if ip_obj in ipaddress.ip_network(net):
+                    return True
+        except ValueError:
+            pass
+        return False
+
+    # Получаем IP (учитывая возможный прокси)
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+
+    # В режиме отладки или если это YooKassa IP — продолжаем
+    if not settings.DEBUG and not is_yookassa_ip(ip):
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Unauthorized YooKassa webhook attempt from IP: {ip}")
+        # Возвращаем 403, но для безопасности можно и 200, чтобы не "палить" защиту.
+        # Но 403 правильнее для мониторинга.
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+
     try:
         # Получаем данные от YooKassa
         data = json.loads(request.body)

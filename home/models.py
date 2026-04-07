@@ -176,6 +176,16 @@ class Rabota(models.Model):
     updated = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
     featured = models.BooleanField(default=False, verbose_name='Рекомендуемый проект')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок отображения')
+    
+    # Связь с услугой (воронка продаж)
+    related_service = models.ForeignKey('Service', on_delete=models.SET_NULL, null=True, blank=True, related_name='portfolio_rabotas', verbose_name='Связанная услуга/тариф')
+    
+    # SEO поля
+    meta_title = models.CharField("Meta Title", max_length=255, blank=True, help_text="Заголовок для поисковиков")
+    meta_description = models.TextField("Meta Description", max_length=500, blank=True, help_text="Описание для поисковиков")
+    meta_keywords = models.CharField("Meta Keywords", max_length=500, blank=True, help_text="Ключевые слова через запятую")
+    focus_keyword = models.CharField("Focus Keyword", max_length=100, blank=True, help_text="Основное ключевое слово")
+    seo_score = models.IntegerField("SEO Score", default=0, help_text="Оценка оптимизации (0-100)")
 
     class Meta:
         ordering = ['order', '-created']
@@ -461,7 +471,8 @@ class Service(models.Model):
     title = models.CharField("Название услуги", max_length=200)
     description = models.TextField("Описание", blank=True)
     icon = models.ImageField("Иконка/картинка", upload_to="services/", blank=True, null=True)
-    price = models.CharField("Цена", max_length=50, blank=True, help_text="Например: от 50,000 ₽")
+    price = models.CharField("Цена (текст)", max_length=50, blank=True, help_text="Например: от 50,000 ₽. Если заполнено числовое поле ниже, это поле будет игнорироваться.")
+    price_value = models.DecimalField("Цена (число)", max_digits=12, decimal_places=2, null=True, blank=True, help_text="Числовое значение для расчетов.")
     order = models.PositiveIntegerField("Порядок", default=0)
     is_active = models.BooleanField("Активно", default=True)
     created = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
@@ -479,6 +490,13 @@ class Service(models.Model):
     def __str__(self):
         return self.title
 
+    def get_display_price(self):
+        """Возвращает отформатированную цену из числа или текста"""
+        if self.price_value:
+            formatted = "{:,}".format(int(self.price_value)).replace(',', ' ')
+            return f"от {formatted} ₽"
+        return self.price
+
     def get_absolute_url(self):
         return reverse('home:service-detail', args=[self.id])
 
@@ -488,7 +506,8 @@ class ExtraService(models.Model):
     service = models.ForeignKey(Service, related_name="extra_services", on_delete=models.CASCADE, verbose_name="Основная услуга")
     title = models.CharField("Название доп. услуги", max_length=200)
     description = models.TextField("Описание", blank=True)
-    price = models.CharField("Цена", max_length=50, blank=True, help_text="Например: от 15,000 ₽/мес")
+    price = models.CharField("Цена (текст)", max_length=50, blank=True, help_text="Например: от 15,000 ₽/мес")
+    price_value = models.DecimalField("Цена (число)", max_digits=12, decimal_places=2, null=True, blank=True)
     order = models.PositiveIntegerField("Порядок", default=0)
     is_active = models.BooleanField("Активно", default=True)
     created = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
@@ -503,12 +522,19 @@ class ExtraService(models.Model):
     def __str__(self):
         return f"{self.title} ({self.service.title})"
 
+    def get_display_price(self):
+        if self.price_value:
+            formatted = "{:,}".format(int(self.price_value)).replace(',', ' ')
+            return f"от {formatted} ₽"
+        return self.price
+
 
 class StandaloneExtraService(models.Model):
     """Модель для независимых дополнительных услуг"""
     title = models.CharField("Название услуги", max_length=200)
     description = models.TextField("Описание", blank=True)
-    price = models.CharField("Цена", max_length=50, blank=True, help_text="Например: от 15,000 ₽/мес")
+    price = models.CharField("Цена (текст)", max_length=50, blank=True, help_text="Например: от 15,000 ₽/мес")
+    price_value = models.DecimalField("Цена (число)", max_digits=12, decimal_places=2, null=True, blank=True)
     order = models.PositiveIntegerField("Порядок", default=0)
     is_active = models.BooleanField("Активно", default=True)
     created = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
@@ -527,8 +553,11 @@ class StandaloneExtraService(models.Model):
     def __str__(self):
         return self.title
 
-    def get_absolute_url(self):
-        return reverse('home:extra-service-detail', args=[self.id])
+    def get_display_price(self):
+        if self.price_value:
+            formatted = "{:,}".format(int(self.price_value)).replace(',', ' ')
+            return f"от {formatted} ₽"
+        return self.price
 
 
 class Cart(models.Model):
@@ -565,6 +594,7 @@ class CartItem(models.Model):
     service_id = models.PositiveIntegerField("ID услуги")
     title = models.CharField("Название услуги", max_length=200)
     price = models.CharField("Цена", max_length=50)
+    price_value = models.DecimalField("Цена (число)", max_digits=12, decimal_places=2, null=True, blank=True)
     quantity = models.PositiveIntegerField("Количество", default=1)
     created = models.DateTimeField(auto_now_add=True, verbose_name="Дата добавления")
 
@@ -578,11 +608,13 @@ class CartItem(models.Model):
 
     def get_total_price(self):
         """Получить общую стоимость элемента"""
-        # Извлекаем числовое значение из строки цены
+        if self.price_value:
+            return self.price_value * self.quantity
+            
+        # Извлекаем числовое значение из строки цены (fallback)
         price_str = self.price.replace('₽', '').replace(',', '').replace('от', '').replace(' ', '')
         try:
-            price_value = float(price_str)
-            return price_value * self.quantity
+            return float(price_str) * self.quantity
         except ValueError:
             return 0
 
@@ -733,6 +765,7 @@ class OrderItem(models.Model):
     service_id = models.PositiveIntegerField("ID услуги")
     title = models.CharField("Название услуги", max_length=200)
     price = models.CharField("Цена", max_length=50)
+    price_value = models.DecimalField("Цена (число)", max_digits=12, decimal_places=2, null=True, blank=True)
     quantity = models.PositiveIntegerField("Количество", default=1)
 
     class Meta:
@@ -744,11 +777,13 @@ class OrderItem(models.Model):
     
     def get_total_price(self):
         """Получить общую стоимость элемента"""
-        # Извлекаем числовое значение из строки цены
+        if self.price_value:
+            return self.price_value * self.quantity
+            
+        # Извлекаем числовое значение из строки цены (fallback)
         price_str = self.price.replace('₽', '').replace(',', '').replace('от', '').replace(' ', '')
         try:
-            price_value = float(price_str)
-            return price_value * self.quantity
+            return float(price_str) * self.quantity
         except ValueError:
             return 0
 
