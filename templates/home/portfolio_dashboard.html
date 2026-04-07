@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block dashboard_header_actions %}
-<a href="{% url 'home:portfolio_create' %}" class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 shadow-sm">
+<a href="{% url 'home:portfolio_create' %}" class="inline-flex items-center justify-center px-5 py-2.5 border border-transparent text-sm font-semibold rounded-xl text-white bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary-200 hover:shadow-xl hover:shadow-primary-300 transition-all duration-300 hover:-translate-y-0.5">
     <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
     </svg>
@@ -18,63 +18,151 @@
 {% endblock %}
 
 {% block content %}
-<div class="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-200">
+<div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
     <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Проект</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Категория</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата создания</th>
-                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+        <table class="min-w-full">
+            <thead>
+                <tr class="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Проект</th>
+                    <th scope="col" class="px-5 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Категория</th>
+                    <th scope="col" class="px-5 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Статус</th>
+                    <th scope="col" class="px-5 py-4 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">На сайте</th>
+                    <th scope="col" class="px-5 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Создан</th>
+                    <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Действия</th>
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody class="divide-y divide-gray-100">
                 {% for rabota in rabotas %}
-                <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 h-10 w-10">
+                <tr class="{% if not rabota.is_visible %}bg-gray-50/70{% elif forloop.counter|divisibleby:2 %}bg-white{% else %}bg-gray-50/30{% endif %} hover:bg-primary-50/40 transition-colors duration-200 group" id="row-{{ rabota.id }}">
+                    <!-- Проект -->
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-4">
+                            <div class="flex-shrink-0 h-14 w-14 rounded-xl overflow-hidden border-2 {% if rabota.is_visible %}border-gray-200 shadow-sm{% else %}border-gray-300 opacity-50{% endif %}">
                                 {% if rabota.image %}
-                                <img class="h-10 w-10 rounded-md object-cover" src="{{ rabota.image.url }}" alt="">
+                                <img class="h-14 w-14 object-cover" src="{{ rabota.image.url }}" alt="{{ rabota.name }}">
                                 {% else %}
-                                <div class="h-10 w-10 rounded-md bg-gray-200 flex items-center justify-center text-gray-500">No Img</div>
+                                <div class="h-14 w-14 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                </div>
                                 {% endif %}
                             </div>
-                            <div class="ml-4">
-                                <div class="text-sm font-medium text-gray-900">{{ rabota.name }}</div>
-                                <div class="text-sm text-gray-500">
-                                    {% if rabota.featured %}★ В избранном{% endif %}
+                            <div class="min-w-0">
+                                <a href="{{ rabota.get_absolute_url }}" target="_blank" class="text-sm font-bold text-gray-900 hover:text-primary-600 transition-colors truncate block max-w-[200px] {% if not rabota.is_visible %}line-through opacity-60{% endif %}">{{ rabota.name }}</a>
+                                <div class="flex items-center gap-2 mt-1">
+                                    {% if rabota.featured %}<span class="inline-flex items-center text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">★ Избранное</span>{% endif %}
+                                    {% if rabota.adres %}<span class="text-xs text-gray-400 truncate max-w-[150px] block">{{ rabota.adres }}</span>{% endif %}
                                 </div>
                             </div>
                         </div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                    <!-- Категория -->
+                    <td class="px-5 py-4">
+                        <span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700 border border-blue-100">
                             {{ rabota.get_category_display_name }}
                         </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if rabota.status == 'completed' %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                    <!-- Статус -->
+                    <td class="px-5 py-4">
+                        <span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-lg {% if rabota.status == 'completed' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif rabota.status == 'in_progress' %}bg-amber-50 text-amber-700 border border-amber-200{% else %}bg-purple-50 text-purple-700 border border-purple-200{% endif %}">
+                            {% if rabota.status == 'completed' %}
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+                            {% elif rabota.status == 'in_progress' %}
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5 animate-pulse"></span>
+                            {% else %}
+                                <span class="w-1.5 h-1.5 rounded-full bg-purple-500 mr-1.5"></span>
+                            {% endif %}
                             {{ rabota.get_status_display_name }}
                         </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {{ rabota.created|date:"d.m.Y" }}
+                    <!-- Видимость Toggle -->
+                    <td class="px-5 py-4 text-center">
+                        <button type="button"
+                                class="visibility-toggle relative inline-flex h-7 w-12 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 {% if rabota.is_visible %}bg-emerald-500{% else %}bg-gray-300{% endif %}"
+                                data-id="{{ rabota.id }}"
+                                data-visible="{{ rabota.is_visible|yesno:'true,false' }}"
+                                title="{% if rabota.is_visible %}Скрыть с сайта{% else %}Показать на сайте{% endif %}">
+                            <span class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition-transform duration-300 ease-in-out {% if rabota.is_visible %}translate-x-5{% else %}translate-x-0{% endif %}"></span>
+                        </button>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <a href="{{ rabota.get_absolute_url }}" target="_blank" class="text-gray-500 hover:text-gray-900 mr-4">Смотреть</a>
-                        <a href="{% url 'home:portfolio_update' rabota.id %}" class="text-primary-600 hover:text-primary-900 font-semibold">Редактировать</a>
+                    <!-- Дата -->
+                    <td class="px-5 py-4">
+                        <span class="text-sm text-gray-500 font-medium">{{ rabota.created|date:"d.m.Y" }}</span>
+                        <div class="text-xs text-gray-400 mt-0.5">обновлён {{ rabota.updated|date:"d.m.Y" }}</div>
+                    </td>
+                    <!-- Действия -->
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                            <a href="{{ rabota.get_absolute_url }}" target="_blank" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 hover:text-gray-900 transition-all border border-gray-200" title="Смотреть">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                Открыть
+                            </a>
+                            <a href="{% url 'home:portfolio_update' rabota.id %}" class="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-primary-700 bg-primary-50 rounded-lg hover:bg-primary-100 hover:text-primary-900 transition-all border border-primary-200" title="Редактировать">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                Правка
+                            </a>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" class="px-6 py-10 text-center text-gray-500 text-sm">Нет ни одного проекта в портфолио.</td>
+                    <td colspan="6" class="px-6 py-16 text-center">
+                        <div class="flex flex-col items-center">
+                            <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                            <p class="text-gray-500 text-lg font-medium">Нет ни одного проекта</p>
+                            <p class="text-gray-400 text-sm mt-1">Создайте первый проект в портфолио</p>
+                        </div>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+
+<!-- AJAX Toggle Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.visibility-toggle').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const dot = this.querySelector('span');
+            const row = document.getElementById('row-' + id);
+            const nameLink = row.querySelector('a');
+            const imgBox = row.querySelector('.flex-shrink-0');
+
+            fetch('{% url "home:portfolio_dashboard" %}'.replace('dashboard/', id + '/toggle-visibility/'), {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(r => r.json())
+            .then(data => {
+                const vis = data.is_visible;
+                btn.dataset.visible = vis ? 'true' : 'false';
+                btn.title = vis ? 'Скрыть с сайта' : 'Показать на сайте';
+
+                // Toggle color
+                btn.classList.toggle('bg-emerald-500', vis);
+                btn.classList.toggle('bg-gray-300', !vis);
+
+                // Toggle dot position
+                dot.classList.toggle('translate-x-5', vis);
+                dot.classList.toggle('translate-x-0', !vis);
+
+                // Row styling
+                row.classList.toggle('bg-gray-50/70', !vis);
+                if (nameLink) {
+                    nameLink.classList.toggle('line-through', !vis);
+                    nameLink.classList.toggle('opacity-60', !vis);
+                }
+                if (imgBox) {
+                    imgBox.classList.toggle('opacity-50', !vis);
+                }
+            });
+        });
+    });
+});
+</script>
 {% endblock %}

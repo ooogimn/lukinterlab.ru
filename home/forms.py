@@ -636,7 +636,7 @@ class RabotaForm(forms.ModelForm):
             'name', 'category', 'status', 'image', 'adres', 'body', 
             'technologies', 'history_text', 'resources_text', 
             'parameters_text', 'instructions_text', 'tariffs_text', 
-            'featured', 'order'
+            'featured', 'is_visible', 'order'
         ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Название проекта'}),

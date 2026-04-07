@@ -60,6 +60,7 @@ urlpatterns = [
     path('portfolio/dashboard/', PortfolioDashboardView.as_view(), name='portfolio_dashboard'),
     path('portfolio/create/', RabotaCreateView.as_view(), name='portfolio_create'),
     path('portfolio/<int:pk>/edit/', RabotaUpdateView.as_view(), name='portfolio_update'),
+    path('portfolio/<int:pk>/toggle-visibility/', portfolio_toggle_visibility, name='portfolio_toggle_visibility'),
     
     # ==================== ПАНЕЛЬ УПРАВЛЕНИЯ (/manage/) ====================
     path('manage/statistics/dashboard/', admin_statistics_dashboard, name='admin_statistics_dashboard'),

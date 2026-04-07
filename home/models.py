@@ -109,9 +109,12 @@ class Rabota(models.Model):
         """  Кастомный менеджер для модели работ      """
         def all(self):
             """ Список работ (SQL запрос с фильтрацией для страницы списка работ)  """
-            return self.get_queryset().filter(status='completed')
+            return self.get_queryset().filter(is_visible=True)
 
     objects = RabotaManager()
+
+    is_visible = models.BooleanField(default=True, verbose_name='Отображать на сайте',
+                                     help_text='Снимите галку, чтобы скрыть проект с сайта')
 
     name = models.CharField(max_length=200, verbose_name='Название проекта')
     category = models.CharField(

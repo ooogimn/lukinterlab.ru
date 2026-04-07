@@ -1552,6 +1552,10 @@ class PortfolioDashboardView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     template_name = 'home/portfolio_dashboard.html'
     context_object_name = 'rabotas'
     
+    def get_queryset(self):
+        # В дашборде показываем ВСЕ работы, включая скрытые
+        return Rabota.objects.get_queryset().order_by('order', '-created')
+    
     def test_func(self):
         return self.request.user.is_staff or self.request.user.is_superuser
 
@@ -1600,6 +1604,18 @@ class RabotaUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             
         messages.success(self.request, "Проект успешно обновлен!")
         return response
+
+
+@require_POST
+@login_required
+def portfolio_toggle_visibility(request, pk):
+    """AJAX toggle is_visible для работы в портфолио"""
+    if not (request.user.is_staff or request.user.is_superuser):
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+    rabota = get_object_or_404(Rabota, pk=pk)
+    rabota.is_visible = not rabota.is_visible
+    rabota.save(update_fields=['is_visible'])
+    return JsonResponse({'is_visible': rabota.is_visible, 'name': rabota.name})
 
 
 # ==================== ДАШБОРДЫ АДМИНИСТРАТОРА ====================
