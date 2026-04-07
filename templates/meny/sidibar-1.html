@@ -69,7 +69,6 @@
                     <a href="{% url 'home:customer_dashboard' %}" class="flex-shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500" title="Личный кабинет">
                         <img src="{{ header_customer_avatar_url }}" alt="" class="w-10 h-10 rounded-full object-cover border-2 border-primary-200 shadow-sm bg-white" width="40" height="40" decoding="async" />
                     </a>
-                    <a href="{% url 'identity_auth:customer_logout' %}" class="text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200">Выйти</a>
                 </div>
             {% else %}
                 <div class="hidden lg:flex items-center space-x-4">
@@ -137,12 +136,7 @@
                         <img src="{{ header_customer_avatar_url }}" alt="" class="w-10 h-10 rounded-full object-cover border border-gray-200" width="40" height="40" decoding="async" />
                         <span class="text-gray-700 font-medium">Личный кабинет</span>
                     </a>
-                    <a href="{% url 'identity_auth:customer_logout' %}" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100 flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                        </svg>
-                        Выйти
-                    </a>
+
                 {% else %}
                     <!-- Для неавторизованных: показываем только "Войти" -->
                     <a href="{% url 'identity_auth:customer_login' %}" class="block py-3 text-gray-700 hover:text-primary-600 font-medium border-b border-gray-100 flex items-center">
