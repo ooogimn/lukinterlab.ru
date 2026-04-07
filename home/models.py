@@ -495,7 +495,13 @@ class Service(models.Model):
         if self.price_value:
             formatted = "{:,}".format(int(self.price_value)).replace(',', ' ')
             return f"от {formatted} ₽"
-        return self.price
+        
+        price_str = self.price.strip()
+        if not price_str:
+            return ""
+        if price_str.lower().startswith('от'):
+            return price_str
+        return f"от {price_str}"
 
     def get_absolute_url(self):
         return reverse('home:service-detail', args=[self.id])
@@ -526,7 +532,13 @@ class ExtraService(models.Model):
         if self.price_value:
             formatted = "{:,}".format(int(self.price_value)).replace(',', ' ')
             return f"от {formatted} ₽"
-        return self.price
+        
+        price_str = self.price.strip()
+        if not price_str:
+            return ""
+        if price_str.lower().startswith('от'):
+            return price_str
+        return f"от {price_str}"
 
 
 class StandaloneExtraService(models.Model):
@@ -557,7 +569,13 @@ class StandaloneExtraService(models.Model):
         if self.price_value:
             formatted = "{:,}".format(int(self.price_value)).replace(',', ' ')
             return f"от {formatted} ₽"
-        return self.price
+        
+        price_str = self.price.strip()
+        if not price_str:
+            return ""
+        if price_str.lower().startswith('от'):
+            return price_str
+        return f"от {price_str}"
 
 
 class Cart(models.Model):

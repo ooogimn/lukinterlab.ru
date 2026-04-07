@@ -160,7 +160,7 @@
         </table>
     </div>
 </div>
-
+<script>
 // AJAX Toggle Script & Filtering
 document.addEventListener('DOMContentLoaded', function() {
     // --- Filtering Logic ---
@@ -211,7 +211,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const nameLink = row.querySelector('a');
             const imgBox = row.querySelector('.flex-shrink-0');
 
-            fetch('{% url "home:portfolio_dashboard" Bird=1 %}'.replace('dashboard/?Bird=1', id + '/toggle-visibility/'), {
+            // Construct URL dynamically using the id
+            fetch('/portfolio/' + id + '/toggle-visibility/', {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': '{{ csrf_token }}',

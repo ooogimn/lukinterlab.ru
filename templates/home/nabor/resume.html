@@ -137,7 +137,7 @@
             <div class="mt-auto text-center">
                 {% if service.price %}
                 <div class="mb-8">
-                    <span class="price-tag-premium-home">от {{ service.price }}</span>
+                    <span class="price-tag-premium-home">{{ service.get_display_price }}</span>
                 </div>
                 {% endif %}
                 

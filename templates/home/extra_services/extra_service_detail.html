@@ -117,7 +117,7 @@
                         <div class="flex flex-wrap items-center justify-center lg:justify-start gap-8 mb-12">
                             {% if extra_service.price %}
                             <div class="price-badge-extra">
-                                {{ extra_service.price }}
+                                {{ extra_service.get_display_price }}
                             </div>
                             {% endif %}
                             
@@ -182,7 +182,7 @@
                             </div>
                             <p class="text-sm text-gray-500 mb-4 line-clamp-2">{{ related.description }}</p>
                             <div class="flex items-center justify-between">
-                                <span class="text-purple-400 font-bold">{{ related.price }}</span>
+                                <span class="text-purple-400 font-bold">{{ related.get_display_price }}</span>
                                 <i class="fas fa-arrow-right text-white/20 group-hover:text-white transition-colors"></i>
                             </div>
                         </div>

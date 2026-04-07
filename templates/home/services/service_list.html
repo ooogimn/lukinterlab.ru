@@ -174,7 +174,7 @@
                     <div class="mt-auto text-center">
                         {% if service.price %}
                         <div class="mb-8">
-                            <span class="price-tag-premium text-xl">от {{ service.price }}</span>
+                            <span class="price-tag-premium text-xl">{{ service.get_display_price }}</span>
                         </div>
                         {% endif %}
                         
@@ -217,7 +217,7 @@
                         <p class="text-gray-400 mb-6 line-clamp-3">{{ extra.description }}</p>
                         
                         {% if extra.price %}
-                        <div class="mb-6 font-bold text-blue-400 text-lg">{{ extra.price }}</div>
+                        <div class="text-2xl font-black text-blue-400 mb-8">{{ extra.get_display_price }}</div>
                         {% endif %}
                         
                         <button onclick="event.stopPropagation(); addToCart('extra_service', {{ extra.id }})" 
