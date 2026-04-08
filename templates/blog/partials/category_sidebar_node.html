@@ -2,7 +2,7 @@
 {# nodes: список словарей { category, children } для рекурсивного MPTT-дерева #}
 {% for node in nodes %}
 <div class="blog-cat-node mb-1">
-    <div class="flex min-w-0 items-center gap-1">
+    <div class="blog-cat-row flex min-w-0 items-center gap-1">
         {% if node.children %}
         <button type="button"
                 class="blog-cat-accordion flex h-11 w-8 shrink-0 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
@@ -16,7 +16,7 @@
         <span class="inline-block h-11 w-8 shrink-0" aria-hidden="true"></span>
         {% endif %}
         <button type="button"
-                class="category-btn blog-cat-icon-btn blog-cat-rail-btn relative z-0 flex h-12 shrink-0 items-center overflow-hidden rounded-xl border-2 border-transparent bg-gradient-to-br from-violet-100 to-blue-50 text-left shadow-sm transition-[max-width,box-shadow] duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                class="category-btn blog-cat-icon-btn blog-cat-rail-btn relative z-0 flex h-12 shrink-0 items-center overflow-hidden rounded-xl border-2 border-transparent bg-gradient-to-br from-violet-100 to-blue-50 text-left shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
                 data-category-id="{{ node.category.id }}"
                 data-category-name="{{ node.category.title }}"
                 id="btn-category-{{ node.category.id }}"

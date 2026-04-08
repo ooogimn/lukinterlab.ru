@@ -307,10 +307,6 @@ window.BLOG_LIST_PATH = "{% url 'Blog:post_list' %}";
     transform: rotate(180deg);
 }
 
-/* В списке категорий кнопка всегда узкая — без расширения потока (нет гориз. скролла) */
-.blog-cat-rail-btn {
-    max-width: 3rem;
-}
 .blog-category-nav--scrollbar-left {
     direction: rtl;
 }
@@ -321,18 +317,26 @@ window.BLOG_LIST_PATH = "{% url 'Blog:post_list' %}";
     padding-left: 4px;
 }
 
+/* Свёрнутая кнопка-категория: только иконка, без inline width от JS */
+.blog-cat-rail-btn {
+    max-width: 3rem;
+    width: 3rem;
+    min-width: 3rem;
+    -webkit-tap-highlight-color: transparent;
+}
 .blog-cat-rail-label {
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.12s ease;
 }
-/* «Всплытие» поверх страницы задаётся скриптом + класс ниже */
+/* Плавающая (fixed): растёт по контенту — не задаём width в JS */
 .blog-cat-rail-btn.blog-cat-rail-floating {
     z-index: 10050;
+    width: auto !important;
+    min-width: 3rem !important;
     max-width: min(18rem, calc(100vw - 1rem)) !important;
-    border-color: rgb(196 181 253);
-    box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18);
-    transition: max-width 0.22s ease, box-shadow 0.2s ease, border-color 0.15s ease;
+    overflow: visible !important;
+    border-color: #7c3aed !important;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.35), 0 12px 40px rgba(15, 23, 42, 0.18);
 }
 .blog-cat-rail-btn.blog-cat-rail-floating .blog-cat-rail-label {
     opacity: 1;
@@ -524,19 +528,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-
-    document.querySelectorAll('.blog-cat-accordion').forEach(function(acc) {
-        acc.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const panelId = acc.getAttribute('aria-controls');
-            const panel = panelId ? document.getElementById(panelId) : null;
-            if (!panel) return;
-            const open = acc.getAttribute('aria-expanded') === 'true';
-            acc.setAttribute('aria-expanded', open ? 'false' : 'true');
-            panel.classList.toggle('hidden', open);
-        });
-    });
 
     function updateActiveButton(categoryId) {
         categoryButtons.forEach(btn => {
@@ -752,6 +743,10 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 currentCategoryTitle = '';
             }
+
+            if (typeof window.blogCollapseAllCategoryNav === 'function') {
+                window.blogCollapseAllCategoryNav();
+            }
             
             // Обновляем активную кнопку
             updateActiveButton(categoryId);
@@ -787,7 +782,6 @@ document.addEventListener('DOMContentLoaded', function() {
 /* Раскрытие кнопки категории поверх вёрстки (fixed), без гориз. прокрутки у nav */
 document.addEventListener('DOMContentLoaded', function() {
     const nav = document.getElementById('blog-category-nav');
-    let floatedBtn = null;
 
     function syncFloatedRailPosition(btn) {
         if (!btn || btn.dataset.railFloating !== '1' || !btn._railSpacer) return;
@@ -796,34 +790,63 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.style.left = Math.round(r.left) + 'px';
     }
 
+    function unfloatOtherHoverRails(keepBtn) {
+        document.querySelectorAll('.blog-cat-rail-btn[data-rail-floating="1"]').forEach(function(b) {
+            if (b !== keepBtn && b.dataset.railPinned !== '1') {
+                unfloatRail(b);
+            }
+        });
+    }
+
     function unfloatRail(btn) {
         if (!btn || btn.dataset.railFloating !== '1') return;
+        if (btn.dataset.railPinned === '1') return;
         btn.classList.remove('blog-cat-rail-floating');
         btn.style.position = '';
         btn.style.top = '';
         btn.style.left = '';
         btn.style.width = '';
+        btn.style.minWidth = '';
         btn.style.maxWidth = '';
         btn.dataset.railFloating = '0';
         if (btn._railSpacer && btn._railSpacer.parentNode) {
             btn._railSpacer.remove();
         }
         btn._railSpacer = null;
-        if (floatedBtn === btn) {
-            floatedBtn = null;
-        }
     }
 
-    function floatRail(btn) {
-        if (!btn || btn.dataset.railFloating === '1') return;
-        if (floatedBtn && floatedBtn !== btn) {
-            unfloatRail(floatedBtn);
+    function unfloatRailForce(btn) {
+        if (!btn) return;
+        btn.dataset.railPinned = '0';
+        if (btn.dataset.railFloating !== '1') return;
+        btn.classList.remove('blog-cat-rail-floating');
+        btn.style.position = '';
+        btn.style.top = '';
+        btn.style.left = '';
+        btn.style.width = '';
+        btn.style.minWidth = '';
+        btn.style.maxWidth = '';
+        btn.dataset.railFloating = '0';
+        if (btn._railSpacer && btn._railSpacer.parentNode) {
+            btn._railSpacer.remove();
         }
+        btn._railSpacer = null;
+    }
+
+    function floatRail(btn, opts) {
+        opts = opts || {};
+        if (!btn) return;
+        if (opts.pin) {
+            btn.dataset.railPinned = '1';
+        }
+        if (btn.dataset.railFloating === '1') return;
+        unfloatOtherHoverRails(btn);
         const r = btn.getBoundingClientRect();
         btn.style.position = 'fixed';
         btn.style.top = Math.round(r.top) + 'px';
         btn.style.left = Math.round(r.left) + 'px';
-        btn.style.width = Math.round(r.width) + 'px';
+        btn.style.width = '';
+        btn.style.minWidth = '';
         btn.style.maxWidth = '';
         const sp = document.createElement('span');
         sp.className = 'blog-cat-rail-spacer shrink-0 rounded-xl';
@@ -836,27 +859,80 @@ document.addEventListener('DOMContentLoaded', function() {
         btn._railSpacer = sp;
         btn.classList.add('blog-cat-rail-floating');
         btn.dataset.railFloating = '1';
-        floatedBtn = btn;
         syncFloatedRailPosition(btn);
         requestAnimationFrame(function() {
             syncFloatedRailPosition(btn);
         });
     }
 
+    function railBtnInAccordionRow(acc) {
+        const row = acc.closest('.blog-cat-row');
+        if (row) {
+            return row.querySelector('.blog-cat-rail-btn');
+        }
+        const parent = acc.parentElement;
+        return parent ? parent.querySelector('.blog-cat-rail-btn') : null;
+    }
+
+    function syncParentRailWithAccordion(acc) {
+        const rail = railBtnInAccordionRow(acc);
+        if (!rail) return;
+        const expanded = acc.getAttribute('aria-expanded') === 'true';
+        if (expanded) {
+            requestAnimationFrame(function() {
+                floatRail(rail, { pin: true });
+                requestAnimationFrame(function() {
+                    syncFloatedRailPosition(rail);
+                });
+            });
+        } else {
+            unfloatRailForce(rail);
+        }
+    }
+
+    document.querySelectorAll('.blog-cat-accordion').forEach(function(acc) {
+        acc.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const panelId = acc.getAttribute('aria-controls');
+            const panel = panelId ? document.getElementById(panelId) : null;
+            if (!panel) return;
+            const open = acc.getAttribute('aria-expanded') === 'true';
+            acc.setAttribute('aria-expanded', open ? 'false' : 'true');
+            panel.classList.toggle('hidden', open);
+            syncParentRailWithAccordion(acc);
+        });
+    });
+
+    document.querySelectorAll('.blog-cat-accordion[aria-expanded="true"]').forEach(function(acc) {
+        syncParentRailWithAccordion(acc);
+    });
+
     document.querySelectorAll('.blog-cat-rail-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            unfloatRail(btn);
-        }, true);
         btn.addEventListener('mouseenter', function() {
+            if (btn._railLeaveTimer) {
+                clearTimeout(btn._railLeaveTimer);
+                btn._railLeaveTimer = null;
+            }
             floatRail(btn);
         });
         btn.addEventListener('mouseleave', function() {
-            unfloatRail(btn);
+            if (btn._railLeaveTimer) clearTimeout(btn._railLeaveTimer);
+            btn._railLeaveTimer = setTimeout(function() {
+                btn._railLeaveTimer = null;
+                if (btn.dataset.railPinned === '1') return;
+                unfloatRail(btn);
+            }, 120);
         });
         btn.addEventListener('focusin', function() {
             floatRail(btn);
         });
         btn.addEventListener('focusout', function() {
+            if (btn._railLeaveTimer) {
+                clearTimeout(btn._railLeaveTimer);
+                btn._railLeaveTimer = null;
+            }
+            if (btn.dataset.railPinned === '1') return;
             unfloatRail(btn);
         });
     });
@@ -869,6 +945,24 @@ document.addEventListener('DOMContentLoaded', function() {
     if (nav) {
         nav.addEventListener('scroll', onScrollOrResize);
     }
+
+    window.blogCollapseAllCategoryNav = function() {
+        document.querySelectorAll('.blog-cat-accordion').forEach(function(acc) {
+            acc.setAttribute('aria-expanded', 'false');
+            var panelId = acc.getAttribute('aria-controls');
+            var panel = panelId ? document.getElementById(panelId) : null;
+            if (panel) {
+                panel.classList.add('hidden');
+            }
+        });
+        document.querySelectorAll('.blog-cat-rail-btn').forEach(function(btn) {
+            if (btn._railLeaveTimer) {
+                clearTimeout(btn._railLeaveTimer);
+                btn._railLeaveTimer = null;
+            }
+            unfloatRailForce(btn);
+        });
+    };
 });
 </script>
 
