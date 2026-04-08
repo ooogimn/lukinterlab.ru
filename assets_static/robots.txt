@@ -1,5 +1,5 @@
 # robots.txt for LukInterLab.ru
-# Last updated: 2025-01-27
+# Last updated: 2026-04-08
 
 # Allow all robots
 User-agent: *
@@ -55,5 +55,5 @@ Crawl-delay: 1
 # Clean parameters
 Clean-param: utm_source&utm_medium&utm_campaign&utm_content&utm_term&ref&source
 
-# Host
-Host: https://lukinterlab.ru 
+# Host (Yandex): только домен, без схемы
+Host: lukinterlab.ru

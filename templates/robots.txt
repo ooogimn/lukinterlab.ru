@@ -1,0 +1,59 @@
+# robots.txt for LukInterLab.ru
+# Last updated: 2026-04-08
+
+# Allow all robots
+User-agent: *
+Allow: /
+Allow: /blog/
+Allow: /otziv/
+Allow: /otzivs/
+
+# Special rules for major search engines
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+User-agent: Yandex
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+# Disallow admin and private pages
+Disallow: /admin/
+Disallow: /search/
+Disallow: /ckeditor/
+Disallow: /accounts/
+Disallow: /login/
+Disallow: /logout/
+Disallow: /password/
+Disallow: /api/
+
+# Disallow media files that don't need indexing
+Disallow: /media/images/
+Disallow: /static/img/
+Disallow: /static/admin/
+Disallow: /static/ckeditor/
+
+# Allow important static files
+Allow: /static/css/
+Allow: /static/js/
+Allow: /static/fonts/
+
+# Allow RSS feeds
+Allow: /blog/feed/
+Allow: /blog/rss/
+
+# Sitemap location
+Sitemap: https://lukinterlab.ru/sitemap.xml
+
+# Crawl delay (be nice to servers)
+Crawl-delay: 1
+
+# Clean parameters (Yandex)
+Clean-param: utm_source&utm_medium&utm_campaign&utm_content&utm_term&ref&source
+
+# Host (Yandex): только домен, без схемы
+Host: lukinterlab.ru
