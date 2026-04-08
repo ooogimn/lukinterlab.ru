@@ -10,6 +10,50 @@
 
 {% block page_title %}{{ post.meta_title|default:post.title }} | Блог LukInterLab{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Тело статьи (CKEditor): без горизонтальной прокрутки viewport на мобильных (Яндекс.Вебмастер) */
+    .blog-post-html {
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+    }
+    .blog-post-html img,
+    .blog-post-html video,
+    .blog-post-html iframe,
+    .blog-post-html embed,
+    .blog-post-html object {
+        max-width: 100%;
+        height: auto;
+    }
+    .blog-post-html figure {
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .blog-post-html pre {
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .blog-post-html table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .blog-post-html td,
+    .blog-post-html th {
+        word-break: break-word;
+    }
+    /* Оглавление статьи — длинные заголовки не раздувают страницу */
+    .table-of-contents {
+        max-width: 100%;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+    }
+</style>
+{% endblock %}
+
 {% block canonical %}
 <link rel="canonical" href="https://lukinterlab.ru{{ post.get_absolute_url }}">
 {% endblock %}

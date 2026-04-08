@@ -12,11 +12,11 @@
 
 <!-- Blog Post Detail -->
 <article class="py-12 bg-white">
-    <div class="max-w-4xl mx-auto px-4">
+    <div class="max-w-4xl mx-auto w-full min-w-0 px-4">
         <!-- Breadcrumb -->
-        <nav class="mb-8">
-            <div class="flex items-center justify-between">
-                <ol class="flex items-center space-x-2 text-sm text-gray-500">
+        <nav class="mb-8 min-w-0" aria-label="Навигация по разделам">
+            <div class="flex flex-col gap-4 min-w-0 sm:flex-row sm:items-start sm:justify-between">
+                <ol class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500 list-none p-0 m-0">
                     <li><a href="{% url 'home:home' %}" class="hover:text-primary-600">Главная</a></li>
                     <li><span class="mx-2">/</span></li>
                     <li><a href="{% url 'Blog:post_list' %}" class="hover:text-primary-600">Блог</a></li>
@@ -28,7 +28,7 @@
                 
                 <!-- Редактирование / удаление: staff и суперюзер -->
                 {% if user.is_authenticated and user.is_staff %}
-                <div class="flex items-center gap-2">
+                <div class="flex shrink-0 flex-wrap items-center gap-2">
                     <a href="{% url 'Blog:post_edit' post.id post.slug %}" 
                        class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-semibold">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -58,8 +58,8 @@
             </h1>
 
             <!-- Meta Information -->
-            <div class="flex flex-wrap items-center text-sm text-gray-500 mb-6">
-                <div class="flex flex-col sm:flex-row sm:items-center mr-6 gap-1 sm:gap-3">
+            <div class="flex min-w-0 flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-500 mb-6">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
                     <div class="flex items-center">
                         <svg class="w-4 h-4 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -74,7 +74,7 @@
                     <span class="text-xs text-gray-400 sm:border-l sm:border-gray-200 sm:pl-3">Создано: {{ post.created|date:"d.m.Y" }}</span>
                 </div>
                 {% if post.vk_posted_at %}
-                <div class="flex items-center mr-6 flex-wrap gap-x-1">
+                <div class="flex flex-wrap items-center gap-x-1">
                     <span class="mr-1 rounded bg-[#0077FF] px-1.5 py-0.5 text-[10px] font-bold text-white leading-none" title="ВКонтакте">VK</span>
                     <span class="font-medium text-gray-700">в сообществе:</span>
                     {% if post.vk_wall_url %}
@@ -85,13 +85,13 @@
                 </div>
                 {% endif %}
                 {% if post.max_posted_at %}
-                <div class="flex items-center mr-6 flex-wrap gap-x-1">
+                <div class="flex flex-wrap items-center gap-x-1">
                     <span class="mr-1 rounded bg-violet-600 px-1.5 py-0.5 text-[10px] font-bold text-white leading-none" title="MAX">MAX</span>
                     <span class="text-gray-500">анонс {{ post.max_posted_at|date:"d.m.Y" }}</span>
                 </div>
                 {% endif %}
                 {% if post.views %}
-                <div class="flex items-center mr-6">
+                <div class="flex items-center">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
@@ -100,14 +100,14 @@
                 </div>
                 {% endif %}
                 {% if post.author %}
-                <a href="{% url 'Blog:post_list' %}?author={{ post.author.id }}" class="flex items-center mr-6 hover:text-primary-600 transition-colors cursor-pointer">
+                <a href="{% url 'Blog:post_list' %}?author={{ post.author.id }}" class="flex items-center hover:text-primary-600 transition-colors cursor-pointer">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                     </svg>
                     {{ post.author.get_full_name|default:post.author.username }}
                 </a>
                 {% endif %}
-                <a href="#comments" class="flex items-center mr-6 hover:text-primary-600 transition-colors cursor-pointer">
+                <a href="#comments" class="flex items-center hover:text-primary-600 transition-colors cursor-pointer">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
                     </svg>
@@ -191,10 +191,10 @@
         {% endif %}
 
         <!-- Post Content -->
-        <div class="prose prose-lg max-w-none mb-12">
+        <div class="prose prose-lg max-w-none mb-12 min-w-0">
             {# Описание не отображается на сайте - используется только для Telegram #}
 
-            <div class="text-gray-800 leading-relaxed cke_contents cke_contents_ltr">
+            <div class="blog-post-html text-gray-800 leading-relaxed cke_contents cke_contents_ltr min-w-0">
                 {% if post_content_with_toc %}
                 {{ post_content_with_toc|safe }}
                 {% else %}
@@ -221,7 +221,7 @@
         <!-- Share Buttons -->
         <div class="border-t border-gray-200 pt-8 mb-12">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Поделиться статьей</h3>
-            <div class="flex space-x-4">
+            <div class="flex flex-wrap gap-3">
                 <a href="https://t.me/share/url?url={{ request.build_absolute_uri }}&text={{ post.title }}" target="_blank" class="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-300">
                     <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
