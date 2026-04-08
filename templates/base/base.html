@@ -30,8 +30,8 @@
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ seo_og_title|default:'LukInterLab - Создание IT-решений и ИИ' }}">
-    <meta name="twitter:description" content="{{ seo_og_description|default:'Мы создаем мощные сайты, ботов, приложения и интернет-магазины с применением искусственного интеллекта.' }}">
+    <meta name="twitter:title" content="{% block twitter_title %}{{ seo_og_title|default:'LukInterLab - Создание IT-решений и ИИ' }}{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}{{ seo_og_description|default:'Мы создаем мощные сайты, ботов, приложения и интернет-магазины с применением искусственного интеллекта.' }}{% endblock %}">
     <meta name="twitter:image" content="{{ seo_og_image|default:'https://lukinterlab.ru/static/img/favicon.svg' }}">
     
     <!-- Additional SEO -->

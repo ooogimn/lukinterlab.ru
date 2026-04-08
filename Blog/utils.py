@@ -10,6 +10,40 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def effective_post_meta_description(post, max_length=160):
+    """
+    Непустое описание для meta description, og:twitter и JSON-LD.
+    Совпадает по смыслу с pre_save в Blog/signals (generate_seo_meta_tags), но работает
+    для старых постов без повторного save и при пустых полях в БД.
+    """
+    from home.seo_utils import SEOUtils
+
+    md = (getattr(post, 'meta_description', None) or '').strip()
+    if md:
+        return SEOUtils.generate_meta_description(md, max_length)
+
+    desc = (getattr(post, 'description', None) or '').strip()
+    if desc:
+        return SEOUtils.generate_meta_description(desc, max_length)
+
+    content = getattr(post, 'content', None) or ''
+    if content:
+        plain = SEOUtils.plain_text_for_meta(content)
+        snippet = ' '.join(plain.split()[:40])
+        gen = SEOUtils.generate_meta_description(snippet, max_length)
+        if gen:
+            return gen
+
+    title = (getattr(post, 'title', None) or '').strip()
+    if title:
+        fallback = f'{title} — статья в блоге LukInterLab.'
+        return SEOUtils.generate_meta_description(fallback, max_length)
+
+    return SEOUtils.generate_meta_description(
+        'Блог LukInterLab — IT, разработка и технологии.', max_length
+    )
+
+
 def safe_log_text(text: str) -> str:
     """Заголовки с emoji для Windows-консоли (cp1251): безопасная строка для logger."""
     if not text:
@@ -98,15 +132,15 @@ def generate_article_structured_data(post, request=None):
     elif post.kartinka:
         image_url = f"{site_url}{post.kartinka.url}"
     
-    # Очистка контента от HTML для description
-    content_text = re.sub(r'<[^>]+>', '', post.content or '')[:300]
+    # Описание для схемы — как на странице (непустое)
+    article_desc = effective_post_meta_description(post, max_length=320)
     
     # Structured data для Article
     article_data = {
         "@context": "https://schema.org",
         "@type": "Article",
         "headline": post.meta_title or post.title,
-        "description": post.meta_description or content_text,
+        "description": article_desc,
         "image": image_url,
         "datePublished": post.created.isoformat() if post.created else None,
         "dateModified": post.updated.isoformat() if post.updated else None,
@@ -257,7 +291,7 @@ def generate_howto_structured_data(post):
         "@context": "https://schema.org",
         "@type": "HowTo",
         "name": post.title,
-        "description": post.meta_description or post.description,
+        "description": effective_post_meta_description(post, max_length=320),
         "image": f"{site_url}{post.kartinka.url}" if post.kartinka else None,
         "totalTime": "PT30M",  # Примерное время, можно сделать динамическим
         "step": []  # Шаги можно извлечь из контента, но это сложнее

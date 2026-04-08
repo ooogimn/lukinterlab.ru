@@ -2,11 +2,13 @@
 {% load static %}
 
 {% block title %}{{ post.meta_title|default:post.title }} | Блог LukInterLab{% endblock %}
-{% block description %}{{ post.meta_description|default:post.description|truncatewords:25 }}{% endblock %}
+{% block description %}{{ post_meta_description }}{% endblock %}
 {% block keywords %}{{ post.meta_keywords|default:"" }}{% endblock %}
 
 {% block og_title %}{{ post.meta_title|default:post.title }}{% endblock %}
-{% block og_description %}{{ post.meta_description|default:post.description|truncatewords:25 }}{% endblock %}
+{% block og_description %}{{ post_meta_description }}{% endblock %}
+{% block twitter_title %}{{ post.meta_title|default:post.title }}{% endblock %}
+{% block twitter_description %}{{ post_meta_description }}{% endblock %}
 
 {% block page_title %}{{ post.meta_title|default:post.title }} | Блог LukInterLab{% endblock %}
 

@@ -2,8 +2,8 @@ from django.contrib.syndication.views import Feed
 from django.urls import reverse
 from django.utils.feedgenerator import Atom1Feed
 from .models import Post
+from .utils import effective_post_meta_description
 from django.conf import settings
-import re
 
 
 class LatestPostsFeed(Feed):
@@ -23,17 +23,8 @@ class LatestPostsFeed(Feed):
         return item.meta_title or item.title
     
     def item_description(self, item):
-        """Описание статьи для RSS"""
-        # Используем meta_description или генерируем из контента
-        if item.meta_description:
-            return item.meta_description
-        
-        # Очищаем HTML из контента и берем первые 200 символов
-        if item.content:
-            clean_content = re.sub(r'<[^>]+>', '', item.content)
-            return clean_content[:200] + '...' if len(clean_content) > 200 else clean_content
-        
-        return item.description or ''
+        """Описание статьи для RSS (та же логика, что и meta description на сайте)."""
+        return effective_post_meta_description(item, max_length=300)
     
     def item_link(self, item):
         """Ссылка на статью"""

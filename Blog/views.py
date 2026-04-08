@@ -161,8 +161,14 @@ def _singl_page_context(request, post, comment_form, show_form, **extra):
 
     comments_count = post.comments.filter(active=True).count()
 
-    from .utils import get_related_posts, generate_article_structured_data, generate_table_of_contents
-    from .utils import generate_faq_structured_data, generate_howto_structured_data
+    from .utils import (
+        get_related_posts,
+        generate_article_structured_data,
+        generate_table_of_contents,
+        generate_faq_structured_data,
+        generate_howto_structured_data,
+        effective_post_meta_description,
+    )
 
     related_posts = get_related_posts(post, limit=5)
     toc_html = None
@@ -181,6 +187,7 @@ def _singl_page_context(request, post, comment_form, show_form, **extra):
     ctx = {
         'post': post,
         'zagolovok': post.title,
+        'post_meta_description': effective_post_meta_description(post),
         'comments': comments,
         'comments_count': comments_count,
         'comment_form': comment_form,
