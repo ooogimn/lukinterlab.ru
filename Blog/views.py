@@ -19,6 +19,50 @@ import json
 logger = logging.getLogger(__name__)
 
 
+def category_subtree_ids(category):
+    """ID категории и всех потомков (MPTT) для фильтрации статей по «ветке»."""
+    return [category.pk] + list(category.get_descendants().values_list('pk', flat=True))
+
+
+def _category_sidebar_child_nodes(parent):
+    """Рекурсивное дерево для сайдбара: узел виден, если в нём или ниже есть статьи."""
+    nodes = []
+    for c in parent.get_children().annotate(
+        post_count=Count('posts', filter=Q(posts__status='published'))
+    ).order_by('lft'):
+        sub = _category_sidebar_child_nodes(c)
+        if c.post_count > 0 or sub:
+            nodes.append({'category': c, 'children': sub})
+    return nodes
+
+
+def build_blog_category_tree():
+    """Корни MPTT с детьми для левого сайдбара блога."""
+    tree = []
+    for root in Category.objects.filter(parent__isnull=True).annotate(
+        post_count=Count('posts', filter=Q(posts__status='published'))
+    ).order_by('tree_id', 'lft'):
+        children = _category_sidebar_child_nodes(root)
+        if root.post_count > 0 or children:
+            tree.append({'category': root, 'children': children})
+    return tree
+
+
+def normalize_blog_sort(sort_param):
+    if sort_param in ('newest', 'popular', 'likes'):
+        return sort_param
+    return 'newest'
+
+
+def apply_blog_post_sort(queryset, sort_key):
+    """Сортировка списка статей блога: newest | popular (просмотры) | likes."""
+    if sort_key == 'popular':
+        return queryset.order_by('-views', '-created')
+    if sort_key == 'likes':
+        return queryset.order_by('-likes_count', '-created')
+    return queryset.order_by('-created')
+
+
 def post_list(request, category_slug=None):
     category = None
     
@@ -41,9 +85,10 @@ def post_list(request, category_slug=None):
     
     posts = Post.objects.filter(status='published').annotate(
         comments_count=Count('comments', filter=Q(comments__active=True))
-    ).order_by('-created')
+    )
     count_post = Post.objects.filter(status='published').count()
-    
+    blog_sort = normalize_blog_sort(request.GET.get('sort'))
+
     # Фильтрация по параметрам запроса
     selected_category = request.GET.get('category')
     selected_tags = request.GET.getlist('tags')
@@ -51,14 +96,11 @@ def post_list(request, category_slug=None):
     
     if category_slug:
         category = get_object_or_404(Category, slug=category_slug)
-        # Только эта категория (без дочерних). Иначе у родителя вроде «Сайтостроение»
-        # в списке оказываются статьи всех подтем — выглядит как «всё подряд».
-        posts = posts.filter(category=category)
+        posts = posts.filter(category_id__in=category_subtree_ids(category))
         zagolovok = 'Категория: ' + category.title
     elif selected_category:
-        # Фильтрация по выбранной категории
-        posts = posts.filter(category_id=selected_category)
         selected_cat = Category.objects.get(id=selected_category)
+        posts = posts.filter(category_id__in=category_subtree_ids(selected_cat))
         zagolovok = f'Категория: {selected_cat.title}'
     elif selected_tags:
         # Фильтрация по выбранным тегам
@@ -80,7 +122,9 @@ def post_list(request, category_slug=None):
     
     # Получаем теги в зависимости от выбранной категории (GET или страница по slug)
     if category:
-        category_posts = Post.objects.filter(status='published', category=category)
+        category_posts = Post.objects.filter(
+            status='published', category_id__in=category_subtree_ids(category)
+        )
         all_tags = Tag.objects.filter(
             taggit_taggeditem_items__content_type__model='post',
             taggit_taggeditem_items__object_id__in=category_posts.values_list('id', flat=True)
@@ -91,8 +135,10 @@ def post_list(request, category_slug=None):
             ))
         ).filter(post_count__gt=0).distinct().order_by('name')
     elif selected_category:
-        # Если выбрана категория, показываем только теги из статей этой категории
-        category_posts = Post.objects.filter(status='published', category_id=selected_category)
+        selected_cat = Category.objects.get(id=selected_category)
+        category_posts = Post.objects.filter(
+            status='published', category_id__in=category_subtree_ids(selected_cat)
+        )
         all_tags = Tag.objects.filter(
             taggit_taggeditem_items__content_type__model='post',
             taggit_taggeditem_items__object_id__in=category_posts.values_list('id', flat=True)
@@ -107,7 +153,9 @@ def post_list(request, category_slug=None):
         all_tags = Tag.objects.annotate(
             post_count=Count('taggit_taggeditem_items', filter=Q(taggit_taggeditem_items__content_type__model='post'))
         ).filter(post_count__gt=0).order_by('name')
-    
+
+    posts = apply_blog_post_sort(posts, blog_sort)
+
     # Обновляем счетчик после фильтрации
     filtered_count = posts.count()
     
@@ -115,6 +163,11 @@ def post_list(request, category_slug=None):
     structured_data = None
     from .utils import generate_category_structured_data, generate_author_structured_data
     
+    if blog_sort == 'popular':
+        zagolovok = f'{zagolovok} · по просмотрам'
+    elif blog_sort == 'likes':
+        zagolovok = f'{zagolovok} · по лайкам'
+
     if category:
         # Structured data для категории
         structured_data = generate_category_structured_data(category, posts, request)
@@ -131,10 +184,13 @@ def post_list(request, category_slug=None):
     return render(request,
                   'blog/page_blog-1.html',
                   {'category': category,
+                   'tag': None,
                    'parent_categories': parent_categories,
                    'child_categories': child_categories,
                    'all_categories': all_categories,
+                   'blog_category_tree': build_blog_category_tree(),
                    'all_tags': all_tags,
+                   'blog_sort': blog_sort,
                    'selected_category': selected_category,
                    'selected_tags': selected_tags,
                    'posts': posts,
@@ -464,14 +520,27 @@ def post_list_by_tag(request, tag_slug=None):
         tag = get_object_or_404(Tag, name=decoded_slug)
         posts = posts.filter(tags__in=[tag])
     
+    blog_sort = normalize_blog_sort(request.GET.get('sort'))
+    posts = apply_blog_post_sort(posts, blog_sort)
+
     zagolovok = 'Тема: ' + tag.name
+    if blog_sort == 'popular':
+        zagolovok = f'{zagolovok} · по просмотрам'
+    elif blog_sort == 'likes':
+        zagolovok = f'{zagolovok} · по лайкам'
+
     return render(request,
                   'blog/page_blog-1.html',
                   {'tag': tag,
                    'zagolovok': zagolovok,
+                   'category': None,
                    'parent_categories': parent_categories,
                    'child_categories': child_categories,
                    'all_categories': all_categories,
+                   'blog_category_tree': build_blog_category_tree(),
+                   'blog_sort': blog_sort,
+                   'selected_category': None,
+                   'selected_tags': [],
                    'posts': posts,
                    'count_post': count_post})
 
@@ -547,23 +616,46 @@ def filter_posts_ajax(request):
     """API endpoint для фильтрации статей через AJAX без перезагрузки страницы"""
     if request.method == 'GET' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         category_id = request.GET.get('category')
-        
-        # Получаем все опубликованные статьи
+        tag_name = request.GET.get('tag')
+
         posts = Post.objects.filter(status='published').annotate(
             comments_count=Count('comments', filter=Q(comments__active=True))
-        ).order_by('-created')
-        
-        # Фильтруем по категории, если выбрана
+        )
+
+        title_parts = []
+
+        if tag_name:
+            try:
+                tag_obj = Tag.objects.get(name=unquote(tag_name))
+                posts = posts.filter(tags=tag_obj)
+                title_parts.append(f'Тема: {tag_obj.name}')
+            except Tag.DoesNotExist:
+                pass
+
         if category_id:
             try:
                 category = Category.objects.get(id=category_id)
-                posts = posts.filter(category=category)
-                zagolovok = f'Категория: {category.title}'
+                posts = posts.filter(category_id__in=category_subtree_ids(category))
+                title_parts.append(f'Категория: {category.title}')
             except Category.DoesNotExist:
-                zagolovok = 'Все статьи'
+                pass
+
+        sort_key = normalize_blog_sort(request.GET.get('sort'))
+        posts = apply_blog_post_sort(posts, sort_key)
+
+        sort_suffix = ''
+        if sort_key == 'popular':
+            sort_suffix = 'по просмотрам'
+        elif sort_key == 'likes':
+            sort_suffix = 'по лайкам'
+
+        if title_parts:
+            zagolovok = ' — '.join(title_parts)
         else:
             zagolovok = 'Все статьи'
-        
+        if sort_suffix:
+            zagolovok = f'{zagolovok} · {sort_suffix}'
+
         # Подготавливаем данные статей для JSON
         posts_data = []
         for post in posts:

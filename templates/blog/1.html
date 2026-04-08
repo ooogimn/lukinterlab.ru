@@ -1,55 +1,83 @@
 {% load static %}
 
+<script>
+window.BLOG_LIST_TAG_NAME = {% if tag %}"{{ tag.name|escapejs }}"{% else %}null{% endif %};
+window.BLOG_INITIAL_CATEGORY_ID = {% if category %}"{{ category.id }}"{% else %}null{% endif %};
+window.BLOG_INITIAL_SORT = "{{ blog_sort|default:'newest'|escapejs }}";
+window.BLOG_LIST_PATH = "{% url 'Blog:post_list' %}";
+</script>
+
 <!-- Blog Section -->
 <section class="py-12 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4">
-        <!-- Categories Filter Section -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-            <div class="flex items-center gap-3 mb-4">
-                <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path>
-                    <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path>
-                </svg>
-                <h2 class="text-xl font-bold text-blue-500">Популярные темы</h2>
-            </div>
-            <div class="flex flex-wrap gap-2 pb-2" id="categories-container">
-                <!-- Кнопка "Все статьи" -->
-                <button 
-                    class="category-btn px-3 py-1.5 rounded-lg text-sm font-semibold text-white transition-all duration-300 transform hover:scale-105 active-category"
-                    data-category-id=""
-                    style="background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);"
-                    id="btn-all">
-                    <span class="flex items-center gap-1">
-                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+        <div class="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
+            <!-- Сайдбар категорий (MPTT: иконки, аккордеон, фильтр по клику) -->
+            <aside class="relative z-10 w-full shrink-0 overflow-visible lg:sticky lg:top-24 lg:w-56" aria-label="Категории блога">
+                <div class="overflow-visible rounded-2xl bg-white p-4 shadow-lg">
+                    <div class="mb-3 flex items-center gap-2 text-sm font-bold text-gray-800">
+                        <svg class="h-5 w-5 text-violet-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path>
+                            <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path>
                         </svg>
-                        Все статьи
-                    </span>
-                </button>
-                
-                <!-- Кнопки категорий -->
-                {% for cat in all_categories %}
-                <button 
-                    class="category-btn px-3 py-1.5 rounded-lg text-sm font-semibold text-white transition-all duration-300 transform hover:scale-105"
-                    data-category-id="{{ cat.id }}"
-                    data-category-name="{{ cat.title }}"
-                    style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);"
-                    id="btn-category-{{ cat.id }}">
-                    <span class="flex items-center gap-1">
-                        {{ cat.title }}
-                        <span class="px-1.5 py-0.5 rounded-full text-xs font-bold" style="background: rgba(255, 255, 255, 0.2);">
-                            {{ cat.post_count }}
+                        Категории
+                    </div>
+                    <button type="button"
+                            class="category-btn mb-4 w-full rounded-xl px-3 py-2.5 text-sm font-semibold text-white shadow-md transition hover:scale-[1.02] active-category"
+                            data-category-id=""
+                            style="background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);"
+                            id="btn-all">
+                        <span class="flex items-center justify-center gap-2">
+                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                            </svg>
+                            Все статьи
                         </span>
-                    </span>
-                </button>
-                {% endfor %}
-            </div>
-        </div>
+                    </button>
+                    <nav id="blog-category-nav" class="blog-category-nav blog-category-nav--scrollbar-left max-h-[min(70vh,32rem)] overflow-y-auto overflow-x-hidden [scrollbar-width:thin]" aria-label="Дерево категорий">
+                        <div class="blog-category-nav-inner">
+                        {% if blog_category_tree %}
+                        {% include "blog/partials/category_sidebar_node.html" with nodes=blog_category_tree %}
+                        {% endif %}
+                        </div>
+                    </nav>
+                </div>
+            </aside>
 
+            <div class="min-w-0 w-full flex-1">
         <!-- Section Header (скрыт, но нужен для JavaScript) -->
         <h1 class="hidden" id="page-title">
             {% if not zagolovok %}Блог LukinterLab{% else %}{{ zagolovok }}{% endif %}
         </h1>
+
+        <!-- Сортировка (сочетается с фильтром по категории / теме) -->
+        <div class="mb-8 rounded-2xl bg-white p-6 shadow-lg">
+            <div class="mb-4 flex items-center gap-3">
+                <svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z"></path>
+                </svg>
+                <h2 class="text-xl font-bold text-blue-500">Порядок статей</h2>
+            </div>
+            <div id="blog-sort-buttons" class="flex flex-wrap gap-2" role="group" aria-label="Сортировка списка статей">
+                <button type="button"
+                        class="blog-sort-btn rounded-lg px-3 py-1.5 text-sm font-semibold text-white transition-all duration-300 hover:scale-105 {% if blog_sort|default:'newest' == 'newest' %}active-sort{% endif %}"
+                        data-sort="newest"
+                        style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);">
+                    Самые новые
+                </button>
+                <button type="button"
+                        class="blog-sort-btn rounded-lg px-3 py-1.5 text-sm font-semibold text-white transition-all duration-300 hover:scale-105 {% if blog_sort|default:'newest' == 'popular' %}active-sort{% endif %}"
+                        data-sort="popular"
+                        style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);">
+                    По просмотрам
+                </button>
+                <button type="button"
+                        class="blog-sort-btn rounded-lg px-3 py-1.5 text-sm font-semibold text-white transition-all duration-300 hover:scale-105 {% if blog_sort|default:'newest' == 'likes' %}active-sort{% endif %}"
+                        data-sort="likes"
+                        style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);">
+                    По лайкам
+                </button>
+            </div>
+        </div>
 
         <!-- Active Filters -->
         {% if selected_category or selected_tags %}
@@ -210,6 +238,8 @@
         </div>
         {% endif %}
         </div>
+            </div>
+        </div>
     </div>
 </section>
 
@@ -260,11 +290,67 @@
     scrollbar-width: none;
 }
 
-/* Стили для активной категории */
-.category-btn.active-category {
+/* Активная категория: чип «Все статьи» */
+#btn-all.category-btn.active-category {
+    transform: scale(1.02);
+    box-shadow: 0 3px 6px rgba(124, 58, 237, 0.4) !important;
+    background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 50%, #8b5cf6 100%) !important;
+}
+
+/* Активная категория: иконка в сайдбаре */
+.category-btn.blog-cat-icon-btn.active-category {
+    border-color: #7c3aed !important;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.35);
+}
+
+.blog-cat-accordion[aria-expanded="true"] .blog-cat-chevron {
+    transform: rotate(180deg);
+}
+
+/* В списке категорий кнопка всегда узкая — без расширения потока (нет гориз. скролла) */
+.blog-cat-rail-btn {
+    max-width: 3rem;
+}
+.blog-category-nav--scrollbar-left {
+    direction: rtl;
+}
+.blog-category-nav-inner {
+    direction: ltr;
+    text-align: left;
+    padding-right: 2px;
+    padding-left: 4px;
+}
+
+.blog-cat-rail-label {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease;
+}
+/* «Всплытие» поверх страницы задаётся скриптом + класс ниже */
+.blog-cat-rail-btn.blog-cat-rail-floating {
+    z-index: 10050;
+    max-width: min(18rem, calc(100vw - 1rem)) !important;
+    border-color: rgb(196 181 253);
+    box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18);
+    transition: max-width 0.22s ease, box-shadow 0.2s ease, border-color 0.15s ease;
+}
+.blog-cat-rail-btn.blog-cat-rail-floating .blog-cat-rail-label {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.blog-sort-btn.active-sort {
     transform: scale(1.05);
     box-shadow: 0 3px 6px rgba(124, 58, 237, 0.4) !important;
     background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 50%, #8b5cf6 100%) !important;
+}
+
+.blog-category-nav::-webkit-scrollbar {
+    width: 6px;
+}
+.blog-category-nav::-webkit-scrollbar-thumb {
+    background-color: rgba(100, 116, 139, 0.45);
+    border-radius: 4px;
 }
 </style>
 
@@ -359,36 +445,121 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentCategoryId = '';
     let currentCategoryTitle = '';
 
-    // Функция для обновления активной кнопки категории
-    function updateActiveButton(categoryId) {
-        categoryButtons.forEach(btn => {
-            btn.classList.remove('active-category');
-            // Восстанавливаем обычный градиент для неактивных кнопок
-            const btnId = btn.getAttribute('data-category-id');
-            if (btnId === '') {
-                btn.style.background = 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)';
+    const urlParams = new URLSearchParams(window.location.search);
+    let currentSort = urlParams.get('sort');
+    if (!currentSort || !['newest', 'popular', 'likes'].includes(currentSort)) {
+        currentSort = window.BLOG_INITIAL_SORT || 'newest';
+    }
+
+    function isMainBlogListPath(pathname) {
+        const p = (pathname || '').replace(/\/+$/, '') || '/';
+        const root = (window.BLOG_LIST_PATH || '/blog/').replace(/\/+$/, '') || '/';
+        return p === root;
+    }
+
+    function syncBlogListUrl() {
+        const u = new URL(window.location.href);
+        const path = u.pathname;
+        if (isMainBlogListPath(path)) {
+            if (currentCategoryId) {
+                u.searchParams.set('category', currentCategoryId);
             } else {
-                btn.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
+                u.searchParams.delete('category');
             }
-            btn.style.opacity = '1';
-        });
-        
-        if (categoryId === '') {
-            const btnAll = document.getElementById('btn-all');
-            btnAll.classList.add('active-category');
-            // Применяем яркий фиолетовый градиент для активной кнопки "Все"
-            btnAll.style.background = 'linear-gradient(135deg, #6d28d9 0%, #7c3aed 50%, #8b5cf6 100%)';
+        }
+        if (path.indexOf('/tag/') !== -1) {
+            u.searchParams.delete('category');
+        }
+        if (currentSort && currentSort !== 'newest') {
+            u.searchParams.set('sort', currentSort);
         } else {
-            const btn = document.getElementById(`btn-category-${categoryId}`);
-            if (btn) {
-                btn.classList.add('active-category');
-                // Применяем яркий фиолетовый градиент для активной кнопки категории
-                btn.style.background = 'linear-gradient(135deg, #6d28d9 0%, #7c3aed 50%, #8b5cf6 100%)';
+            u.searchParams.delete('sort');
+        }
+        history.replaceState({}, '', u.pathname + (u.search || ''));
+    }
+
+    function updateActiveSortButtons() {
+        document.querySelectorAll('.blog-sort-btn').forEach(function(btn) {
+            btn.classList.remove('active-sort');
+            btn.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
+            btn.style.boxShadow = '0 2px 4px rgba(59, 130, 246, 0.3)';
+        });
+        const active = document.querySelector('.blog-sort-btn[data-sort="' + currentSort + '"]');
+        if (active) {
+            active.classList.add('active-sort');
+            active.style.background = 'linear-gradient(135deg, #6d28d9 0%, #7c3aed 50%, #8b5cf6 100%)';
+            active.style.boxShadow = '0 3px 6px rgba(124, 58, 237, 0.4)';
+        }
+    }
+
+    updateActiveSortButtons();
+
+    document.querySelectorAll('.blog-sort-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            currentSort = btn.getAttribute('data-sort') || 'newest';
+            updateActiveSortButtons();
+            loadPosts(currentCategoryId || '');
+        });
+    });
+
+    function expandAncestorsForCategory(categoryId) {
+        if (!categoryId) return;
+        const btn = document.getElementById('btn-category-' + categoryId);
+        if (!btn) return;
+        let container = btn.closest('.blog-cat-node');
+        while (container) {
+            const parentPanel = container.parentElement;
+            if (parentPanel && parentPanel.classList.contains('blog-cat-children')) {
+                parentPanel.classList.remove('hidden');
+                const row = parentPanel.previousElementSibling;
+                if (row) {
+                    const acc = row.querySelector('.blog-cat-accordion');
+                    if (acc) {
+                        acc.setAttribute('aria-expanded', 'true');
+                    }
+                }
+                container = parentPanel.closest('.blog-cat-node');
+            } else {
+                break;
             }
         }
     }
 
-    // Функция для загрузки статей через AJAX
+    document.querySelectorAll('.blog-cat-accordion').forEach(function(acc) {
+        acc.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const panelId = acc.getAttribute('aria-controls');
+            const panel = panelId ? document.getElementById(panelId) : null;
+            if (!panel) return;
+            const open = acc.getAttribute('aria-expanded') === 'true';
+            acc.setAttribute('aria-expanded', open ? 'false' : 'true');
+            panel.classList.toggle('hidden', open);
+        });
+    });
+
+    function updateActiveButton(categoryId) {
+        categoryButtons.forEach(btn => {
+            btn.classList.remove('active-category');
+            if (btn.id === 'btn-all') {
+                btn.style.background = 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)';
+            }
+        });
+
+        if (categoryId === '' || categoryId == null) {
+            const btnAll = document.getElementById('btn-all');
+            if (btnAll) {
+                btnAll.classList.add('active-category');
+                btnAll.style.background = 'linear-gradient(135deg, #6d28d9 0%, #7c3aed 50%, #8b5cf6 100%)';
+            }
+        } else {
+            const btn = document.getElementById('btn-category-' + categoryId);
+            if (btn) {
+                btn.classList.add('active-category');
+            }
+        }
+    }
+
     function loadPosts(categoryId) {
         // Показываем индикатор загрузки
         postsContainer.innerHTML = `
@@ -403,6 +574,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const params = new URLSearchParams();
         if (categoryId) {
             params.append('category', categoryId);
+        }
+        if (window.BLOG_LIST_TAG_NAME) {
+            params.append('tag', window.BLOG_LIST_TAG_NAME);
+        }
+        if (currentSort) {
+            params.append('sort', currentSort);
         }
 
         // Отправляем AJAX запрос
@@ -420,6 +597,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Обновляем статьи
                 if (data.posts.length > 0) {
+                    syncBlogListUrl();
                     let postsHTML = '<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8" id="posts-grid">';
                     
                     data.posts.forEach(post => {
@@ -531,6 +709,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     postsHTML += '</div>';
                     postsContainer.innerHTML = postsHTML;
                 } else {
+                    syncBlogListUrl();
                     postsContainer.innerHTML = `
                         <div class="text-center py-12" id="empty-state">
                             <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -582,14 +761,113 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Инициализация: если есть выбранная категория в URL, активируем её
-    const urlParams = new URLSearchParams(window.location.search);
-    const selectedCategory = urlParams.get('category');
+    const categoryFromQuery = urlParams.get('category');
+    let selectedCategory = categoryFromQuery;
+    if (!selectedCategory && window.BLOG_INITIAL_CATEGORY_ID) {
+        selectedCategory = String(window.BLOG_INITIAL_CATEGORY_ID);
+    }
     if (selectedCategory) {
-        const btn = document.getElementById(`btn-category-${selectedCategory}`);
+        expandAncestorsForCategory(selectedCategory);
+        const btn = document.getElementById('btn-category-' + selectedCategory);
         if (btn) {
-            btn.click();
+            currentCategoryId = selectedCategory;
+            currentCategoryTitle = btn.getAttribute('data-category-name') || '';
+            updateActiveButton(selectedCategory);
+            if (categoryFromQuery) {
+                loadPosts(selectedCategory);
+            }
         }
+    } else {
+        updateActiveButton('');
+    }
+});
+</script>
+
+<script>
+/* Раскрытие кнопки категории поверх вёрстки (fixed), без гориз. прокрутки у nav */
+document.addEventListener('DOMContentLoaded', function() {
+    const nav = document.getElementById('blog-category-nav');
+    let floatedBtn = null;
+
+    function syncFloatedRailPosition(btn) {
+        if (!btn || btn.dataset.railFloating !== '1' || !btn._railSpacer) return;
+        const r = btn._railSpacer.getBoundingClientRect();
+        btn.style.top = Math.round(r.top) + 'px';
+        btn.style.left = Math.round(r.left) + 'px';
+    }
+
+    function unfloatRail(btn) {
+        if (!btn || btn.dataset.railFloating !== '1') return;
+        btn.classList.remove('blog-cat-rail-floating');
+        btn.style.position = '';
+        btn.style.top = '';
+        btn.style.left = '';
+        btn.style.width = '';
+        btn.style.maxWidth = '';
+        btn.dataset.railFloating = '0';
+        if (btn._railSpacer && btn._railSpacer.parentNode) {
+            btn._railSpacer.remove();
+        }
+        btn._railSpacer = null;
+        if (floatedBtn === btn) {
+            floatedBtn = null;
+        }
+    }
+
+    function floatRail(btn) {
+        if (!btn || btn.dataset.railFloating === '1') return;
+        if (floatedBtn && floatedBtn !== btn) {
+            unfloatRail(floatedBtn);
+        }
+        const r = btn.getBoundingClientRect();
+        btn.style.position = 'fixed';
+        btn.style.top = Math.round(r.top) + 'px';
+        btn.style.left = Math.round(r.left) + 'px';
+        btn.style.width = Math.round(r.width) + 'px';
+        btn.style.maxWidth = '';
+        const sp = document.createElement('span');
+        sp.className = 'blog-cat-rail-spacer shrink-0 rounded-xl';
+        sp.style.display = 'inline-block';
+        sp.style.width = Math.round(r.width) + 'px';
+        sp.style.height = Math.round(r.height) + 'px';
+        sp.style.verticalAlign = 'middle';
+        sp.setAttribute('aria-hidden', 'true');
+        btn.parentNode.insertBefore(sp, btn);
+        btn._railSpacer = sp;
+        btn.classList.add('blog-cat-rail-floating');
+        btn.dataset.railFloating = '1';
+        floatedBtn = btn;
+        syncFloatedRailPosition(btn);
+        requestAnimationFrame(function() {
+            syncFloatedRailPosition(btn);
+        });
+    }
+
+    document.querySelectorAll('.blog-cat-rail-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            unfloatRail(btn);
+        }, true);
+        btn.addEventListener('mouseenter', function() {
+            floatRail(btn);
+        });
+        btn.addEventListener('mouseleave', function() {
+            unfloatRail(btn);
+        });
+        btn.addEventListener('focusin', function() {
+            floatRail(btn);
+        });
+        btn.addEventListener('focusout', function() {
+            unfloatRail(btn);
+        });
+    });
+
+    function onScrollOrResize() {
+        document.querySelectorAll('.blog-cat-rail-btn[data-rail-floating="1"]').forEach(syncFloatedRailPosition);
+    }
+    window.addEventListener('scroll', onScrollOrResize, true);
+    window.addEventListener('resize', onScrollOrResize);
+    if (nav) {
+        nav.addEventListener('scroll', onScrollOrResize);
     }
 });
 </script>

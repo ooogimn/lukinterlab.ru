@@ -1,0 +1,42 @@
+{% load static %}
+{# nodes: список словарей { category, children } для рекурсивного MPTT-дерева #}
+{% for node in nodes %}
+<div class="blog-cat-node mb-1">
+    <div class="flex min-w-0 items-center gap-1">
+        {% if node.children %}
+        <button type="button"
+                class="blog-cat-accordion flex h-11 w-8 shrink-0 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                aria-expanded="false"
+                aria-controls="blog-subcat-{{ node.category.id }}">
+            <svg class="blog-cat-chevron h-4 w-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </button>
+        {% else %}
+        <span class="inline-block h-11 w-8 shrink-0" aria-hidden="true"></span>
+        {% endif %}
+        <button type="button"
+                class="category-btn blog-cat-icon-btn blog-cat-rail-btn relative z-0 flex h-12 shrink-0 items-center overflow-hidden rounded-xl border-2 border-transparent bg-gradient-to-br from-violet-100 to-blue-50 text-left shadow-sm transition-[max-width,box-shadow] duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                data-category-id="{{ node.category.id }}"
+                data-category-name="{{ node.category.title }}"
+                id="btn-category-{{ node.category.id }}"
+                aria-label="{{ node.category.title }}">
+            <span class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-l-xl text-sm font-bold text-violet-800">
+                {% if node.category.kartinka_cat %}
+                <img src="{{ node.category.kartinka_cat.url }}" alt="" class="h-full w-full object-cover" width="48" height="48" loading="lazy">
+                {% else %}
+                <span class="select-none text-base uppercase">{{ node.category.title|slice:":1" }}</span>
+                {% endif %}
+            </span>
+            <span class="blog-cat-rail-label min-w-0 flex-1 truncate pr-2 text-xs font-semibold leading-tight text-violet-900">
+                {{ node.category.title }}
+            </span>
+        </button>
+    </div>
+    {% if node.children %}
+    <div id="blog-subcat-{{ node.category.id }}" class="blog-cat-children ml-4 hidden border-l border-gray-200 py-1 pl-3" role="region">
+        {% include "blog/partials/category_sidebar_node.html" with nodes=node.children %}
+    </div>
+    {% endif %}
+</div>
+{% endfor %}
