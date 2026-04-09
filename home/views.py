@@ -154,7 +154,7 @@ def home(request):
                    'rabotas': rabotas,
                    'services': services,
                    'standalone_extra_services': standalone_extra_services,
-                   'page_title': page_title,
+                   'title': "LukInterLab - Главная",
                    'seo_title': seo_title,
                    'seo_description': seo_description,
                    'seo_canonical': seo_canonical,
