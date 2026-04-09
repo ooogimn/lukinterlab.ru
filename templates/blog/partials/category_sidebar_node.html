@@ -5,15 +5,15 @@
     <div class="blog-cat-row flex min-w-0 items-center gap-1">
         {% if node.children %}
         <button type="button"
-                class="blog-cat-accordion flex h-11 w-8 shrink-0 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                class="blog-cat-accordion flex h-11 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-200/70 bg-gradient-to-br from-violet-50 via-white to-indigo-50 text-violet-600 shadow-sm transition-all duration-200 hover:border-violet-300 hover:from-violet-100 hover:via-violet-50 hover:to-indigo-100 hover:text-violet-800 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-1 active:scale-95"
                 aria-expanded="false"
                 aria-controls="blog-subcat-{{ node.category.id }}">
-            <svg class="blog-cat-chevron h-4 w-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            <svg class="blog-cat-chevron h-5 w-5 shrink-0 transition-transform duration-300 ease-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 9l6 6 6-6"></path>
             </svg>
         </button>
         {% else %}
-        <span class="inline-block h-11 w-8 shrink-0" aria-hidden="true"></span>
+        <span class="inline-block h-11 w-10 shrink-0" aria-hidden="true"></span>
         {% endif %}
         <button type="button"
                 class="category-btn blog-cat-icon-btn blog-cat-rail-btn relative z-0 flex h-12 shrink-0 items-center overflow-hidden rounded-xl border-2 border-transparent bg-gradient-to-br from-violet-100 to-blue-50 text-left shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"

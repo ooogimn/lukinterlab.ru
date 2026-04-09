@@ -14,25 +14,24 @@ window.BLOG_LIST_PATH = "{% url 'Blog:post_list' %}";
             <!-- Сайдбар категорий (MPTT: иконки, аккордеон, фильтр по клику) -->
             <aside class="relative z-10 w-full shrink-0 overflow-visible lg:sticky lg:top-24 lg:w-56" aria-label="Категории блога">
                 <div class="overflow-visible rounded-2xl bg-white p-4 shadow-lg">
-                    <div class="mb-3 flex items-center gap-2 text-sm font-bold text-gray-800">
-                        <svg class="h-5 w-5 text-violet-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                            <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path>
-                            <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path>
-                        </svg>
-                        Категории
+                    <div class="blog-cat-row mb-4 flex min-w-0 items-center gap-1">
+                        <span class="inline-block h-11 w-10 shrink-0" aria-hidden="true"></span>
+                        <button type="button"
+                                class="category-btn blog-cat-icon-btn blog-cat-rail-btn relative z-0 flex h-12 shrink-0 items-center overflow-hidden rounded-xl border-2 border-transparent text-left shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 {% if not category %}active-category{% endif %}"
+                                data-category-id=""
+                                style="background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);"
+                                id="btn-all"
+                                aria-label="Все статьи">
+                            <span class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-l-xl text-white" aria-hidden="true">
+                                <svg class="h-5 w-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                </svg>
+                            </span>
+                            <span class="blog-cat-rail-label min-w-0 flex-1 truncate pr-2 text-xs font-semibold leading-tight text-white">
+                                Все статьи
+                            </span>
+                        </button>
                     </div>
-                    <button type="button"
-                            class="category-btn mb-4 w-full rounded-xl px-3 py-2.5 text-sm font-semibold text-white shadow-md transition hover:scale-[1.02] active-category"
-                            data-category-id=""
-                            style="background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);"
-                            id="btn-all">
-                        <span class="flex items-center justify-center gap-2">
-                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                            </svg>
-                            Все статьи
-                        </span>
-                    </button>
                     <nav id="blog-category-nav" class="blog-category-nav blog-category-nav--scrollbar-left max-h-[min(70vh,32rem)] overflow-y-auto overflow-x-hidden [scrollbar-width:thin]" aria-label="Дерево категорий">
                         <div class="blog-category-nav-inner">
                         {% if blog_category_tree %}
@@ -44,22 +43,49 @@ window.BLOG_LIST_PATH = "{% url 'Blog:post_list' %}";
             </aside>
 
             <div class="min-w-0 w-full flex-1">
-        <!-- Category Header (отображается при фильтрации по категории) -->
-        <div id="category-header" class="mb-8 {% if not category %}hidden{% endif %}">
+        <!-- Шапка: заголовок (категория или весь блог) + сортировка + описание категории -->
+        <div id="category-header" class="mb-8"
+             data-default-title="{% if zagolovok %}{{ zagolovok|escape }}{% else %}Блог LukinterLab{% endif %}">
             <div class="rounded-2xl bg-white p-6 shadow-lg border-l-4 border-violet-600 flex flex-col sm:flex-row items-center sm:items-start gap-6 transition-all duration-300">
-                <div id="category-header-icon-container" class="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-violet-100 to-blue-50 flex items-center justify-center text-4xl font-bold text-violet-800 shadow-sm border border-violet-100">
-                    {% if category.kartinka_cat %}
-                        <img src="{{ category.kartinka_cat.url }}" alt="{{ category.title }}" class="h-full w-full object-cover" id="category-header-icon-img">
+                <div id="category-header-icon-container" class="h-24 w-24 shrink-0 overflow-hidden rounded-2xl flex items-center justify-center shadow-sm border {% if category %}bg-gradient-to-br from-violet-100 to-blue-50 text-4xl font-bold text-violet-800 border-violet-100{% else %}bg-gradient-to-br from-blue-600 to-indigo-600 text-white border-blue-500/30{% endif %}">
+                    {% if category %}
+                        {% if category.kartinka_cat %}
+                            <img src="{{ category.kartinka_cat.url }}" alt="{{ category.title }}" class="h-full w-full object-cover" id="category-header-icon-img">
+                        {% else %}
+                            <span id="category-header-icon-letter">{{ category.title|slice:":1"|upper }}</span>
+                        {% endif %}
                     {% else %}
-                        <span id="category-header-icon-letter">{% if category %}{{ category.title|slice:":1"|upper }}{% endif %}</span>
+                        <svg class="h-14 w-14 shrink-0 text-white" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
                     {% endif %}
                 </div>
-                <div class="min-w-0 flex-1 text-center sm:text-left">
+                <div class="min-w-0 flex-1 w-full text-center sm:text-left">
                     <h1 class="text-3xl lg:text-4xl font-black text-gray-900 mb-2 leading-tight" id="category-header-title">
-                        {{ category.title }}
+                        {% if category %}{{ category.title }}{% else %}{% if zagolovok %}{{ zagolovok }}{% else %}Блог LukinterLab{% endif %}{% endif %}
                     </h1>
+                    <div id="blog-sort-buttons" class="flex flex-wrap justify-center sm:justify-start gap-2 mt-1 mb-3" role="group" aria-label="Сортировка списка статей">
+                        <button type="button"
+                                class="blog-sort-btn rounded-lg px-3 py-1.5 text-sm font-semibold text-white transition-all duration-300 hover:scale-105 {% if blog_sort|default:'newest' == 'newest' %}active-sort{% endif %}"
+                                data-sort="newest"
+                                style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);">
+                            Самые новые
+                        </button>
+                        <button type="button"
+                                class="blog-sort-btn rounded-lg px-3 py-1.5 text-sm font-semibold text-white transition-all duration-300 hover:scale-105 {% if blog_sort|default:'newest' == 'popular' %}active-sort{% endif %}"
+                                data-sort="popular"
+                                style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);">
+                            По просмотрам
+                        </button>
+                        <button type="button"
+                                class="blog-sort-btn rounded-lg px-3 py-1.5 text-sm font-semibold text-white transition-all duration-300 hover:scale-105 {% if blog_sort|default:'newest' == 'likes' %}active-sort{% endif %}"
+                                data-sort="likes"
+                                style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);">
+                            По лайкам
+                        </button>
+                    </div>
                     <div id="category-header-description-container">
-                        {% if category.description %}
+                        {% if category and category.description %}
                         <p class="text-gray-600 text-lg leading-relaxed" id="category-header-description">
                             {{ category.description }}
                         </p>
@@ -73,36 +99,6 @@ window.BLOG_LIST_PATH = "{% url 'Blog:post_list' %}";
         <h1 class="hidden" id="page-title">
             {% if not zagolovok %}Блог LukinterLab{% else %}{{ zagolovok }}{% endif %}
         </h1>
-
-        <!-- Сортировка (сочетается с фильтром по категории / теме) -->
-        <div class="mb-8 rounded-2xl bg-white p-6 shadow-lg">
-            <div class="mb-4 flex items-center gap-3">
-                <svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                    <path d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z"></path>
-                </svg>
-                <h2 class="text-xl font-bold text-blue-500">Порядок статей</h2>
-            </div>
-            <div id="blog-sort-buttons" class="flex flex-wrap gap-2" role="group" aria-label="Сортировка списка статей">
-                <button type="button"
-                        class="blog-sort-btn rounded-lg px-3 py-1.5 text-sm font-semibold text-white transition-all duration-300 hover:scale-105 {% if blog_sort|default:'newest' == 'newest' %}active-sort{% endif %}"
-                        data-sort="newest"
-                        style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);">
-                    Самые новые
-                </button>
-                <button type="button"
-                        class="blog-sort-btn rounded-lg px-3 py-1.5 text-sm font-semibold text-white transition-all duration-300 hover:scale-105 {% if blog_sort|default:'newest' == 'popular' %}active-sort{% endif %}"
-                        data-sort="popular"
-                        style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);">
-                    По просмотрам
-                </button>
-                <button type="button"
-                        class="blog-sort-btn rounded-lg px-3 py-1.5 text-sm font-semibold text-white transition-all duration-300 hover:scale-105 {% if blog_sort|default:'newest' == 'likes' %}active-sort{% endif %}"
-                        data-sort="likes"
-                        style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);">
-                    По лайкам
-                </button>
-            </div>
-        </div>
 
         <!-- Active Filters -->
         {% if selected_category or selected_tags %}
@@ -328,6 +324,12 @@ window.BLOG_LIST_PATH = "{% url 'Blog:post_list' %}";
     box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.35);
 }
 
+.blog-cat-accordion[aria-expanded="true"] {
+    border-color: rgb(167 139 250) !important;
+    background: linear-gradient(135deg, rgb(237 233 254) 0%, rgb(224 231 255) 50%, rgb(238 242 255) 100%) !important;
+    color: rgb(91 33 182) !important;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.15);
+}
 .blog-cat-accordion[aria-expanded="true"] .blog-cat-chevron {
     transform: rotate(180deg);
 }
@@ -611,8 +613,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Обновляем заголовок
                 pageTitle.textContent = data.zagolovok;
                 
-                // Обновляем шапку категории
-                updateCategoryHeader(data.category_data);
+                // Обновляем шапку категории (и заголовок списка без категории = zagolovok)
+                updateCategoryHeader(data.category_data, data.zagolovok);
                 
                 // Обновляем статьи
                 if (data.posts.length > 0) {
@@ -759,35 +761,42 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Функция обновления шапки категории
-    function updateCategoryHeader(categoryData) {
+    var BLOG_HEADER_ICON_CLASS_CATEGORY = 'h-24 w-24 shrink-0 overflow-hidden rounded-2xl flex items-center justify-center shadow-sm border bg-gradient-to-br from-violet-100 to-blue-50 text-4xl font-bold text-violet-800 border-violet-100';
+    var BLOG_HEADER_ICON_CLASS_ALL = 'h-24 w-24 shrink-0 overflow-hidden rounded-2xl flex items-center justify-center shadow-sm border bg-gradient-to-br from-blue-600 to-indigo-600 text-white border-blue-500/30';
+    var BLOG_HEADER_ICON_SVG_ALL = '<svg class="h-14 w-14 shrink-0 text-white" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>';
+
+    // Функция обновления шапки категории (сортировка остаётся в этом блоке)
+    function updateCategoryHeader(categoryData, listTitle) {
         const header = document.getElementById('category-header');
         const title = document.getElementById('category-header-title');
         const descContainer = document.getElementById('category-header-description-container');
         const iconContainer = document.getElementById('category-header-icon-container');
-        
+        if (!header || !title || !descContainer || !iconContainer) return;
+
         if (categoryData) {
-            header.classList.remove('hidden');
             title.textContent = categoryData.title;
-            
-            // Обновляем описание
+            iconContainer.className = BLOG_HEADER_ICON_CLASS_CATEGORY;
+
             if (categoryData.description) {
-                descContainer.innerHTML = `<p class="text-gray-600 text-lg leading-relaxed" id="category-header-description">${categoryData.description}</p>`;
+                descContainer.innerHTML = '<p class="text-gray-600 text-lg leading-relaxed" id="category-header-description">' + categoryData.description + '</p>';
             } else {
                 descContainer.innerHTML = '';
             }
-            
-            // Обновляем иконку
+
             if (categoryData.icon_url) {
-                iconContainer.innerHTML = `<img src="${categoryData.icon_url}" alt="${categoryData.title}" class="h-full w-full object-cover" id="category-header-icon-img">`;
+                var safeAlt = String(categoryData.title || '').replace(/"/g, '&quot;');
+                iconContainer.innerHTML = '<img src="' + categoryData.icon_url + '" alt="' + safeAlt + '" class="h-full w-full object-cover" id="category-header-icon-img">';
             } else {
-                iconContainer.innerHTML = `<span id="category-header-icon-letter">${categoryData.first_letter}</span>`;
+                iconContainer.innerHTML = '<span id="category-header-icon-letter">' + (categoryData.first_letter || '') + '</span>';
             }
-            
-            // Прокрутка к началу контента при смене категории
+
             header.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else {
-            header.classList.add('hidden');
+            var def = (listTitle && String(listTitle).trim()) || header.getAttribute('data-default-title') || 'Блог LukinterLab';
+            title.textContent = def;
+            descContainer.innerHTML = '';
+            iconContainer.className = BLOG_HEADER_ICON_CLASS_ALL;
+            iconContainer.innerHTML = BLOG_HEADER_ICON_SVG_ALL;
         }
     }
 
