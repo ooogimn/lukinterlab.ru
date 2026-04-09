@@ -15,6 +15,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 import logging
 import json
+from home.seo_utils import SEOUtils
 
 logger = logging.getLogger(__name__)
 

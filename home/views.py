@@ -28,6 +28,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.urls import reverse, reverse_lazy
 from django.db.models import Q, Count
+from .seo_utils import SEOUtils
 from django.core.paginator import Paginator
 from django.utils import timezone
 from django.conf import settings
