@@ -143,6 +143,7 @@ def home(request):
     phone_for_link = legal_info_obj.phone or '+7-905-856-02-82'
     phone_for_link = phone_for_link.replace(' ', '').replace('(', '').replace(')', '').replace('-', '')
     
+    page_title = "LukInterLab - Главная"
     seo_title = "LukInterLab - AI и IT решения под ключ: создание сайтов, ИИ и автоматизация"
     seo_description = "Создаем мощные IT-решения под ключ: сайты, боты, мобильные приложения с ИИ. Автоматизируем бизнес и повышаем продажи. Посмотрите наше портфолио и отзывы."
     seo_canonical = request.build_absolute_uri(reverse('home:home'))
