@@ -7,8 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     
     <!-- SEO Meta Tags -->
-    <meta name="title" content="{% block title %}{{ seo_title|default:title|default:'LukInterLab - AI и IT решения под ключ' }}{% endblock %}">
-    <meta name="description" content="{% block description %}{{ seo_description|default:post_meta_description|default:'Мы создаем мощные сайты, ботов, приложения и интернет-магазины с применением искусственного интеллекта. Автоматизируем бизнес и повышаем продажи.' }}{% endblock %}">
+    <meta name="title" content="{% block title %}{% if seo_title %}{{ seo_title }}{% elif title %}{{ title }}{% else %}LukInterLab - AI и IT решения под ключ{% endif %}{% endblock %}">
+    <meta name="description" content="{% block description %}{% if seo_description %}{{ seo_description }}{% elif post_meta_description %}{{ post_meta_description }}{% else %}Мы создаем мощные сайты, ботов, приложения и интернет-магазины с применением искусственного интеллекта. Автоматизируем бизнес и повышаем продажи.{% endif %}{% endblock %}">
     <meta name="keywords" content="{% block keywords %}{{ seo_keywords|default:'разработка сайтов, IT компания, искусственный интеллект, боты, GPT, автоматизация бизнеса' }}{% endblock %}">
     <meta name="author" content="LukInterLab">
     <meta name="robots" content="index, follow">
@@ -316,7 +316,7 @@
     {% endif %}
      
     <!-- Индикатор загрузки -->
-    <div id="loading" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
+    <div id="loading" class="fixed inset-0 bg-white z-[9999] flex items-center justify-center">
         <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600"></div>
     </div>
     
