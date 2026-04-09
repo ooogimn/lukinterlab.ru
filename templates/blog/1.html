@@ -44,7 +44,32 @@ window.BLOG_LIST_PATH = "{% url 'Blog:post_list' %}";
             </aside>
 
             <div class="min-w-0 w-full flex-1">
-        <!-- Section Header (скрыт, но нужен для JavaScript) -->
+        <!-- Category Header (отображается при фильтрации по категории) -->
+        <div id="category-header" class="mb-8 {% if not category %}hidden{% endif %}">
+            <div class="rounded-2xl bg-white p-6 shadow-lg border-l-4 border-violet-600 flex flex-col sm:flex-row items-center sm:items-start gap-6 transition-all duration-300">
+                <div id="category-header-icon-container" class="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-violet-100 to-blue-50 flex items-center justify-center text-4xl font-bold text-violet-800 shadow-sm border border-violet-100">
+                    {% if category.kartinka_cat %}
+                        <img src="{{ category.kartinka_cat.url }}" alt="{{ category.title }}" class="h-full w-full object-cover" id="category-header-icon-img">
+                    {% else %}
+                        <span id="category-header-icon-letter">{% if category %}{{ category.title|slice:":1"|upper }}{% endif %}</span>
+                    {% endif %}
+                </div>
+                <div class="min-w-0 flex-1 text-center sm:text-left">
+                    <h1 class="text-3xl lg:text-4xl font-black text-gray-900 mb-2 leading-tight" id="category-header-title">
+                        {{ category.title }}
+                    </h1>
+                    <div id="category-header-description-container">
+                        {% if category.description %}
+                        <p class="text-gray-600 text-lg leading-relaxed" id="category-header-description">
+                            {{ category.description }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Header (скрыт, но основной для SEO) -->
         <h1 class="hidden" id="page-title">
             {% if not zagolovok %}Блог LukinterLab{% else %}{{ zagolovok }}{% endif %}
         </h1>
@@ -586,6 +611,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Обновляем заголовок
                 pageTitle.textContent = data.zagolovok;
                 
+                // Обновляем шапку категории
+                updateCategoryHeader(data.category_data);
+                
                 // Обновляем статьи
                 if (data.posts.length > 0) {
                     syncBlogListUrl();
@@ -729,6 +757,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
         });
+    }
+
+    // Функция обновления шапки категории
+    function updateCategoryHeader(categoryData) {
+        const header = document.getElementById('category-header');
+        const title = document.getElementById('category-header-title');
+        const descContainer = document.getElementById('category-header-description-container');
+        const iconContainer = document.getElementById('category-header-icon-container');
+        
+        if (categoryData) {
+            header.classList.remove('hidden');
+            title.textContent = categoryData.title;
+            
+            // Обновляем описание
+            if (categoryData.description) {
+                descContainer.innerHTML = `<p class="text-gray-600 text-lg leading-relaxed" id="category-header-description">${categoryData.description}</p>`;
+            } else {
+                descContainer.innerHTML = '';
+            }
+            
+            // Обновляем иконку
+            if (categoryData.icon_url) {
+                iconContainer.innerHTML = `<img src="${categoryData.icon_url}" alt="${categoryData.title}" class="h-full w-full object-cover" id="category-header-icon-img">`;
+            } else {
+                iconContainer.innerHTML = `<span id="category-header-icon-letter">${categoryData.first_letter}</span>`;
+            }
+            
+            // Прокрутка к началу контента при смене категории
+            header.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            header.classList.add('hidden');
+        }
     }
 
     // Обработчик клика по кнопкам категорий

@@ -99,9 +99,9 @@ def post_list(request, category_slug=None):
         posts = posts.filter(category_id__in=category_subtree_ids(category))
         zagolovok = 'Категория: ' + category.title
     elif selected_category:
-        selected_cat = Category.objects.get(id=selected_category)
-        posts = posts.filter(category_id__in=category_subtree_ids(selected_cat))
-        zagolovok = f'Категория: {selected_cat.title}'
+        category = get_object_or_404(Category, id=selected_category)
+        posts = posts.filter(category_id__in=category_subtree_ids(category))
+        zagolovok = f'Категория: {category.title}'
     elif selected_tags:
         # Фильтрация по выбранным тегам
         posts = posts.filter(tags__name__in=selected_tags).distinct()
@@ -632,11 +632,19 @@ def filter_posts_ajax(request):
             except Tag.DoesNotExist:
                 pass
 
+        category_data = None
         if category_id:
             try:
                 category = Category.objects.get(id=category_id)
                 posts = posts.filter(category_id__in=category_subtree_ids(category))
                 title_parts.append(f'Категория: {category.title}')
+                category_data = {
+                    'id': category.id,
+                    'title': category.title,
+                    'description': category.description or '',
+                    'icon_url': category.kartinka_cat.url if category.kartinka_cat else None,
+                    'first_letter': category.title[:1].upper()
+                }
             except Category.DoesNotExist:
                 pass
 
@@ -682,6 +690,7 @@ def filter_posts_ajax(request):
             'success': True,
             'posts': posts_data,
             'zagolovok': zagolovok,
+            'category_data': category_data,
             'count': len(posts_data)
         })
     
