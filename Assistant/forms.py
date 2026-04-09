@@ -372,7 +372,7 @@ class AIScheduleForm(forms.ModelForm):
             'first_run_date', 'first_run_hour', 'first_run_minute',
             'interval_hours', 'interval_minutes', 'is_active',
         )
-        sched_changed = any(self.has_changed(f) for f in sched_fields)
+        sched_changed = any(f in self.changed_data for f in sched_fields)
         if obj.is_active and obj.first_run_at and (not obj.pk or sched_changed):
             obj.sync_next_run()
         if commit:

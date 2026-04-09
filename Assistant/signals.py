@@ -40,15 +40,18 @@ def create_welcome_message(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=AISchedule)
 def setup_ai_schedule(sender, instance, created, **kwargs):
-    """Настроить расписание Django-Q при создании/обновлении AISchedule"""
+    """Синхронизировать глобальный CRON Django-Q (минутный тик) после любого сохранения AISchedule.
+
+    Раньше вызывалось только для is_active=True, а в dashboard ещё раз вызывали setup_schedules()
+    без try/except — при сбое в БД django_q сигнал глотал ошибку, а view повторно бросал → 500.
+    """
     if kwargs.get('raw'):
         return
-    if instance.is_active:
-        try:
-            setup_schedules()
-            logger.info(f"[OK] Расписание Django-Q настроено для: {instance.name}")
-        except Exception as e:
-            logger.error(f"Ошибка настройки расписания Django-Q: {str(e)}")
+    try:
+        setup_schedules()
+        logger.info(f"[OK] Django-Q (минутный тик) синхронизирован после сохранения: {instance.name}")
+    except Exception as e:
+        logger.error(f"Ошибка настройки расписания Django-Q: {str(e)}", exc_info=True)
 
 
 @receiver(post_delete, sender=AISchedule)

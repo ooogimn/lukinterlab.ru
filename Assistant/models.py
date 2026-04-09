@@ -791,8 +791,16 @@ class AISchedule(models.Model):
         elif timezone.is_naive(anchor):
             anchor = timezone.make_aware(anchor, timezone.get_current_timezone())
         t = anchor
-        while t <= after_ts:
-            t += delta
+        if t <= after_ts:
+            # Масштабируемый прыжок вперёд, если t сильно отстаёт от after_ts.
+            # (after_ts - t) // delta в секундах
+            diff_secs = (after_ts - t).total_seconds()
+            delta_secs = delta.total_seconds()
+            steps = int(diff_secs // delta_secs)
+            t += delta * steps
+            # Мини-цикл для точного попадания на следующий слот строго ПОСЛЕ after_ts
+            while t <= after_ts:
+                t += delta
         self.next_run = t
     
 

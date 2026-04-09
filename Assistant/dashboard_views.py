@@ -468,11 +468,7 @@ def schedule_create(request):
             schedule = form.save(commit=False)
             schedule.created_by = request.user
             schedule.save()
-            
-            # Настраиваем расписание в Django-Q
-            from .tasks import setup_schedules
-            setup_schedules()
-            
+            # Django-Q: post_save → Assistant.signals.setup_ai_schedule → setup_schedules()
             return redirect('assistant:dashboard_schedules')
     else:
         form = forms.AIScheduleForm()
@@ -494,11 +490,7 @@ def schedule_edit(request, pk):
         form = forms.AIScheduleForm(request.POST, instance=schedule)
         if form.is_valid():
             schedule = form.save()
-            
-            # Обновляем расписание в Django-Q
-            from .tasks import setup_schedules
-            setup_schedules()
-            
+            # Django-Q: post_save → Assistant.signals.setup_ai_schedule → setup_schedules()
             return redirect('assistant:dashboard_schedules')
     else:
         form = forms.AIScheduleForm(instance=schedule)
@@ -1576,11 +1568,8 @@ def template_test_schedule(request, post_id):
         )
         schedule.sync_next_run()
         schedule.save(update_fields=['next_run'])
-        
-        # Настраиваем Django-Q расписание
-        from .signals import setup_ai_schedule
-        setup_ai_schedule(sender=AISchedule, instance=schedule, created=True)
-        
+        # Django-Q: post_save на create и на save(next_run) → setup_schedules в сигнале
+
         return JsonResponse({
             'success': True,
             'message': f'Расписание "{schedule.name}" создано успешно',
