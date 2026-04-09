@@ -106,7 +106,9 @@ def post_list(request, category_slug=None):
     elif selected_tags:
         # Фильтрация по выбранным тегам (избегаем N+1 и ошибок при отсутствии тега)
         posts = posts.filter(tags__name__in=selected_tags).distinct()
-        tag_names = Tag.objects.filter(name__in=selected_tags).values_list('name', flat=True)
+        tag_objs = Tag.objects.filter(name__in=selected_tags)
+        tag_names = [t.name for t in tag_objs]
+        tag = tag_objs[0] if tag_objs else None
         zagolovok = f'Теги: {", ".join(tag_names)}'
     elif selected_author:
         # Фильтрация по автору
@@ -169,29 +171,46 @@ def post_list(request, category_slug=None):
     elif blog_sort == 'likes':
         zagolovok = f'{zagolovok} · по лайкам'
 
-    if category:
-        # Structured data для категории
-        structured_data = generate_category_structured_data(category, posts, request)
-    elif selected_author:
-        # Structured data для автора
-        try:
-            from django.contrib.auth import get_user_model
-            User = get_user_model()
-            author = User.objects.get(id=selected_author)
-            structured_data = {'author': generate_author_structured_data(author, posts, request)}
-        except User.DoesNotExist:
-            pass
+    page_num = request.GET.get('page')
+    seo_title = f"{zagolovok} | Блог LukInterLab"
+    if page_num and page_num != '1':
+        seo_title = f"{zagolovok} (Страница {page_num}) | Блог LukInterLab"
     
+    # Автоматическое SEO описание
+    if category and category.description:
+        seo_description = SEOUtils.generate_meta_description(category.description, 160)
+    elif 'tag' in locals() and tag:
+        seo_description = f"Читайте статьи по теме #{tag.name} в блоге LukInterLab. Инсайты, уроки и инновации в IT и ИИ."
+    else:
+        seo_description = "Блог LukInterLab: статьи об ИИ, программировании и современных технологиях. Посмотрите наши последние новости и советы."
+    
+    # Канонический URL для устранения дублей (передаем только важные параметры)
+    from django.urls import reverse
+    base_url = reverse('Blog:post_list')
+    query_params = []
+    if selected_category: query_params.append(f"category={selected_category}")
+    if selected_tags: 
+        for t in selected_tags: query_params.append(f"tags={t}")
+    if page_num and page_num != '1':
+        query_params.append(f"page={page_num}")
+    
+    seo_canonical = request.build_absolute_uri(base_url)
+    if query_params:
+        seo_canonical += "?" + "&".join(query_params)
+
     return render(request,
                   'blog/page_blog-1.html',
                   {'category': category,
-                   'tag': None,
+                   'tag': tag if 'tag' in locals() else None,
                    'parent_categories': parent_categories,
                    'child_categories': child_categories,
                    'all_categories': all_categories,
                    'blog_category_tree': build_blog_category_tree(),
                    'all_tags': all_tags,
                    'blog_sort': blog_sort,
+                   'seo_title': seo_title,
+                   'seo_description': seo_description,
+                   'seo_canonical': seo_canonical,
                    'selected_category': selected_category,
                    'selected_tags': selected_tags,
                    'posts': posts,
@@ -530,6 +549,14 @@ def post_list_by_tag(request, tag_slug=None):
     elif blog_sort == 'likes':
         zagolovok = f'{zagolovok} · по лайкам'
 
+    page_num = request.GET.get('page')
+    seo_title = f"{zagolovok} | Блог LukInterLab"
+    if page_num and page_num != '1':
+        seo_title = f"{zagolovok} (Страница {page_num}) | Блог LukInterLab"
+    
+    seo_description = f"Читайте статьи по теме #{tag.name} в блоге LukInterLab. Инсайты, уроки и инновации в IT и ИИ."
+    seo_canonical = request.build_absolute_uri(reverse('Blog:post_list_by_tag', args=[tag_slug]))
+
     return render(request,
                   'blog/page_blog-1.html',
                   {'tag': tag,
@@ -540,8 +567,11 @@ def post_list_by_tag(request, tag_slug=None):
                    'all_categories': all_categories,
                    'blog_category_tree': build_blog_category_tree(),
                    'blog_sort': blog_sort,
+                   'seo_title': seo_title,
+                   'seo_description': seo_description,
+                   'seo_canonical': seo_canonical,
                    'selected_category': None,
-                   'selected_tags': [],
+                   'selected_tags': [tag.name],
                    'posts': posts,
                    'count_post': count_post})
 

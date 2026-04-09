@@ -7,8 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     
     <!-- SEO Meta Tags -->
-    <meta name="title" content="{% block title %}{{ seo_title|default:'LukInterLab - Создание IT-решений и ИИ' }}{% endblock %}">
-    <meta name="description" content="{% block description %}{{ seo_description|default:'Мы создаем мощные сайты, ботов, приложения и интернет-магазины с применением искусственного интеллекта. Повышаем продажи и автоматизируем бизнес.' }}{% endblock %}">
+    <meta name="title" content="{% block title %}{{ seo_title|default:title|default:'LukInterLab - AI и IT решения под ключ' }}{% endblock %}">
+    <meta name="description" content="{% block description %}{{ seo_description|default:post_meta_description|default:'Мы создаем мощные сайты, ботов, приложения и интернет-магазины с применением искусственного интеллекта. Автоматизируем бизнес и повышаем продажи.' }}{% endblock %}">
     <meta name="keywords" content="{% block keywords %}{{ seo_keywords|default:'разработка сайтов, IT компания, искусственный интеллект, боты, GPT, автоматизация бизнеса' }}{% endblock %}">
     <meta name="author" content="LukInterLab">
     <meta name="robots" content="index, follow">
@@ -17,7 +17,9 @@
     <meta name="distribution" content="global">
     
     <!-- Canonical URL -->
-    <link rel="canonical" href="{{ seo_canonical }}">
+    {% block canonical %}
+    <link rel="canonical" href="{{ seo_canonical|default:request.build_absolute_uri }}">
+    {% endblock %}
     
     <!-- Open Graph -->
     <meta property="og:title" content="{% block og_title %}{{ seo_og_title|default:'LukInterLab - Создание IT-решений и ИИ' }}{% endblock %}">
@@ -49,7 +51,7 @@
     <meta name="geo.position" content="55.7558;37.6173">
     <meta name="ICBM" content="55.7558, 37.6173">
     
-    <title>{% block page_title %}{{ seo_title|default:'LukInterLab - IT решения' }}{% endblock %}</title>
+    <title>{% block page_title %}{{ seo_title|default:title|default:'LukInterLab - AI и IT решения под ключ' }}{% endblock %}</title>
     
     <!-- Structured Data (JSON-LD) -->
     <script type="application/ld+json">

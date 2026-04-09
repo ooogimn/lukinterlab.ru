@@ -142,8 +142,10 @@ def home(request):
     phone_for_link = legal_info_obj.phone or '+7-905-856-02-82'
     phone_for_link = phone_for_link.replace(' ', '').replace('(', '').replace(')', '').replace('-', '')
     
-    page_title = "главная"
-    
+    seo_title = "LukInterLab - AI и IT решения под ключ: создание сайтов, ИИ и автоматизация"
+    seo_description = "Создаем мощные IT-решения под ключ: сайты, боты, мобильные приложения с ИИ. Автоматизируем бизнес и повышаем продажи. Посмотрите наше портфолио и отзывы."
+    seo_canonical = request.build_absolute_uri(reverse('home:home'))
+
     return render(request,
                   'home/page_home-1.html',
                   {'otzivs': otzivs,
@@ -151,6 +153,9 @@ def home(request):
                    'services': services,
                    'standalone_extra_services': standalone_extra_services,
                    'page_title': page_title,
+                   'seo_title': seo_title,
+                   'seo_description': seo_description,
+                   'seo_canonical': seo_canonical,
                    'posts': posts,
                    'legal_info': legal_info_obj,
                    'phone_for_link': phone_for_link,
@@ -169,7 +174,10 @@ class OtzivListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Страница отзывов'
+        context['title'] = 'Отзывы наших клиентов'
+        context['seo_title'] = 'Отзывы клиентов LukInterLab | Реальные кейсы и фидбек'
+        context['seo_description'] = 'Что говорят о нас клиенты? Читайте реальные отзывы о разработке сайтов, ботов и внедрении ИИ от LukInterLab.'
+        context['seo_canonical'] = self.request.build_absolute_uri(reverse('home:otzivs'))
         context['count_otziv'] = self.get_queryset().count()
         return context
 
@@ -198,7 +206,12 @@ class OtzivDetailView(DetailView):
             context['comment_form'] = OtzivCommentForm(user=self.request.user)
         else:
             context['comment_form'] = None
+        
         context['title'] = f'Отзыв от {otziv.name}'
+        context['seo_title'] = f'Отзыв {otziv.firma or otziv.name} о работе с LukInterLab'
+        snippet = (otziv.body or "")[:150]
+        context['seo_description'] = f'Читать полный отзыв: {snippet}...'
+        context['seo_canonical'] = self.request.build_absolute_uri(otziv.get_absolute_url())
         return context
 
 
@@ -525,7 +538,10 @@ class ServiceListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Наши услуги'
+        context['title'] = 'IT Услуги и разработка'
+        context['seo_title'] = 'Разработка сайтов, ботов и мобильных приложений под ключ | Услуги LukInterLab'
+        context['seo_description'] = 'Полный спектр IT-услуг: создание сайтов, Telegram-ботов, внедрение ИИ и автоматизация бизнес-процессов. Цены и описание услуг.'
+        context['seo_canonical'] = self.request.build_absolute_uri(reverse('home:service-list'))
         context['standalone_extra_services'] = StandaloneExtraService.objects.filter(is_active=True)
         
         # Добавляем фоны секций
@@ -549,7 +565,10 @@ class ServiceDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         service = self.get_object()
-        context['title'] = f'{service.title} - LukInterLab'
+        context['title'] = service.title
+        context['seo_title'] = f'{service.title} под ключ - разработка в LukInterLab'
+        context['seo_description'] = (service.description or f'Заказать услугу: {service.title}. Профессиональная разработка и внедрение современных IT-решений.')[:160]
+        context['seo_canonical'] = self.request.build_absolute_uri(reverse('home:service-detail', args=[service.id]))
         context['related_services'] = Service.objects.filter(is_active=True).exclude(id=service.id)[:3]
         context['standalone_extra_services'] = StandaloneExtraService.objects.filter(is_active=True)
         

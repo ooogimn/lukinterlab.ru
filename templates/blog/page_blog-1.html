@@ -1,6 +1,19 @@
 {% extends 'base/base.html' %}
 {% load static %}
 
+{% block title %}{{ seo_title }}{% endblock %}
+{% block page_title %}{{ seo_title }}{% endblock %}
+{% block description %}{{ seo_description }}{% endblock %}
+
+{% block og_title %}{{ seo_title }}{% endblock %}
+{% block og_description %}{{ seo_description }}{% endblock %}
+{% block twitter_title %}{{ seo_title }}{% endblock %}
+{% block twitter_description %}{{ seo_description }}{% endblock %}
+
+{% block canonical %}
+<link rel="canonical" href="{{ seo_canonical }}">
+{% endblock %}
+
 {% block structured_data %}
 {% if structured_data %}
     {% if structured_data.collection %}

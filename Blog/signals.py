@@ -2,7 +2,7 @@ from django.db.models.signals import post_save, pre_save, m2m_changed
 from django.dispatch import receiver
 from django.utils.text import slugify
 from django.utils import timezone
-from .models import Post, Comment
+from .models import Post, Comment, Category
 from .utils import add_nofollow_to_external_links, add_internal_links_to_content, safe_log_text
 from home.seo_utils import SEOUtils
 from Moderation.services import SEOService
@@ -293,3 +293,19 @@ def add_nofollow_to_comment_links(sender, instance, **kwargs):
     except Exception as e:
         logger.error(f"[SEO] Ошибка при обработке ссылок в комментарии: {str(e)}", exc_info=True)
 
+@receiver(pre_save, sender=Category)
+def generate_category_seo_meta(sender, instance, **kwargs):
+    """Автогенерация SEO для категорий"""
+    if kwargs.get('raw'):
+        return
+    try:
+        if not (instance.meta_title or '').strip() and instance.title:
+            instance.meta_title = f"{instance.title} | LukInterLab"
+        
+        if not (instance.meta_description or '').strip():
+            if instance.description:
+                instance.meta_description = SEOUtils.generate_meta_description(instance.description, 160)
+            else:
+                instance.meta_description = f"Узнайте больше о {instance.title} в блоге LukInterLab. Инновации, разработка и современные IT-решения под ключ."
+    except Exception as e:
+        logger.error(f"[SEO_CATEGORY] Ошибка автогенерации: {e}")
