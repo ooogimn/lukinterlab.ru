@@ -10,6 +10,9 @@ from mptt.admin import DraggableMPTTAdmin
 from taggit.forms import TagField
 from taggit.models import Tag
 from taggit.admin import TagAdmin as TaggitTagAdmin
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Отмените регистрацию администратора тега по умолчанию
 admin.site.unregister(Tag)
@@ -71,10 +74,20 @@ class PostAdminForm(forms.ModelForm):
             }),
         }
     
+    def clean(self):
+        cleaned_data = super().clean()
+        if self.errors:
+            logger.warning(f"[POST_ADMIN_ERROR] Ошибки валидации формы статьи: {self.errors}")
+        return cleaned_data
+
     def clean_meta_title(self):
-        meta_title = self.cleaned_data.get('meta_title', '')
-        if meta_title and len(meta_title) > 60:
-            raise forms.ValidationError(f'Meta Title слишком длинный ({len(meta_title)} символов, максимум 60)')
+        meta_title = (self.cleaned_data.get('meta_title') or '').strip()
+        if not meta_title:
+            return ''
+        # Автоматически усекаем до 60, чтобы не блокировать сохранение
+        if len(meta_title) > 60:
+            logger.info(f"[SEO] Meta Title статьи был усечен с {len(meta_title)} до 60 символов")
+            meta_title = meta_title[:60]
         return meta_title
     
     def clean_meta_description(self):
@@ -119,7 +132,7 @@ class PostAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Основная информация', {
             'fields': ('title', 'slug', 'category', 'author', 'status', 'fixed', 'published_at'),
-            'description': '«Дата публикации» проставляется при переходе черновик → опубликовано (не равна дате создания).',
+            'description': 'ℹ️ Дата публикации проставляется автоматически при первом переходе «Черновик» → «Опубликовано».',
         }),
         ('Содержание', {
             'fields': ('content', 'video'),
@@ -129,7 +142,7 @@ class PostAdmin(admin.ModelAdmin):
             'fields': ('kartinka', 'video_file', 'post_photo', 'og_image'),
             'classes': ('wide',)
         }),
-        ('SEO настройки', {
+        ('SEO настройки (заполняются автоматически если пусто)', {
             'fields': ('meta_title', 'meta_description', 'meta_keywords', 'focus_keyword', 'seo_score'),
             'classes': ('collapse',),
             'description': 'SEO поля автогенерируются при сохранении, если не указаны вручную. SEO Score обновляется автоматически.'
@@ -149,6 +162,25 @@ class PostAdmin(admin.ModelAdmin):
         if Blog.kartinka:
             return mark_safe(f"<img src='{Blog.kartinka.url}' width=100>")
         return "Без фото"
+
+    def save_model(self, request, obj, form, change):
+        # Сохраняем намерение пользователя
+        requested_status = obj.status
+        
+        # Выполняем сохранение (сработают pre_save сигналы модерации)
+        super().save_model(request, obj, form, change)
+        
+        # Если пользователь хотел опубликовать, но статус остался или стал 'draft'
+        # и это не было намеренным действием в форме (т.е. в форме было 'published')
+        if requested_status == 'published' and obj.status == 'draft':
+            from django.contrib import messages
+            self.message_user(
+                request, 
+                "⚠️ Публикация отклонена автопроверкой. Статья сохранена как черновик. "
+                "Проверьте контент на соответствие критериям модерации.",
+                messages.WARNING
+            )
+            logger.info(f"[MODERATION] Пользователю показано уведомление об отклонении публикации статьи {obj.pk}")
 
     @admin.action(description="Опубликовать выбранные статьи")
     def publish_selected(self, request, queryset):
