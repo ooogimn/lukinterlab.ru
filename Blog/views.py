@@ -93,6 +93,7 @@ def post_list(request, category_slug=None):
     selected_category = request.GET.get('category')
     selected_tags = request.GET.getlist('tags')
     selected_author = request.GET.get('author')
+    category = None
     
     if category_slug:
         category = get_object_or_404(Category, slug=category_slug)
@@ -103,9 +104,9 @@ def post_list(request, category_slug=None):
         posts = posts.filter(category_id__in=category_subtree_ids(category))
         zagolovok = f'Категория: {category.title}'
     elif selected_tags:
-        # Фильтрация по выбранным тегам
+        # Фильтрация по выбранным тегам (избегаем N+1 и ошибок при отсутствии тега)
         posts = posts.filter(tags__name__in=selected_tags).distinct()
-        tag_names = [Tag.objects.get(name=tag).name for tag in selected_tags]
+        tag_names = Tag.objects.filter(name__in=selected_tags).values_list('name', flat=True)
         zagolovok = f'Теги: {", ".join(tag_names)}'
     elif selected_author:
         # Фильтрация по автору
@@ -618,7 +619,7 @@ def filter_posts_ajax(request):
         category_id = request.GET.get('category')
         tag_name = request.GET.get('tag')
 
-        posts = Post.objects.filter(status='published').annotate(
+        posts = Post.objects.filter(status='published').select_related('category').prefetch_related('tags').annotate(
             comments_count=Count('comments', filter=Q(comments__active=True))
         )
 
