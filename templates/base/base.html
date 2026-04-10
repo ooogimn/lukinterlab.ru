@@ -356,10 +356,20 @@
     <script src="{% static 'js/main.js' %}"></script>
     <script src="{% static 'js/contact-form-fix.js' %}"></script>
     <script>
-        // Loading animation
-        window.addEventListener('load', function() {
-            document.getElementById('loading').style.display = 'none';
-        });
+        // Убираем оверлей как только разобран DOM — не ждать window.load (шрифты, GTM, видео, CDN).
+        (function () {
+            function hideLoader() {
+                var el = document.getElementById('loading');
+                if (el) el.style.display = 'none';
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', hideLoader);
+            } else {
+                hideLoader();
+            }
+            window.addEventListener('load', hideLoader);
+            setTimeout(hideLoader, 3000);
+        })();
         
         // Back to top button
         const backToTop = document.getElementById('backToTop');
@@ -391,7 +401,7 @@
         // PWA Service Worker Registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
+                navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
                     .then(reg => console.log('Service Worker registered!'))
                     .catch(err => console.log('Service Worker registration failed:', err));
             });
