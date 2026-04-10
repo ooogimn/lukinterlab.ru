@@ -232,6 +232,27 @@ def send_to_vk(post):
     Публикация анонса статьи на стене сообщества VK.
     Вызывается из сигнала publish_to_social при первой публикации (vk_posted_at пустой).
     """
+    post.refresh_from_db(
+        fields=[
+            'vk_posted_at',
+            'vk_wall_post_id',
+            'status',
+            'title',
+            'description',
+            'content',
+            'meta_description',
+            'kartinka',
+            'video_file',
+            'video',
+        ]
+    )
+    if post.vk_posted_at:
+        logger.info(
+            'VK: «%s» уже с vk_posted_at, повторная отправка пропущена (retry django-q / дубль задачи)',
+            (post.title or '')[:80],
+        )
+        return True
+
     if post.status != 'published':
         logger.warning('VK: пост id=%s не в статусе published, wall.post отменён (как у MAX)', post.pk)
         return False

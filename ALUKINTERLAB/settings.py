@@ -527,15 +527,27 @@ if not _redis_cache_url.strip():
     raise ImproperlyConfigured(
         'Задайте REDIS_URL (например redis://127.0.0.1:6379/1). См. env.example.'
     )
+# При сбое Redis (недоступен, read-only replica): не ронять страницы из-за CACHE.
+# True = ResilientRedisCache (ошибки логируются, ведём себя как пустой кэш).
+# False = стандартный RedisCache (исключения наружу). По умолчанию: устойчивый режим на проде.
+_use_resilient_redis_cache = env_bool(
+    'REDIS_CACHE_IGNORE_ERRORS',
+    not DEBUG,
+)
+_redis_cache_backend = (
+    'ALUKINTERLAB.resilient_redis_cache.ResilientRedisCache'
+    if _use_resilient_redis_cache
+    else 'django.core.cache.backends.redis.RedisCache'
+)
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'BACKEND': _redis_cache_backend,
         'LOCATION': _redis_cache_url,
         'KEY_PREFIX': env_str('REDIS_CACHE_KEY_PREFIX', 'luk'),
         'TIMEOUT': env_int('REDIS_CACHE_DEFAULT_TIMEOUT', 300) or 300,
     },
     'filesystem': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'BACKEND': _redis_cache_backend,
         'LOCATION': env_str('REDIS_URL_FILECACHE', _redis_cache_url),
         'KEY_PREFIX': env_str('REDIS_FILECACHE_KEY_PREFIX', 'luk_fs'),
         'TIMEOUT': 3600,
