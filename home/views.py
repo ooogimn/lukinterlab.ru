@@ -43,46 +43,75 @@ from django.core.cache import cache
 from identity_auth.models import LinkedSocialAccount
 from identity_auth.services import linked_labels_for_user
 
+
+def _ordered_by_ids(queryset, id_list):
+    """Восстановить порядок записей как в id_list (безопасно при пропавших pk)."""
+    by_pk = {obj.pk: obj for obj in queryset}
+    return [by_pk[i] for i in id_list if i in by_pk]
+
+
 def home(request):
-    # Кэшируем данные главной страницы на 15 минут (900 секунд)
-    cache_key_posts = 'home_posts'
-    cache_key_otzivs = 'home_otzivs'
-    cache_key_rabotas = 'home_rabotas'
-    cache_key_services = 'home_services'
-    cache_key_extra_services = 'home_extra_services'
-    
-    # Получаем посты из кэша или БД
-    posts = cache.get(cache_key_posts)
-    if posts is None:
-        posts = list(Post.objects.filter(
-            status='published'
-        ).exclude(
-            slug__isnull=True
-        ).exclude(
-            slug=''
-        ).select_related(
-            'author', 'category'
-        ).annotate(
-            comments_count=Count('comments', filter=Q(comments__active=True))
-        ).only(
-            'id', 'title', 'slug', 'description', 'kartinka', 
-            'created', 'author__username', 'category__title', 'category__slug'
-        ).order_by('-created')[:6])
-        cache.set(cache_key_posts, posts, 900)
-    
-    # Получаем отзывы из кэша или БД
-    otzivs = cache.get(cache_key_otzivs)
-    if otzivs is None:
-        otzivs = list(Otziv.objects.filter(
-            active=True
-        ).only(
-            'id', 'name', 'firma', 'foto', 'body', 'created'
-        ).order_by('-created')[:6])
-        cache.set(cache_key_otzivs, otzivs, 900)
-    
-    # Работы портфолио: кэш + prefetch media_items (иначе N+1 на главной в шаблоне).
-    rabotas = cache.get(cache_key_rabotas)
-    if rabotas is None:
+    # Кэш только списков id — не pickle экземпляров моделей в Redis (ломается при смене кода/полей).
+    ttl = 900
+    cache_key_posts = 'home_post_ids_v3'
+    cache_key_otzivs = 'home_otziv_ids_v3'
+    cache_key_rabotas = 'home_rabota_ids_v3'
+    cache_key_services = 'home_service_ids_v3'
+    cache_key_extra_services = 'home_standalone_extra_ids_v3'
+
+    post_ids = cache.get(cache_key_posts)
+    if not isinstance(post_ids, list):
+        post_ids = None
+    if post_ids is None:
+        posts = list(
+            Post.objects.filter(status='published')
+            .exclude(slug__isnull=True)
+            .exclude(slug='')
+            .select_related('author', 'category')
+            .annotate(comments_count=Count('comments', filter=Q(comments__active=True)))
+            .only(
+                'id', 'title', 'slug', 'description', 'kartinka',
+                'created', 'author__username', 'category__title', 'category__slug',
+            )
+            .order_by('-created')[:6]
+        )
+        cache.set(cache_key_posts, [p.pk for p in posts], ttl)
+    else:
+        posts = _ordered_by_ids(
+            Post.objects.filter(pk__in=post_ids)
+            .exclude(slug__isnull=True)
+            .exclude(slug='')
+            .select_related('author', 'category')
+            .annotate(comments_count=Count('comments', filter=Q(comments__active=True)))
+            .only(
+                'id', 'title', 'slug', 'description', 'kartinka',
+                'created', 'author__username', 'category__title', 'category__slug',
+            ),
+            post_ids,
+        )
+
+    otziv_ids = cache.get(cache_key_otzivs)
+    if not isinstance(otziv_ids, list):
+        otziv_ids = None
+    if otziv_ids is None:
+        otzivs = list(
+            Otziv.objects.filter(active=True)
+            .only('id', 'name', 'firma', 'foto', 'body', 'created')
+            .order_by('-created')[:6]
+        )
+        cache.set(cache_key_otzivs, [o.pk for o in otzivs], ttl)
+    else:
+        otzivs = _ordered_by_ids(
+            Otziv.objects.filter(pk__in=otziv_ids, active=True).only(
+                'id', 'name', 'firma', 'foto', 'body', 'created'
+            ),
+            otziv_ids,
+        )
+
+    rabota_ids = cache.get(cache_key_rabotas)
+    if not isinstance(rabota_ids, list):
+        rabota_ids = None
+    if rabota_ids is None:
         rabotas = list(
             Rabota.objects.filter(is_visible=True, status='completed')
             .prefetch_related('media_items')
@@ -92,7 +121,17 @@ def home(request):
             )
             .order_by('-featured', '-order', '-created')[:24]
         )
-        cache.set(cache_key_rabotas, rabotas, 900)
+        cache.set(cache_key_rabotas, [r.pk for r in rabotas], ttl)
+    else:
+        rabotas = _ordered_by_ids(
+            Rabota.objects.filter(pk__in=rabota_ids, is_visible=True, status='completed')
+            .prefetch_related('media_items')
+            .only(
+                'id', 'name', 'category', 'image', 'adres', 'body',
+                'technologies', 'status', 'featured', 'order', 'created', 'updated',
+            ),
+            rabota_ids,
+        )
     
     # Логируем для отладки (можно убрать после проверки)
     import logging
@@ -105,39 +144,64 @@ def home(request):
         else:
             rabota.technologies_list = []
     
-    # Получаем услуги из кэша или БД
-    services = cache.get(cache_key_services)
-    if services is None:
-        services = list(Service.objects.filter(
-            is_active=True
-        ).prefetch_related(
-            'extra_services'
-        ).only(
-            'id', 'title', 'description', 'icon', 'price', 'order', 'is_active'
-        ).order_by('order'))
-        cache.set(cache_key_services, services, 900)
-    
-    # Получаем дополнительные услуги из кэша или БД
-    standalone_extra_services = cache.get(cache_key_extra_services)
-    if standalone_extra_services is None:
-        standalone_extra_services = list(StandaloneExtraService.objects.filter(
-            is_active=True
-        ).only(
-            'id', 'title', 'description', 'price', 'order', 'is_active'
-        ).order_by('order'))
-        cache.set(cache_key_extra_services, standalone_extra_services, 900)
-    
-    # Получаем правовую информацию для контактов (кэшируем отдельно)
-    legal_info_cache_key = 'legal_info_active'
-    legal_info_obj = cache.get(legal_info_cache_key)
-    if legal_info_obj is None:
+    service_ids = cache.get(cache_key_services)
+    if not isinstance(service_ids, list):
+        service_ids = None
+    if service_ids is None:
+        services = list(
+            Service.objects.filter(is_active=True)
+            .prefetch_related('extra_services')
+            .only('id', 'title', 'description', 'icon', 'price', 'order', 'is_active')
+            .order_by('order')
+        )
+        cache.set(cache_key_services, [s.pk for s in services], ttl)
+    else:
+        services = _ordered_by_ids(
+            Service.objects.filter(pk__in=service_ids, is_active=True)
+            .prefetch_related('extra_services')
+            .only('id', 'title', 'description', 'icon', 'price', 'order', 'is_active'),
+            service_ids,
+        )
+
+    extra_ids = cache.get(cache_key_extra_services)
+    if not isinstance(extra_ids, list):
+        extra_ids = None
+    if extra_ids is None:
+        standalone_extra_services = list(
+            StandaloneExtraService.objects.filter(is_active=True)
+            .only('id', 'title', 'description', 'price', 'order', 'is_active')
+            .order_by('order')
+        )
+        cache.set(cache_key_extra_services, [x.pk for x in standalone_extra_services], ttl)
+    else:
+        standalone_extra_services = _ordered_by_ids(
+            StandaloneExtraService.objects.filter(pk__in=extra_ids, is_active=True).only(
+                'id', 'title', 'description', 'price', 'order', 'is_active'
+            ),
+            extra_ids,
+        )
+
+    legal_pk_key = 'legal_info_home_pk_v3'
+    legal_pk = cache.get(legal_pk_key)
+    if not isinstance(legal_pk, int):
+        legal_pk = None
+    if legal_pk is None:
         legal_info_obj = LegalInfo.objects.filter(is_active=True).only(
+            'id', 'phone', 'email', 'company_name', 'is_active'
+        ).first()
+        if legal_info_obj:
+            cache.set(legal_pk_key, legal_info_obj.pk, 3600)
+        else:
+            cache.set(legal_pk_key, 0, 3600)
+            legal_info_obj = LegalInfo()
+    elif legal_pk == 0:
+        legal_info_obj = LegalInfo()
+    else:
+        legal_info_obj = LegalInfo.objects.filter(pk=legal_pk, is_active=True).only(
             'id', 'phone', 'email', 'company_name', 'is_active'
         ).first()
         if not legal_info_obj:
             legal_info_obj = LegalInfo()
-        # Кэшируем на 1 час (3600 секунд)
-        cache.set(legal_info_cache_key, legal_info_obj, 3600)
     
     # Обрабатываем телефон для tel: ссылки (убираем пробелы, скобки, дефисы)
     phone_for_link = legal_info_obj.phone or '+7-905-856-02-82'
