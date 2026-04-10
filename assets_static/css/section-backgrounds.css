@@ -15,32 +15,43 @@
     }
 }
 
-/* GIF-фон отдельным img — корректный бесконечный цикл в браузерах */
+/*
+ * GIF / видео как слой фона: Tailwind preflight задаёт img,video{max-width:100%;height:auto},
+ * из-за чего без !important картинка остаётся в потоке и уезжает «наверх» над текстом.
+ */
 .section-gif-background {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index: 0;
-    pointer-events: none;
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    z-index: 0 !important;
+    pointer-events: none !important;
+    display: block !important;
+    margin: 0 !important;
 }
 
 section.relative.overflow-hidden > .section-gif-background {
-    z-index: 0;
+    z-index: 0 !important;
 }
 
 /* Стили для видео фонов */
 .section-video-background {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index: 0;
-    pointer-events: none;
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    z-index: 0 !important;
+    pointer-events: none !important;
+    display: block !important;
+    margin: 0 !important;
 }
 
 /* Видео/градиент секции — всегда под контентом */
