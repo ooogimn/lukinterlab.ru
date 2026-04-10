@@ -1,59 +1,53 @@
-# robots.txt for LukInterLab.ru
-# Last updated: 2026-04-08
+# robots.txt — https://lukinterlab.ru/
+# Обновлено: 2026-04-10
+# RFC 9309: https://www.rfc-editor.org/rfc/rfc9309.html
+#
+# Всё, что не запрещено ниже, разрешено к обходу. Закрыты только служебные,
+# личные и транзакционные URL (см. home.urls, identity_auth, Assistant, Blog).
 
-# Allow all robots
 User-agent: *
-Allow: /
-Allow: /blog/
-Allow: /otziv/
-Allow: /otzivs/
 
-# Special rules for major search engines
-User-agent: Googlebot
-Allow: /
-Crawl-delay: 0
-
-User-agent: Yandex
-Allow: /
-Crawl-delay: 1
-
-User-agent: Bingbot
-Allow: /
-Crawl-delay: 1
-
-# Disallow admin and private pages
+# --- Админка, редактор, панели управления ---
 Disallow: /admin/
-Disallow: /search/
 Disallow: /ckeditor/
-Disallow: /accounts/
-Disallow: /login/
-Disallow: /logout/
-Disallow: /password/
-Disallow: /api/
+Disallow: /manage/
 
-# Disallow media files that don't need indexing
-Disallow: /media/images/
-Disallow: /static/img/
+# --- Вход, регистрация, OAuth, личный кабинет ---
+Disallow: /customer/
+
+# --- Внутренние дашборды и API ассистента / модерации ---
+Disallow: /assistant/
+Disallow: /moderation/
+
+# --- Корзина, оформление, заказы, оплата ---
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /order/
+Disallow: /yookassa/
+Disallow: /payment/
+
+# --- Служебные эндпоинты ---
+Disallow: /cookie-consent/
+Disallow: /callback/
+
+# --- Редактирование публичных страниц (не путать с просмотром) ---
+Disallow: /legal-info/edit/
+Disallow: /portfolio/
+
+# --- Блог: поиск и дубли, API, черновики/превью для редакторов ---
+Disallow: /blog/search/
+Disallow: /blog/api/
+Disallow: /blog/*/*/edit/
+Disallow: /blog/*/*/preview/
+
+# --- Статика админки и CKEditor (экономия краул-бюджета) ---
 Disallow: /static/admin/
 Disallow: /static/ckeditor/
 
-# Allow important static files
-Allow: /static/css/
-Allow: /static/js/
-Allow: /static/fonts/
-
-# Allow RSS feeds
-Allow: /blog/feed/
-Allow: /blog/rss/
-
-# Sitemap location
+# Карта сайта (основной индекс для поисковиков)
 Sitemap: https://lukinterlab.ru/sitemap.xml
 
-# Crawl delay (be nice to servers)
-Crawl-delay: 1
-
-# Clean parameters
-Clean-param: utm_source&utm_medium&utm_campaign&utm_content&utm_term&ref&source
-
-# Host (Yandex): только домен, без схемы
+# Ниже — расширения Яндекса; Google и Bing строки не используют (игнорируют).
+# https://yandex.ru/support/webmaster/ru/controlling-robot/robots-txt
 Host: lukinterlab.ru
+Clean-param: utm_source&utm_medium&utm_campaign&utm_content&utm_term&ref&source
