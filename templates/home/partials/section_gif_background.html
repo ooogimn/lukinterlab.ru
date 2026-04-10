@@ -1,0 +1,6 @@
+{% comment %}
+  Анимированный GIF как фон: <img> зацикливается надёжнее, чем background-image + fixed.
+{% endcomment %}
+{% if gif_url %}
+<img src="{{ gif_url }}" alt="" class="section-gif-background" loading="eager" fetchpriority="high" decoding="async" width="1920" height="1080">
+{% endif %}
