@@ -39,7 +39,13 @@ urlpatterns = [
     path('blog/', include('Blog.urls', namespace='Blog')),
     path('assistant/', include('Assistant.urls', namespace='assistant')),
     path('moderation/', include('Moderation.urls', namespace='moderation')),
-    path('robots.txt', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
+    path(
+        'robots.txt',
+        TemplateView.as_view(
+            template_name='robots.txt',
+            content_type='text/plain; charset=utf-8',
+        ),
+    ),
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
     path('manifest.json', TemplateView.as_view(template_name='pwa/manifest.json', content_type='application/json')),
     path('sw.js', TemplateView.as_view(template_name='pwa/sw.js', content_type='application/javascript')),
