@@ -7,6 +7,15 @@
     min-height: 100vh;
 }
 
+/*
+ * Только первая секция главной (#home): при background-attachment: fixed у верхнего края
+ * вьюпорта Chromium часто «замораживает» анимированный GIF после первого цикла; остальные
+ * секции с тем же fixed обычно ведут себя нормально. scroll — минимальное отличие только здесь.
+ */
+#home.section-background {
+    background-attachment: scroll;
+}
+
 /* Адаптивность для мобильных устройств */
 @media (max-width: 768px) {
     .section-background {
