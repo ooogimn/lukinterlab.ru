@@ -6,9 +6,7 @@
     
     <!-- Видео фон -->
     {% if section_backgrounds.home.type == 'video' and section_backgrounds.home.video_url %}
-    <video class="section-video-background" autoplay muted loop playsinline poster="{% static 'img/favicon.svg' %}">
-        <source src="{{ section_backgrounds.home.video_url }}" type="video/mp4">
-    </video>
+    {% include 'home/partials/deferred_section_video.html' with video_url=section_backgrounds.home.video_url %}
     {% elif section_backgrounds.home.type == 'gradient' %}
     <div class="section-gradient-background"></div>
     {% endif %}
@@ -35,9 +33,7 @@
     
     <!-- Видео фон -->
     {% if section_backgrounds.about.type == 'video' and section_backgrounds.about.video_url %}
-    <video class="section-video-background" autoplay muted loop playsinline poster="{% static 'img/favicon.svg' %}">
-        <source src="{{ section_backgrounds.about.video_url }}" type="video/mp4">
-    </video>
+    {% include 'home/partials/deferred_section_video.html' with video_url=section_backgrounds.about.video_url %}
     {% elif section_backgrounds.about.type == 'gradient' %}
     <div class="section-gradient-background"></div>
     {% endif %}
@@ -60,9 +56,7 @@
     
     <!-- Видео фон -->
     {% if section_backgrounds.resume.type == 'video' and section_backgrounds.resume.video_url %}
-    <video class="section-video-background" autoplay muted loop playsinline poster="{% static 'img/favicon.svg' %}">
-        <source src="{{ section_backgrounds.resume.video_url }}" type="video/mp4">
-    </video>
+    {% include 'home/partials/deferred_section_video.html' with video_url=section_backgrounds.resume.video_url %}
     {% elif section_backgrounds.resume.type == 'gradient' %}
     <div class="section-gradient-background"></div>
     {% endif %}
@@ -85,9 +79,7 @@
     
     <!-- Видео фон -->
     {% if section_backgrounds.portfolio.type == 'video' and section_backgrounds.portfolio.video_url %}
-    <video class="section-video-background" autoplay muted loop playsinline poster="{% static 'img/favicon.svg' %}">
-        <source src="{{ section_backgrounds.portfolio.video_url }}" type="video/mp4">
-    </video>
+    {% include 'home/partials/deferred_section_video.html' with video_url=section_backgrounds.portfolio.video_url %}
     {% elif section_backgrounds.portfolio.type == 'gradient' %}
     <div class="section-gradient-background"></div>
     {% endif %}
@@ -110,9 +102,7 @@
     
     <!-- Видео фон -->
     {% if section_backgrounds.testimonials.type == 'video' and section_backgrounds.testimonials.video_url %}
-    <video class="section-video-background" autoplay muted loop playsinline poster="{% static 'img/favicon.svg' %}">
-        <source src="{{ section_backgrounds.testimonials.video_url }}" type="video/mp4">
-    </video>
+    {% include 'home/partials/deferred_section_video.html' with video_url=section_backgrounds.testimonials.video_url %}
     {% elif section_backgrounds.testimonials.type == 'gradient' %}
     <div class="section-gradient-background"></div>
     {% endif %}
@@ -135,9 +125,7 @@
     
     <!-- Видео фон -->
     {% if section_backgrounds.blog.type == 'video' and section_backgrounds.blog.video_url %}
-    <video class="section-video-background" autoplay muted loop playsinline poster="{% static 'img/favicon.svg' %}">
-        <source src="{{ section_backgrounds.blog.video_url }}" type="video/mp4">
-    </video>
+    {% include 'home/partials/deferred_section_video.html' with video_url=section_backgrounds.blog.video_url %}
     {% elif section_backgrounds.blog.type == 'gradient' %}
     <div class="section-gradient-background"></div>
     {% endif %}
@@ -160,9 +148,7 @@
     
     <!-- Видео фон -->
     {% if section_backgrounds.contact.type == 'video' and section_backgrounds.contact.video_url %}
-    <video class="section-video-background" autoplay muted loop playsinline poster="{% static 'img/favicon.svg' %}">
-        <source src="{{ section_backgrounds.contact.video_url }}" type="video/mp4">
-    </video>
+    {% include 'home/partials/deferred_section_video.html' with video_url=section_backgrounds.contact.video_url %}
     {% elif section_backgrounds.contact.type == 'gradient' %}
     <div class="section-gradient-background"></div>
     {% endif %}

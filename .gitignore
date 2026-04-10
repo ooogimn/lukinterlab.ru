@@ -54,6 +54,9 @@ INFO_START.txt
 
 body.txt
 
+# Node (сборка Tailwind: npm ci && npm run build:css)
+node_modules/
+
 # IDE / OS
 .idea/
 .vscode/

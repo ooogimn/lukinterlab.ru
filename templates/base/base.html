@@ -134,37 +134,8 @@
     <link rel="alternate" type="application/atom+xml" title="LukInterLab.ru - Блог (Atom)" href="https://lukinterlab.ru/blog/feed/">
     <link rel="alternate" type="application/rss+xml" title="LukInterLab.ru - Блог (RSS)" href="https://lukinterlab.ru/blog/rss/">
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#eff6ff',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                            900: '#1e3a8a'
-                        },
-                        secondary: {
-                            500: '#8b5cf6',
-                            600: '#7c3aed'
-                        }
-                    },
-                    fontFamily: {
-                        'sans': ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                    animation: {
-                        'fade-in': 'fadeIn 0.5s ease-in-out',
-                        'slide-up': 'slideUp 0.5s ease-out',
-                        'bounce-slow': 'bounce 2s infinite',
-                    }
-                }
-            }
-        }
-    </script>
+    <!-- Tailwind: собранный CSS (npm run build:css), без блокирующего CDN -->
+    <link rel="stylesheet" href="{% static 'css/tailwind-built.css' %}">
     
     <!-- Section Backgrounds CSS -->
     <link rel="stylesheet" href="{% static 'css/section-backgrounds.css' %}">
@@ -262,32 +233,6 @@
         {% if site_marketing.yandex_metrika_html %}
         {{ site_marketing.yandex_metrika_html|safe }}
         {% endif %}
-    {% else %}
-    <!-- Google Tag Manager -->
-    <script>
-    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-WCPSGH7C');
-    </script>
-    <!-- End Google Tag Manager -->
-    
-    <!-- Yandex.Metrika -->
-    <script type="text/javascript">
-        (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-        m[i].l=1*new Date();
-        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
-        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
-        (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
-        ym(102639370, "init", {
-            clickmap:true,
-            trackLinks:true,
-            accurateTrackBounce:true,
-            webvisor:true
-        });
-    </script>
-    <noscript><div><img src="https://mc.yandex.ru/watch/102639370" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
     {% endif %}
 
     {% if site_marketing.active and site_marketing.head_extra_html %}
@@ -306,13 +251,34 @@
         {{ site_marketing.google_tag_body_html|safe }}
         {% endif %}
     {% else %}
-    <!-- Google Tag Manager (noscript) -->
+    {# Счётчики в начале body: не блокируют разбор <head> и первую отрисовку #}
+    <!-- Google Tag Manager -->
+    <script>
+    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-WCPSGH7C');
+    </script>
     <noscript>
-        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WCPSGH7C" 
-        height="0" width="0" style="display:none;visibility:hidden">
-        </iframe>
+        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WCPSGH7C"
+        height="0" width="0" style="display:none;visibility:hidden" title="GTM"></iframe>
     </noscript>
-    <!-- End Google Tag Manager (noscript) -->
+    <!-- Yandex.Metrika -->
+    <script>
+        (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+        m[i].l=1*new Date();
+        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+        (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+        ym(102639370, "init", {
+            clickmap:true,
+            trackLinks:true,
+            accurateTrackBounce:true,
+            webvisor:true
+        });
+    </script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/102639370" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
     {% endif %}
      
     <!-- Индикатор загрузки -->
@@ -352,10 +318,34 @@
     
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <script src="{% static 'js/jquery.min.js' %}"></script>
-    <script src="{% static 'js/main.js' %}"></script>
-    <script src="{% static 'js/contact-form-fix.js' %}"></script>
+    <script src="{% static 'js/jquery.min.js' %}" defer></script>
+    <script src="{% static 'js/main.js' %}" defer></script>
+    <script src="{% static 'js/contact-form-fix.js' %}" defer></script>
     <script>
+        // Фоновые видео секций: не тянуть mp4 до готовности DOM; на узких экранах — только poster.
+        (function () {
+            function initDeferredSectionVideos() {
+                var skipVideo = window.matchMedia('(max-width: 768px)').matches;
+                document.querySelectorAll('video.section-bg-video-deferred[data-bg-video]').forEach(function (v) {
+                    if (skipVideo) return;
+                    var url = v.getAttribute('data-bg-video');
+                    if (!url) return;
+                    var source = document.createElement('source');
+                    source.src = url;
+                    source.type = 'video/mp4';
+                    v.appendChild(source);
+                    v.load();
+                    v.addEventListener('loadeddata', function () {
+                        v.play().catch(function () {});
+                    }, { once: true });
+                });
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initDeferredSectionVideos);
+            } else {
+                initDeferredSectionVideos();
+            }
+        })();
         // Убираем оверлей как только разобран DOM — не ждать window.load (шрифты, GTM, видео, CDN).
         (function () {
             function hideLoader() {

@@ -1,5 +1,22 @@
 # Образ приложения для docker compose --profile full и прод-VPS.
 # Сборка: docker compose --profile full build
+#
+# Этап Node: собирает Tailwind в assets_static/css/tailwind-built.css (без CDN в рантайме).
+
+FROM node:20-bookworm-slim AS tailwind
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY tailwind.config.js postcss.config.js ./
+COPY assets_static/css/tailwind-input.css ./assets_static/css/
+COPY templates ./templates
+COPY Assistant ./Assistant
+COPY Moderation ./Moderation
+COPY identity_auth ./identity_auth
+COPY home ./home
+COPY Blog ./Blog
+COPY Users ./Users
+RUN npm run build:css
 
 FROM python:3.13-slim-bookworm
 
@@ -18,6 +35,7 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 COPY . .
+COPY --from=tailwind /app/assets_static/css/tailwind-built.css ./assets_static/css/tailwind-built.css
 
 RUN mkdir -p logs media
 

@@ -12,9 +12,7 @@
          style="{{ section_backgrounds.resume.background_style|default:'background: #f9fafb;' }}">
 
     {% if section_backgrounds.resume.type == 'video' and section_backgrounds.resume.video_url %}
-    <video class="section-video-background" autoplay muted loop playsinline>
-        <source src="{{ section_backgrounds.resume.video_url }}" type="video/mp4">
-    </video>
+    {% include 'home/partials/deferred_section_video.html' with video_url=section_backgrounds.resume.video_url %}
     {% endif %}
 
     {% if section_backgrounds.resume.has_overlay %}

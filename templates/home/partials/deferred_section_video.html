@@ -1,0 +1,4 @@
+{% load static %}
+{% if video_url %}
+<video class="section-video-background section-bg-video-deferred" muted loop playsinline preload="none" poster="{% static 'img/favicon.svg' %}" data-bg-video="{{ video_url }}"></video>
+{% endif %}
