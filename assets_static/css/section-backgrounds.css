@@ -15,22 +15,6 @@
     }
 }
 
-/* GIF-фон отдельным img — корректный бесконечный цикл в браузерах */
-.section-gif-background {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index: 0;
-    pointer-events: none;
-}
-
-section.relative.overflow-hidden > .section-gif-background {
-    z-index: 0;
-}
-
 /* Стили для видео фонов */
 .section-video-background {
     position: absolute;

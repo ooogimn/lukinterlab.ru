@@ -438,30 +438,6 @@ class SectionBackground(models.Model):
     
     def __str__(self):
         return f"Фон секции: {self.get_section_display()}"
-
-    @property
-    def background_style(self):
-        """Для шаблонов с экземпляром модели (корзина, checkout и т.д.)."""
-        return self.get_background_style()
-
-    def get_gif_background_url(self):
-        """
-        URL для анимированного GIF отдельным <img>: в CSS background GIF часто
-        не зацикливается (fixed/композитинг). None если не GIF-фон.
-        """
-        if not self.is_active or self.background_type != 'image' or not self.background_image:
-            return None
-        name = (self.background_image.name or '').lower()
-        if not name.endswith('.gif'):
-            return None
-        try:
-            return self.background_image.url
-        except ValueError:
-            return None
-
-    @property
-    def gif_background_url(self):
-        return self.get_gif_background_url()
     
     def get_background_style(self):
         """Возвращает CSS стили для фона"""
@@ -469,9 +445,6 @@ class SectionBackground(models.Model):
             return ""
         
         if self.background_type == 'image' and self.background_image:
-            # GIF — через <img class="section-gif-background">, иначе в Chrome часто 1 проигрыш
-            if (self.background_image.name or '').lower().endswith('.gif'):
-                return "background-color: #020617;"
             return f"background-image: url('{self.background_image.url}'); background-size: cover; background-position: center; background-repeat: no-repeat;"
         
         elif self.background_type == 'gradient':

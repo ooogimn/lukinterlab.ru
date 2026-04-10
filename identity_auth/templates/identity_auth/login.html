@@ -13,8 +13,6 @@
 
     {% if section_backgrounds.resume.type == 'video' and section_backgrounds.resume.video_url %}
     {% include 'home/partials/deferred_section_video.html' with video_url=section_backgrounds.resume.video_url %}
-    {% elif section_backgrounds.resume.gif_background_url %}
-    {% include 'home/partials/section_gif_background.html' with gif_url=section_backgrounds.resume.gif_background_url %}
     {% endif %}
 
     {% if section_backgrounds.resume.has_overlay %}

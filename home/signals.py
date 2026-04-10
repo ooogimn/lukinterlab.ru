@@ -103,4 +103,3 @@ def clear_section_backgrounds_cache(sender, instance, **kwargs):
     if kwargs.get('raw'):
         return
     cache.delete('section_backgrounds_all')
-    cache.delete('section_backgrounds_all_v2')

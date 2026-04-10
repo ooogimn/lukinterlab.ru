@@ -59,7 +59,7 @@ def seo_meta_tags(request):
 
 def section_backgrounds(request):
     """Контекст-процессор для фонов секций с кэшированием"""
-    cache_key = 'section_backgrounds_all_v2'
+    cache_key = 'section_backgrounds_all'
     
     # Пытаемся получить из кэша
     cached_data = _cache_context_dict(cache.get(cache_key), cache_key)
@@ -82,7 +82,6 @@ def section_backgrounds(request):
                 'background_style': bg.get_background_style(),
                 'overlay_style': bg.get_overlay_style(),
                 'video_url': bg.get_video_url(),
-                'gif_background_url': bg.get_gif_background_url(),
                 'has_overlay': bg.overlay_opacity > 0,
             }
         
