@@ -29,6 +29,65 @@ def _gigachat_basic_credentials_part(authorization_key: str | None) -> str:
     return k
 
 
+def _normalize_gigachat_balance_payload(raw: Any) -> Dict[str, Any]:
+    """
+    Привести ответ GET /api/v1/balance к виду {'data': [{'model': str, 'balance': int}, ...]}.
+
+    API периодически менял формат: раньше был список в ``data`` с полями model/balance,
+    сейчас часто приходит ``{'balance': [{'usage': 'GigaChat', 'value': int}, ...]}`` без ``data``.
+    """
+    if not isinstance(raw, dict):
+        return {'data': []}
+
+    usage_to_model = {
+        'GigaChat': 'GigaChat-2-Lite',
+        'GigaChat-Pro': 'GigaChat-2-Pro',
+        'GigaChat-Max': 'GigaChat-2-Max',
+        'embeddings': 'Embeddings',
+        'Embeddings': 'Embeddings',
+    }
+
+    def _row(model: str, balance: int) -> Dict[str, Any]:
+        return {'model': model, 'balance': balance}
+
+    bal = raw.get('balance')
+    if isinstance(bal, list) and bal and isinstance(bal[0], dict):
+        if 'usage' in bal[0] or 'value' in bal[0]:
+            out: List[Dict[str, Any]] = []
+            for entry in bal:
+                if not isinstance(entry, dict):
+                    continue
+                usage = entry.get('usage') or entry.get('model')
+                val = entry.get('value')
+                if val is None:
+                    val = entry.get('balance')
+                if usage is None or val is None:
+                    continue
+                try:
+                    v = int(val)
+                except (TypeError, ValueError):
+                    continue
+                model_name = usage_to_model.get(str(usage), str(usage))
+                out.append(_row(model_name, v))
+            return {'data': out}
+
+    data = raw.get('data')
+    if isinstance(data, list):
+        out = []
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+            if 'model' in item and isinstance(item.get('balance'), (int, float)):
+                out.append(_row(str(item['model']), int(item['balance'])))
+        if out:
+            return {'data': out}
+        # Старый обходной путь: один элемент — весь JSON с полем balance
+        if len(data) == 1 and isinstance(data[0], dict) and isinstance(data[0].get('balance'), list):
+            return _normalize_gigachat_balance_payload(data[0])
+
+    return {'data': []}
+
+
 class AIService:
     """Сервис для работы с AI моделями"""
     
@@ -910,7 +969,7 @@ class GigaChatAPIService:
         """
         from django.core.cache import cache
         
-        cache_key = 'gigachat_balance'
+        cache_key = 'gigachat_balance_v2'
         cached_balance = cache.get(cache_key)
         
         if cached_balance:
@@ -939,29 +998,19 @@ class GigaChatAPIService:
                 try:
                     balance_data = response.json()
                     
-                    # Проверяем структуру ответа
                     if not isinstance(balance_data, dict):
                         logger.error(f"Неожиданный формат ответа API balance: {type(balance_data)}")
                         return {}
-                    
-                    if 'data' not in balance_data:
-                        logger.warning("API balance вернул ответ без поля 'data'")
-                        logger.debug(f"Структура ответа: {balance_data}")
-                        # Возможно, структура другая - пробуем использовать весь ответ
-                        balance_data = {'data': [balance_data]} if balance_data else {'data': []}
-                    
-                    # Валидация структуры данных
-                    if isinstance(balance_data.get('data'), list):
-                        for item in balance_data['data']:
-                            if not isinstance(item, dict):
-                                logger.warning(f"Неожиданный формат элемента в data: {type(item)}")
-                                continue
-                            if 'model' not in item or 'balance' not in item:
-                                logger.warning(f"Элемент data не содержит 'model' или 'balance': {item}")
-                    
+
+                    balance_data = _normalize_gigachat_balance_payload(balance_data)
+                    rows = balance_data.get('data') or []
+                    if not rows:
+                        logger.warning("API balance: после нормализации нет строк баланса")
+                        logger.debug(f"Исходный JSON (фрагмент): {str(response.text)[:500]}")
+
                     # Кэшируем на 5 минут (300 секунд)
                     cache.set(cache_key, balance_data, 300)
-                    logger.info(f"Баланс GigaChat получен из API: {len(balance_data.get('data', []))} моделей")
+                    logger.info(f"Баланс GigaChat получен из API: {len(rows)} записей")
                     logger.debug(f"Детали баланса: {balance_data}")
                     return balance_data
                 except json.JSONDecodeError as e:

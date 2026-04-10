@@ -76,19 +76,28 @@ class TokenCostAnalyzer:
         daily_avg_cost = total_cost / days if days > 0 else 0
         yearly_projection = daily_avg_cost * days_in_year
         
-        # Сравнение с пакетными тарифами
+        # Сравнение с пакетными тарифами (PACKAGE_INFO: модель -> список тарифных ступеней)
         package_comparison = []
-        for package_name, package_info in TokenUsage.PACKAGE_INFO.items():
-            if yearly_projection > 0:
-                packages_needed = yearly_projection / package_info['price']
-                package_comparison.append({
-                    'package': package_name,
-                    'yearly_cost': yearly_projection,
-                    'package_price': package_info['price'],
-                    'packages_needed': packages_needed,
-                    'tokens_in_package': package_info['tokens'],
-                    'savings_if_package': max(0, yearly_projection - package_info['price']) if packages_needed <= 1 else 0,
-                })
+        for package_name, package_options in TokenUsage.PACKAGE_INFO.items():
+            tiers = package_options if isinstance(package_options, list) else (
+                [package_options] if isinstance(package_options, dict) else []
+            )
+            for package_info in tiers:
+                if not isinstance(package_info, dict):
+                    continue
+                price = package_info.get('price') or 0
+                tokens_in_pkg = package_info.get('tokens')
+                if yearly_projection > 0 and price:
+                    packages_needed = yearly_projection / price
+                    package_comparison.append({
+                        'package': package_name,
+                        'tier_tokens': tokens_in_pkg,
+                        'yearly_cost': yearly_projection,
+                        'package_price': price,
+                        'packages_needed': packages_needed,
+                        'tokens_in_package': tokens_in_pkg,
+                        'savings_if_package': max(0, yearly_projection - price) if packages_needed <= 1 else 0,
+                    })
         
         return {
             'period_days': days,
