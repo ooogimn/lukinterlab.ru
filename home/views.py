@@ -2025,7 +2025,7 @@ def admin_marketing_settings(request):
         form = SiteMarketingSettingsForm(request.POST, request.FILES, instance=obj)
         if form.is_valid():
             form.save()
-            cache.delete('site_marketing_ctx')
+            cache.delete_many(['site_marketing_ctx', 'site_marketing_ctx_v2'])
             messages.success(request, 'Настройки рекламы и метрик сохранены.')
             return redirect('home:admin_marketing_settings')
     else:

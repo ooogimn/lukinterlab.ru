@@ -959,8 +959,9 @@ class SiteMarketingSettings(models.Model):
         help_text='Если заполнено и включена подмена — выводится вместо встроенного счётчика в шаблоне.',
     )
     google_tag_head_html = models.TextField(
-        'Google Tag Manager / аналитика (часть для &lt;head&gt;)',
+        'Google (gtag.js или GTM) — фрагмент для &lt;head&gt;',
         blank=True,
+        help_text='Выводится на сайте при включённом «Включить вывод с БД». Режим «Заменить встроенные…» дополнительно отключает захардкоженный GTM/Метрику в шаблоне.',
     )
     google_tag_body_html = models.TextField(
         'Google Tag Manager (noscript сразу после &lt;body&gt;)',

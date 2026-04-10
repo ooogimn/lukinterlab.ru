@@ -94,7 +94,7 @@ def clear_legal_info_cache(sender, instance, **kwargs):
 def clear_site_marketing_cache(sender, instance, **kwargs):
     if kwargs.get('raw'):
         return
-    cache.delete('site_marketing_ctx')
+    cache.delete_many(['site_marketing_ctx', 'site_marketing_ctx_v2'])
 
 
 @receiver([post_save, post_delete], sender=SectionBackground)

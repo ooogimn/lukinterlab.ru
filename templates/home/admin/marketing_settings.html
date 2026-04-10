@@ -4,7 +4,7 @@
 
 {% block dashboard_header %}Реклама и метрики{% endblock %}
 {% block dashboard_subtitle %}
-<p class="text-sm text-gray-600 mt-1">РСЯ, счётчики и произвольный HTML без правки кода репозитория. Включите «Заменить встроенные GTM и Метрику», только если вставили полный код в поля ниже.</p>
+<p class="text-sm text-gray-600 mt-1">РСЯ, счётчики и произвольный HTML без правки кода репозитория. Фрагмент Google для &lt;head&gt; (gtag.js) выводится при включённом «Вывод из БД» сразу после сохранения. «Заменить встроенные GTM и Метрику» включайте, если нужно убрать захардкоженные счётчики в шаблоне и задать Метрику/GTM только из полей ниже.</p>
 {% endblock %}
 
 {% block content %}
@@ -46,7 +46,7 @@
             {{ form.yandex_metrika_html }}
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Google Tag Manager — фрагмент для &lt;head&gt;</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Google (gtag.js или GTM) — фрагмент для &lt;head&gt;</label>
             {{ form.google_tag_head_html }}
         </div>
         <div>

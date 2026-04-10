@@ -226,12 +226,17 @@
         }
     </style>
 
-    {% if site_marketing.active and site_marketing.replace_builtin_counters %}
-        {% if site_marketing.google_tag_head_html %}
-        {{ site_marketing.google_tag_head_html|safe }}
-        {% endif %}
-        {% if site_marketing.yandex_metrika_html %}
-        {{ site_marketing.yandex_metrika_html|safe }}
+    {# Google (gtag / фрагмент для head): при active всегда, если поле заполнено. Яндекс из БД — только в режиме полной замены встроенных счётчиков. #}
+    {% if site_marketing.active %}
+        {% if site_marketing.replace_builtin_counters %}
+            {% if site_marketing.google_tag_head_html %}
+            {{ site_marketing.google_tag_head_html|safe }}
+            {% endif %}
+            {% if site_marketing.yandex_metrika_html %}
+            {{ site_marketing.yandex_metrika_html|safe }}
+            {% endif %}
+        {% elif site_marketing.google_tag_head_html %}
+            {{ site_marketing.google_tag_head_html|safe }}
         {% endif %}
     {% endif %}
 
