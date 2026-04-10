@@ -956,12 +956,12 @@ class SiteMarketingSettings(models.Model):
     yandex_metrika_html = models.TextField(
         'Яндекс.Метрика и счётчики (фрагмент для &lt;head&gt; или полный)',
         blank=True,
-        help_text='Если заполнено и включена подмена — выводится вместо встроенного счётчика в шаблоне.',
+        help_text='При включённом «Включить вывод с БД» выводится в &lt;head&gt;.',
     )
     google_tag_head_html = models.TextField(
         'Google (gtag.js или GTM) — фрагмент для &lt;head&gt;',
         blank=True,
-        help_text='Выводится на сайте при включённом «Включить вывод с БД». Режим «Заменить встроенные…» дополнительно отключает захардкоженный GTM/Метрику в шаблоне.',
+        help_text='Выводится при включённом «Включить вывод с БД».',
     )
     google_tag_body_html = models.TextField(
         'Google Tag Manager (noscript сразу после &lt;body&gt;)',
@@ -993,9 +993,9 @@ class SiteMarketingSettings(models.Model):
         blank=True,
     )
     replace_builtin_counters = models.BooleanField(
-        'Заменить встроенные GTM и Метрику в шаблоне',
+        'Устарело: замена встроенных счётчиков',
         default=False,
-        help_text='Если включено — блоки из полей выше подставляются вместо захардкоженных скриптов в base.html (заполните Metrika/GTM вручную).',
+        help_text='Не используется: в base.html больше нет захардкоженных GTM/Метрики. Счётчики только из полей выше.',
     )
     active = models.BooleanField('Включить вывод с БД', default=True)
 

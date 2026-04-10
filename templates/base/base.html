@@ -226,17 +226,13 @@
         }
     </style>
 
-    {# Google (gtag / фрагмент для head): при active всегда, если поле заполнено. Яндекс из БД — только в режиме полной замены встроенных счётчиков. #}
+    {# Метрики и Google — только из БД (/manage/marketing/), в шаблоне захардкоженных счётчиков нет. #}
     {% if site_marketing.active %}
-        {% if site_marketing.replace_builtin_counters %}
-            {% if site_marketing.google_tag_head_html %}
-            {{ site_marketing.google_tag_head_html|safe }}
-            {% endif %}
-            {% if site_marketing.yandex_metrika_html %}
-            {{ site_marketing.yandex_metrika_html|safe }}
-            {% endif %}
-        {% elif site_marketing.google_tag_head_html %}
-            {{ site_marketing.google_tag_head_html|safe }}
+        {% if site_marketing.google_tag_head_html %}
+        {{ site_marketing.google_tag_head_html|safe }}
+        {% endif %}
+        {% if site_marketing.yandex_metrika_html %}
+        {{ site_marketing.yandex_metrika_html|safe }}
         {% endif %}
     {% endif %}
 
@@ -251,41 +247,10 @@
 </head>
 
 <body class="bg-gray-50 text-gray-900 font-sans antialiased">
-    {% if site_marketing.active and site_marketing.replace_builtin_counters %}
-        {% if site_marketing.google_tag_body_html %}
-        {{ site_marketing.google_tag_body_html|safe }}
-        {% endif %}
-    {% else %}
-    {# Счётчики в начале body: не блокируют разбор <head> и первую отрисовку #}
-    <!-- Google Tag Manager -->
-    <script>
-    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-WCPSGH7C');
-    </script>
-    <noscript>
-        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WCPSGH7C"
-        height="0" width="0" style="display:none;visibility:hidden" title="GTM"></iframe>
-    </noscript>
-    <!-- Yandex.Metrika -->
-    <script>
-        (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-        m[i].l=1*new Date();
-        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
-        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
-        (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
-        ym(102639370, "init", {
-            clickmap:true,
-            trackLinks:true,
-            accurateTrackBounce:true,
-            webvisor:true
-        });
-    </script>
-    <noscript><div><img src="https://mc.yandex.ru/watch/102639370" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    {% if site_marketing.active and site_marketing.google_tag_body_html %}
+    {{ site_marketing.google_tag_body_html|safe }}
     {% endif %}
-     
+
     <!-- Индикатор загрузки -->
     <div id="loading" class="fixed inset-0 bg-white z-[9999] flex items-center justify-center">
         <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600"></div>
@@ -351,7 +316,7 @@
                 initDeferredSectionVideos();
             }
         })();
-        // Убираем оверлей как только разобран DOM — не ждать window.load (шрифты, GTM, видео, CDN).
+        // Убираем оверлей как только разобран DOM — не ждать window.load (шрифты, видео, CDN).
         (function () {
             function hideLoader() {
                 var el = document.getElementById('loading');

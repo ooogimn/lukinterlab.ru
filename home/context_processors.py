@@ -166,7 +166,6 @@ def site_marketing_context(request):
                     promo_url = ''
             data = {
                 'active': s.active,
-                'replace_builtin_counters': s.replace_builtin_counters,
                 'yandex_metrika_html': s.yandex_metrika_html or '',
                 'google_tag_head_html': s.google_tag_head_html or '',
                 'google_tag_body_html': s.google_tag_body_html or '',
@@ -182,7 +181,6 @@ def site_marketing_context(request):
             logger.exception('site_marketing_context: fallback после ошибки БД/настроек')
             data = {
                 'active': False,
-                'replace_builtin_counters': False,
                 'yandex_metrika_html': '',
                 'google_tag_head_html': '',
                 'google_tag_body_html': '',

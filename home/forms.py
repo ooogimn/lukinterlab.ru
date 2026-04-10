@@ -700,7 +700,6 @@ class SiteMarketingSettingsForm(forms.ModelForm):
             'custom_promo_banner_html',
             'promo_image',
             'promo_link',
-            'replace_builtin_counters',
             'active',
         ]
         widgets = {
@@ -713,7 +712,6 @@ class SiteMarketingSettingsForm(forms.ModelForm):
             'custom_promo_banner_html': forms.Textarea(attrs={**_TA, 'rows': 5}),
             'promo_link': forms.URLInput(attrs={'class': 'w-full rounded-lg border border-gray-300 px-3 py-2'}),
             'promo_image': forms.FileInput(attrs={'class': 'block w-full text-sm text-gray-600'}),
-            'replace_builtin_counters': forms.CheckboxInput(attrs={'class': 'rounded border-gray-300 text-primary-600'}),
             'active': forms.CheckboxInput(attrs={'class': 'rounded border-gray-300 text-primary-600'}),
         }
 

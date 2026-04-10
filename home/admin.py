@@ -800,7 +800,7 @@ class LegalInfoAdmin(admin.ModelAdmin):
 class SiteMarketingSettingsAdmin(admin.ModelAdmin):
     """Дублирование /manage/marketing/ для суперпользователей в Jazzmin."""
 
-    list_display = ('__str__', 'active', 'replace_builtin_counters')
+    list_display = ('__str__', 'active')
 
     def has_add_permission(self, request):
         return not SiteMarketingSettings.objects.exists()
