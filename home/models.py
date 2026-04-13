@@ -161,6 +161,24 @@ class Rabota(models.Model):
         verbose_name='Использованные технологии',
         help_text='Python, Django, React, PostgreSQL и т.д.'
     )
+    game_html = models.TextField(
+        blank=True,
+        verbose_name='HTML-код приложения/игры',
+        help_text='Вставьте HTML-код (например, мини-игры), который откроется в модальном окне в секции портфолио.'
+    )
+    tariff_short_description = models.TextField(
+        blank=True,
+        verbose_name='Тарифы и стоимость: краткое описание',
+        help_text='Краткое описание того, что входит в стоимость этого проекта.'
+    )
+    tariff_price_value = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Тарифы и стоимость: цена (числом)',
+        help_text='Укажите стоимость в цифрах, например 150000.'
+    )
     history_text = RichTextUploadingField(blank=True, verbose_name='История развития', help_text='Описание процесса создания и развития проекта')
     resources_text = RichTextUploadingField(blank=True, verbose_name='Ресурсы', help_text='Список использованных ресурсов (команда, время, ассеты)')
     parameters_text = RichTextUploadingField(blank=True, verbose_name='Технические параметры', help_text='Спецификации, архитектура, нагрузки')
@@ -229,6 +247,13 @@ class Rabota(models.Model):
             version = int(self.updated.timestamp()) if self.updated else ''
             return f"{self.thumbnail_webp.url}?v={version}"
         return None
+
+    def get_tariff_display_price(self):
+        """Возвращает форматированную цену тарифа проекта."""
+        if self.tariff_price_value is None:
+            return ""
+        formatted = "{:,}".format(int(self.tariff_price_value)).replace(',', ' ')
+        return f"{formatted} ₽"
 
 
 class RabotaMedia(models.Model):
@@ -605,6 +630,7 @@ class CartItem(models.Model):
     SERVICE_TYPE_CHOICES = [
         ('service', 'Основная услуга'),
         ('extra_service', 'Дополнительная услуга'),
+        ('portfolio', 'Проект из портфолио'),
     ]
 
     cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE, verbose_name="Корзина")
@@ -776,6 +802,7 @@ class OrderItem(models.Model):
     SERVICE_TYPE_CHOICES = [
         ('service', 'Основная услуга'),
         ('extra_service', 'Дополнительная услуга'),
+        ('portfolio', 'Проект из портфолио'),
     ]
 
     order = models.ForeignKey(Order, on_delete=models.CASCADE, verbose_name="Заказ")

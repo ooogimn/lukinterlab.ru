@@ -707,6 +707,14 @@ def get_or_create_cart(request):
 
 def add_to_cart(request):
     """Добавить услугу в корзину"""
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+    def error_response(message):
+        if is_ajax:
+            return JsonResponse({'success': False, 'message': message})
+        messages.error(request, message)
+        return redirect('home:cart')
+
     if request.method == 'POST':
         form = AddToCartForm(request.POST)
         if form.is_valid():
@@ -723,7 +731,7 @@ def add_to_cart(request):
                     price = service.price
                     price_value = service.price_value
                 except Service.DoesNotExist:
-                    return JsonResponse({'success': False, 'message': 'Услуга не найдена'})
+                    return error_response('Услуга не найдена')
             elif service_type == 'extra_service':
                 try:
                     service = ExtraService.objects.get(id=service_id, is_active=True)
@@ -731,7 +739,7 @@ def add_to_cart(request):
                     price = service.price
                     price_value = service.price_value
                 except ExtraService.DoesNotExist:
-                    return JsonResponse({'success': False, 'message': 'Дополнительная услуга не найдена'})
+                    return error_response('Дополнительная услуга не найдена')
             elif service_type == 'standalone_extra_service':
                 try:
                     service = StandaloneExtraService.objects.get(id=service_id, is_active=True)
@@ -739,9 +747,19 @@ def add_to_cart(request):
                     price = service.price
                     price_value = service.price_value
                 except StandaloneExtraService.DoesNotExist:
-                    return JsonResponse({'success': False, 'message': 'Дополнительная услуга не найдена'})
+                    return error_response('Дополнительная услуга не найдена')
+            elif service_type == 'portfolio':
+                try:
+                    portfolio = Rabota.objects.get(id=service_id, is_visible=True)
+                    if portfolio.tariff_price_value is None:
+                        return error_response('Для этого проекта не указана стоимость')
+                    title = (portfolio.tariff_short_description or portfolio.name).strip()[:200]
+                    price_value = portfolio.tariff_price_value
+                    price = portfolio.get_tariff_display_price()
+                except Rabota.DoesNotExist:
+                    return error_response('Проект не найден')
             else:
-                return JsonResponse({'success': False, 'message': 'Неверный тип услуги'})
+                return error_response('Неверный тип услуги')
             
             # Получаем или создаем корзину
             cart = get_or_create_cart(request)
@@ -765,14 +783,21 @@ def add_to_cart(request):
             if not created:
                 cart_item.quantity += quantity
                 cart_item.save()
-            
-            return JsonResponse({
-                'success': True,
-                'message': f'Услуга "{title}" добавлена в корзину',
-                'cart_count': cart.get_items_count()
-            })
-    
-    return JsonResponse({'success': False, 'message': 'Неверный запрос'})
+
+            success_message = f'Услуга "{title}" добавлена в корзину'
+            if is_ajax:
+                return JsonResponse({
+                    'success': True,
+                    'message': success_message,
+                    'cart_count': cart.get_items_count()
+                })
+
+            messages.success(request, success_message)
+            return redirect('home:cart')
+
+        return error_response('Проверьте данные формы добавления в корзину')
+
+    return error_response('Неверный запрос')
 
 
 def cart_view(request):

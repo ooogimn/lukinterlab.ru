@@ -79,6 +79,27 @@
                         </div>
 
                         <div>
+                            <label for="{{ form.game_html.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">{{ form.game_html.label }}</label>
+                            {{ form.game_html }}
+                            {% if form.game_html.help_text %}<p class="text-xs text-gray-500 mt-1">{{ form.game_html.help_text }}</p>{% endif %}
+                            {% if form.game_html.errors %}<p class="mt-1 text-xs text-red-500 font-medium">{{ form.game_html.errors.0 }}</p>{% endif %}
+                        </div>
+
+                        <div>
+                            <label for="{{ form.tariff_short_description.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">{{ form.tariff_short_description.label }}</label>
+                            {{ form.tariff_short_description }}
+                            {% if form.tariff_short_description.help_text %}<p class="text-xs text-gray-500 mt-1">{{ form.tariff_short_description.help_text }}</p>{% endif %}
+                            {% if form.tariff_short_description.errors %}<p class="mt-1 text-xs text-red-500 font-medium">{{ form.tariff_short_description.errors.0 }}</p>{% endif %}
+                        </div>
+
+                        <div>
+                            <label for="{{ form.tariff_price_value.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">{{ form.tariff_price_value.label }}</label>
+                            {{ form.tariff_price_value }}
+                            {% if form.tariff_price_value.help_text %}<p class="text-xs text-gray-500 mt-1">{{ form.tariff_price_value.help_text }}</p>{% endif %}
+                            {% if form.tariff_price_value.errors %}<p class="mt-1 text-xs text-red-500 font-medium">{{ form.tariff_price_value.errors.0 }}</p>{% endif %}
+                        </div>
+
+                        <div>
                             <label for="{{ form.body.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">{{ form.body.label }}</label>
                             {{ form.body }}
                         </div>
@@ -175,7 +196,7 @@
                 </div>
 
                 {% for field in form %}
-                    {% if field.name == 'history_text' or field.name == 'instructions_text' or field.name == 'parameters_text' or field.name == 'resources_text' or field.name == 'tariffs_text' %}
+                    {% if field.name == 'instructions_text' or field.name == 'parameters_text' or field.name == 'resources_text' %}
                     <div class="bg-white rounded-xl border-2 border-gray-200 p-6 shadow-sm hover:border-primary-200 transition-colors">
                         <label class="block text-base font-bold text-gray-800 mb-1">{{ field.label }}</label>
                         <p class="text-sm text-gray-500 mb-3">{{ field.help_text }}</p>

@@ -125,6 +125,7 @@ class AddToCartForm(forms.Form):
             ('service', 'Основная услуга'),
             ('extra_service', 'Дополнительная услуга'),
             ('standalone_extra_service', 'Независимая дополнительная услуга'),
+            ('portfolio', 'Проект из портфолио'),
         ],
         widget=forms.HiddenInput()
     )
@@ -634,8 +635,8 @@ class RabotaForm(forms.ModelForm):
         model = Rabota
         fields = [
             'name', 'category', 'status', 'image', 'adres', 'body', 
-            'technologies', 'history_text', 'resources_text', 
-            'parameters_text', 'instructions_text', 'tariffs_text', 
+            'technologies', 'game_html', 'tariff_short_description', 'tariff_price_value',
+            'resources_text', 'parameters_text', 'instructions_text',
             'featured', 'is_visible', 'order'
         ]
         widgets = {
@@ -645,6 +646,9 @@ class RabotaForm(forms.ModelForm):
             'adres': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://example.com'}),
             'body': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Краткое описание'}),
             'technologies': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Например: Python, Django, Tailwind CSS'}),
+            'game_html': forms.Textarea(attrs={'class': 'form-control font-mono text-sm', 'rows': 10, 'placeholder': '<!doctype html>...'}),
+            'tariff_short_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Что входит в стоимость проекта'}),
+            'tariff_price_value': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01', 'placeholder': '150000'}),
             'featured': forms.CheckboxInput(attrs={'class': 'form-checkbox h-4 w-4 text-primary-600 border-gray-300 rounded'}),
             'order': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
         }

@@ -111,14 +111,14 @@
                 {% endif %}
             </div>
 
-            {% if rabota.history_text %}
+            {% if rabota.technologies %}
             <section class="prose prose-lg prose-primary max-w-none prose-img:rounded-xl prose-a:text-primary-600">
                 <h2 class="text-2xl font-bold text-gray-900 flex items-center mb-4 !mt-0">
                     <svg class="w-7 h-7 mr-3 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    История развития
+                    Стек технологий
                 </h2>
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    {{ rabota.history_text|safe }}
+                    <p class="text-gray-700 leading-relaxed !m-0">{{ rabota.technologies|linebreaksbr }}</p>
                 </div>
             </section>
             {% endif %}
@@ -150,10 +150,10 @@
         </div>
 
         <!-- RIGHT: Сайдбар -->
-        <div class="lg:col-span-1 space-y-6">
+        <div class="lg:col-span-1 space-y-6 lg:sticky lg:top-28 self-start">
             
             <!-- Карточка проекта -->
-            <div class="bg-white rounded-2xl border-2 border-gray-200 shadow-lg sticky top-28 overflow-hidden">
+            <div class="bg-white rounded-2xl border-2 border-gray-200 shadow-lg overflow-hidden">
                 <!-- Title -->
                 <div class="bg-gradient-to-r from-gray-900 to-gray-800 px-6 py-5">
                     <h2 class="text-xl font-bold text-white leading-tight">{{ rabota.name }}</h2>
@@ -178,14 +178,6 @@
                         <span class="text-sm text-gray-500 font-medium">Категория</span>
                         <span class="text-sm font-semibold text-gray-900">{{ rabota.get_category_display_name }}</span>
                     </div>
-                    {% if rabota.technologies %}
-                    <div class="pt-2">
-                        <span class="text-sm text-gray-500 font-medium block mb-2">Стек технологий</span>
-                        <div class="flex flex-wrap gap-1.5">
-                            <span class="px-3 py-1 bg-gray-100 rounded-lg text-xs font-medium text-gray-700 border border-gray-200">{{ rabota.technologies }}</span>
-                        </div>
-                    </div>
-                    {% endif %}
                 </div>
 
                 {% if rabota.resources_text %}
@@ -198,22 +190,36 @@
                 {% endif %}
             </div>
 
-            {% if rabota.tariffs_text or rabota.related_service %}
+            {% if rabota.tariff_short_description or rabota.tariff_price_value or rabota.related_service %}
             <div class="bg-gradient-to-br from-primary-600 to-indigo-700 rounded-2xl p-6 shadow-xl text-white">
                 <h3 class="text-xl font-bold mb-4 flex items-center">
                     <svg class="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     Тарифы и стоимость
                 </h3>
-                <div class="prose prose-sm prose-invert prose-headings:text-white text-primary-50">
-                    {% if rabota.tariffs_text %}
-                        {{ rabota.tariffs_text|safe }}
+                <div class="text-primary-50 space-y-3">
+                    {% if rabota.tariff_short_description %}
+                        <p class="text-sm leading-relaxed">{{ rabota.tariff_short_description }}</p>
                     {% elif rabota.related_service %}
-                        <p>Данный проект выполнен на базе услуги: <strong>{{ rabota.related_service.title }}</strong>.</p>
-                        <p class="text-lg font-bold mt-2">Стоимость: {{ rabota.related_service.get_display_price }}</p>
+                        <p class="text-sm leading-relaxed">Данный проект выполнен на базе услуги: <strong>{{ rabota.related_service.title }}</strong>.</p>
+                    {% endif %}
+                    {% if rabota.tariff_price_value %}
+                        <p class="text-2xl font-bold">{{ rabota.get_tariff_display_price }}</p>
+                    {% elif rabota.related_service %}
+                        <p class="text-2xl font-bold">{{ rabota.related_service.get_display_price }}</p>
                     {% endif %}
                 </div>
                 
-                {% if rabota.related_service %}
+                {% if rabota.tariff_price_value %}
+                <form action="{% url 'home:add-to-cart' %}" method="POST" class="mt-6">
+                    {% csrf_token %}
+                    <input type="hidden" name="service_id" value="{{ rabota.id }}">
+                    <input type="hidden" name="service_type" value="portfolio">
+                    <input type="hidden" name="quantity" value="1">
+                    <button type="submit" class="w-full text-center inline-block px-4 py-3 bg-white text-primary-700 font-bold rounded-xl shadow-md hover:bg-gray-50 hover:shadow-lg transition-all">
+                        Заказать такой проект
+                    </button>
+                </form>
+                {% elif rabota.related_service %}
                 <form action="{% url 'home:add-to-cart' %}" method="POST" class="mt-6">
                     {% csrf_token %}
                     <input type="hidden" name="service_id" value="{{ rabota.related_service.id }}">
