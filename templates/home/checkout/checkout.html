@@ -56,6 +56,24 @@
                 {% endfor %}
             </div>
             {% endif %}
+
+            {% if not request.user.is_authenticated %}
+            <div class="mb-8 bg-amber-50 border border-amber-200 rounded-2xl p-6">
+                <h2 class="text-xl font-bold text-amber-900 mb-2">Нужно авторизоваться</h2>
+                <p class="text-amber-800 mb-4">
+                    Чтобы перейти к опросному листу, войдите в аккаунт или зарегистрируйтесь. После входа вы вернетесь на эту страницу, и контактные поля заполнятся автоматически.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <a href="{% url 'identity_auth:customer_login' %}?next={{ next_url|urlencode }}" class="inline-flex justify-center items-center px-5 py-3 rounded-xl bg-primary-600 text-white font-semibold hover:bg-primary-700 transition-colors">
+                        Войти
+                    </a>
+                    <a href="{% url 'identity_auth:customer_register' %}?next={{ next_url|urlencode }}" class="inline-flex justify-center items-center px-5 py-3 rounded-xl border border-primary-300 text-primary-700 bg-white font-semibold hover:bg-primary-50 transition-colors">
+                        Зарегистрироваться
+                    </a>
+                </div>
+                {% include "identity_auth/partials/oauth_widget.html" with next=next_url vkid_oauth_box_class="mt-4 pt-4 border-t border-amber-200" %}
+            </div>
+            {% endif %}
             
             <form method="post" class="grid lg:grid-cols-2 gap-12">
                 {% csrf_token %}
@@ -64,7 +82,7 @@
                 <div class="bg-white rounded-3xl p-8 shadow-lg">
                     <h2 class="text-2xl font-bold text-gray-900 mb-6">Контактная информация</h2>
                     
-                    <div class="space-y-6">
+                    <fieldset class="space-y-6" {% if not request.user.is_authenticated %}disabled{% endif %}>
                         <div>
                             <label for="{{ order_form.customer_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
                                 Полное имя *
@@ -106,80 +124,13 @@
                             <label for="{{ order_form.company_fax.id_for_label }}">Факс (не заполняйте)</label>
                             {{ order_form.company_fax }}
                         </div>
-                        
-                        <!-- Account Creation Section -->
-                        <div class="border-t border-gray-200 pt-6">
-                            <div class="flex items-center mb-4">
-                                <input type="checkbox" id="{{ order_form.create_account.id_for_label }}" 
-                                       name="{{ order_form.create_account.name }}" 
-                                       value="on" 
-                                       {% if order_form.create_account.value %}checked{% endif %}
-                                       class="form-checkbox h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
-                                <label for="{{ order_form.create_account.id_for_label }}" class="ml-2 text-sm font-medium text-gray-900">
-                                    {{ order_form.create_account.label }}
-                                </label>
-                            </div>
-                            
-                            <div id="account-fields" class="space-y-4">
-                                <div>
-                                    <label for="{{ order_form.username.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Логин для входа в личный кабинет *
-                                    </label>
-                                    {{ order_form.username }}
-                                    {% if order_form.username.errors %}
-                                    <div class="text-red-600 text-sm mt-1">
-                                        {{ order_form.username.errors.0 }}
-                                    </div>
-                                    {% endif %}
-                                    <p class="text-xs text-gray-500 mt-1">Будет использоваться для входа в личный кабинет</p>
-                                </div>
-                                
-                                <div>
-                                    <label for="{{ order_form.password1.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Пароль *
-                                    </label>
-                                    {{ order_form.password1 }}
-                                    {% if order_form.password1.errors %}
-                                    <div class="text-red-600 text-sm mt-1">
-                                        {{ order_form.password1.errors.0 }}
-                                    </div>
-                                    {% endif %}
-                                    <p class="text-xs text-gray-500 mt-1">Минимум 8 символов</p>
-                                </div>
-                                
-                                <div>
-                                    <label for="{{ order_form.password2.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Подтвердите пароль *
-                                    </label>
-                                    {{ order_form.password2 }}
-                                    {% if order_form.password2.errors %}
-                                    <div class="text-red-600 text-sm mt-1">
-                                        {{ order_form.password2.errors.0 }}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            
-                            <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                                <div class="flex">
-                                    <div class="flex-shrink-0">
-                                        <svg class="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                    </div>
-                                    <div class="ml-3">
-                                        <p class="text-sm text-blue-800">
-                                            <strong>Преимущества личного кабинета:</strong><br>
-                                            • Отслеживание статуса заказов<br>
-                                            • История всех заказов<br>
-                                            • Комментарии к заказам<br>
-                                            • Быстрое оформление новых заказов
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p class="text-sm text-blue-800">
+                                <strong>Данные подтягиваются из профиля пользователя.</strong>
+                                При необходимости вы можете скорректировать их перед переходом к опросному листу.
+                            </p>
                         </div>
-                    </div>
+                    </fieldset>
                 </div>
                 
                 <!-- Order Summary -->
@@ -231,9 +182,15 @@
                     
                     <!-- Action Buttons -->
                     <div class="mt-8 space-y-4">
+                        {% if request.user.is_authenticated %}
                         <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-full font-semibold text-lg hover:bg-blue-700 transition-all duration-300">
                             Перейти к опросному листу →
                         </button>
+                        {% else %}
+                        <div class="w-full bg-amber-100 text-amber-800 py-4 px-4 rounded-2xl text-center font-semibold">
+                            Нужно авторизоваться, чтобы перейти к опросному листу
+                        </div>
+                        {% endif %}
                         <a href="{% url 'home:cart' %}" class="block w-full bg-gray-600 text-white py-3 rounded-full font-semibold text-center hover:bg-gray-700 transition-colors">
                             ← Вернуться в корзину
                         </a>
@@ -272,87 +229,4 @@
         border: 1px solid #bfdbfe;
     }
 </style>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const createAccountCheckbox = document.getElementById('{{ order_form.create_account.id_for_label }}');
-    const accountFields = document.getElementById('account-fields');
-    const usernameField = document.getElementById('{{ order_form.username.id_for_label }}');
-    const password1Field = document.getElementById('{{ order_form.password1.id_for_label }}');
-    const password2Field = document.getElementById('{{ order_form.password2.id_for_label }}');
-    const form = document.querySelector('form');
-    
-    console.log('DEBUG: Checkout page initialized');
-    console.log('DEBUG: Form found:', form);
-    console.log('DEBUG: Create account checkbox found:', createAccountCheckbox);
-    console.log('DEBUG: Create account checkbox checked:', createAccountCheckbox ? createAccountCheckbox.checked : 'null');
-    
-    function toggleAccountFields() {
-        if (!createAccountCheckbox) return;
-        
-        const isChecked = createAccountCheckbox.checked;
-        console.log('DEBUG: Toggle account fields, checkbox is:', isChecked);
-        
-        if (isChecked) {
-            accountFields.style.display = 'block';
-            usernameField.required = true;
-            password1Field.required = true;
-            password2Field.required = true;
-            console.log('DEBUG: Account fields shown and required');
-        } else {
-            accountFields.style.display = 'none';
-            usernameField.required = false;
-            password1Field.required = false;
-            password2Field.required = false;
-            // Очищаем поля при отключении
-            usernameField.value = '';
-            password1Field.value = '';
-            password2Field.value = '';
-            console.log('DEBUG: Account fields hidden and not required');
-        }
-    }
-    
-    // Инициализация - скрываем поля аккаунта по умолчанию
-    if (createAccountCheckbox && accountFields) {
-        toggleAccountFields();
-    }
-    
-    // Обработчик изменения чекбокса
-    if (createAccountCheckbox) {
-        createAccountCheckbox.addEventListener('change', function() {
-            console.log('DEBUG: Checkbox changed to:', this.checked);
-            toggleAccountFields();
-        });
-    }
-    
-    // Обработчик отправки формы
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            console.log('DEBUG: Form submit event triggered');
-            console.log('DEBUG: Create account checkbox checked:', createAccountCheckbox.checked);
-            
-            // Собираем данные формы для отладки
-            const formData = new FormData(form);
-            console.log('DEBUG: Form data:');
-            for (let pair of formData.entries()) {
-                console.log('  ', pair[0], '=', pair[1]);
-            }
-            
-            // Проверяем валидность формы
-            if (!form.checkValidity()) {
-                console.log('DEBUG: Form is not valid - browser validation failed');
-                e.preventDefault();
-                // Показываем какие поля не валидны
-                const invalidFields = form.querySelectorAll(':invalid');
-                console.log('DEBUG: Invalid fields:', invalidFields);
-                invalidFields.forEach(field => {
-                    console.log('  - Invalid field:', field.name, field.validationMessage);
-                });
-                return false;
-            }
-            
-            console.log('DEBUG: Form is valid, submitting to server...');
-        });
-    }
-});
-</script>
 {% endblock extra_scripts %} 

@@ -101,6 +101,14 @@
                                     <p class="text-sm text-gray-600">Общая сумма</p>
                                     <p class="font-bold text-2xl text-primary-600">{{ order.total_price|floatformat:0 }} ₽</p>
                                 </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Предоплата заказа</p>
+                                    <p class="font-semibold text-gray-900">{{ order.get_prepayment_amount|floatformat:0 }} ₽</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Финишная оплата</p>
+                                    <p class="font-semibold text-gray-900">{{ order.get_final_payment_amount|floatformat:0 }} ₽</p>
+                                </div>
                                 {% if order.payment_id %}
                                 <div>
                                     <p class="text-sm text-gray-600">ID платежа</p>
@@ -151,9 +159,17 @@
                                 <div class="text-right">
                                     <div class="font-semibold text-gray-900">{{ item.price }}</div>
                                     <div class="text-sm text-gray-600">x{{ item.quantity }}</div>
+                                    <div class="text-xs text-primary-600 font-semibold mt-1">
+                                        Предоплата: {{ item.prepayment_percent }}%
+                                    </div>
                                 </div>
                             </div>
                             {% endfor %}
+                        </div>
+                        <div class="mt-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-900">
+                            Предоплата заказа: {{ order.get_prepayment_amount|floatformat:0 }} ₽.
+                            Финишная оплата: {{ order.get_final_payment_amount|floatformat:0 }} ₽ после оказания услуги и подписания акта выполненных работ.
+                            (Полная передача прав и кода — после 100% оплаты услуг и подписания акта. Если выполненные работы не соответствуют ТЗ/опросному листу, предоплата возвращается.)
                         </div>
                     </div>
 

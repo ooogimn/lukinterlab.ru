@@ -11,7 +11,7 @@
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="card shadow">
+            <div class="card shadow payment-card">
                 <div class="card-header bg-primary text-white">
                     <h4 class="mb-0">
                         <i class="fas fa-credit-card me-2"></i>
@@ -19,89 +19,162 @@
                     </h4>
                 </div>
                 <div class="card-body">
-                    <!-- Информация о заказе -->
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <h5 class="text-primary">Информация о заказе</h5>
-                            <p><strong>Номер заказа:</strong> {{ order.order_number }}</p>
-                            <p><strong>Дата создания:</strong> {{ order.created|date:"d.m.Y H:i" }}</p>
-                            <p><strong>Статус:</strong> 
-                                <span class="badge bg-{% if order.status == 'new' %}secondary{% elif order.status == 'confirmed' %}success{% else %}warning{% endif %}">
-                                    {{ order.get_status_display }}
-                                </span>
+                    <div class="payment-frame">
+                        <!-- Информация о заказе -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h5 class="text-primary">Информация о заказе</h5>
+                                <p><strong>Номер заказа:</strong> {{ order.order_number }}</p>
+                                <p><strong>Дата создания:</strong> {{ order.created|date:"d.m.Y H:i" }}</p>
+                                <p><strong>Статус:</strong> 
+                                    <span class="badge bg-{% if order.status == 'new' %}secondary{% elif order.status == 'confirmed' %}success{% else %}warning{% endif %}">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="text-primary">Клиент</h5>
+                                <p><strong>Имя:</strong> {{ order.customer_name }}</p>
+                                <p><strong>Email:</strong> {{ order.customer_email }}</p>
+                                <p><strong>Телефон:</strong> {{ order.customer_phone }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Товары в заказе -->
+                        <div class="mb-4">
+                            <h5 class="text-primary">Товары в заказе</h5>
+                            <div class="table-responsive">
+                                <table class="table table-striped align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Товар</th>
+                                            <th>Цена</th>
+                                            <th>Количество</th>
+                                            <th>Сумма</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in order.orderitem_set.all %}
+                                        <tr>
+                                            <td>{{ item.title }}</td>
+                                            <td>{{ item.price }}</td>
+                                            <td>{{ item.quantity }}</td>
+                                            <td>{{ item.get_total_price }} ₽</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="table-primary">
+                                            <th colspan="3" class="text-end">Итого:</th>
+                                            <th>{{ order.total_price }} ₽</th>
+                                        </tr>
+                                        <tr>
+                                            <th colspan="3" class="text-end">Предоплата:</th>
+                                            <th>{{ payment_amount|floatformat:0 }} ₽</th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="mb-4 p-3 bg-warning-subtle rounded border border-warning">
+                            <strong>Финишная оплата:</strong> {{ order.get_final_payment_amount|floatformat:0 }} ₽
+                            после оказания услуги и подписания акта выполненных работ.
+                        </div>
+
+                        <!-- Форма оплаты -->
+                        <div class="text-center">
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success btn-lg btn-neon btn-neon-primary">
+                                    <i class="fas fa-credit-card me-2"></i>
+                                    Оплатить предоплату {{ payment_amount|floatformat:0 }} ₽
+                                </button>
+                            </form>
+                            
+                            <a href="{% url 'home:order_detail' order.id %}" class="btn btn-secondary btn-lg ms-2 btn-neon btn-neon-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                Вернуться к заказу
+                            </a>
+                        </div>
+
+                        <!-- Информация о безопасности -->
+                        <div class="mt-4 p-3 bg-light rounded">
+                            <h6 class="text-muted">
+                                <i class="fas fa-shield-alt me-2"></i>
+                                Безопасная оплата
+                            </h6>
+                            <p class="text-muted mb-0">
+                                Оплата производится через защищенное соединение с использованием платежной системы YooKassa. 
+                                Ваши данные защищены и не передаются третьим лицам.
                             </p>
                         </div>
-                        <div class="col-md-6">
-                            <h5 class="text-primary">Клиент</h5>
-                            <p><strong>Имя:</strong> {{ order.customer_name }}</p>
-                            <p><strong>Email:</strong> {{ order.customer_email }}</p>
-                            <p><strong>Телефон:</strong> {{ order.customer_phone }}</p>
-                        </div>
-                    </div>
-
-                    <!-- Товары в заказе -->
-                    <div class="mb-4">
-                        <h5 class="text-primary">Товары в заказе</h5>
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Товар</th>
-                                        <th>Цена</th>
-                                        <th>Количество</th>
-                                        <th>Сумма</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for item in order.orderitem_set.all %}
-                                    <tr>
-                                        <td>{{ item.title }}</td>
-                                        <td>{{ item.price }}</td>
-                                        <td>{{ item.quantity }}</td>
-                                        <td>{{ item.get_total_price }} ₽</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                                <tfoot>
-                                    <tr class="table-primary">
-                                        <th colspan="3" class="text-end">Итого:</th>
-                                        <th>{{ order.total_price }} ₽</th>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Форма оплаты -->
-                    <div class="text-center">
-                        <form method="post" class="d-inline">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-success btn-lg">
-                                <i class="fas fa-credit-card me-2"></i>
-                                Оплатить {{ order.total_price }} ₽
-                            </button>
-                        </form>
-                        
-                        <a href="{% url 'home:order_detail' order.id %}" class="btn btn-secondary btn-lg ms-2">
-                            <i class="fas fa-arrow-left me-2"></i>
-                            Вернуться к заказу
-                        </a>
-                    </div>
-
-                    <!-- Информация о безопасности -->
-                    <div class="mt-4 p-3 bg-light rounded">
-                        <h6 class="text-muted">
-                            <i class="fas fa-shield-alt me-2"></i>
-                            Безопасная оплата
-                        </h6>
-                        <p class="text-muted mb-0">
-                            Оплата производится через защищенное соединение с использованием платежной системы YooKassa. 
-                            Ваши данные защищены и не передаются третьим лицам.
-                        </p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+<style>
+.payment-card {
+    border: 1px solid rgba(37, 99, 235, 0.18);
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.payment-frame {
+    border: 2px solid rgba(37, 99, 235, 0.2);
+    border-radius: 1rem;
+    padding: 1.25rem;
+    background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 12px 30px rgba(37, 99, 235, 0.08);
+}
+
+.btn-neon {
+    position: relative;
+    border: 0;
+    border-radius: 999px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+.btn-neon-primary {
+    background: linear-gradient(145deg, #38bdf8, #16a34a 55%, #0f766e);
+    box-shadow: 0 10px 24px rgba(16, 185, 129, 0.35), inset 0 2px 2px rgba(255, 255, 255, 0.45), inset 0 -4px 10px rgba(0, 0, 0, 0.22);
+}
+
+.btn-neon-secondary {
+    background: linear-gradient(145deg, #94a3b8, #64748b 55%, #334155);
+    box-shadow: 0 10px 24px rgba(100, 116, 139, 0.3), inset 0 2px 2px rgba(255, 255, 255, 0.42), inset 0 -4px 10px rgba(0, 0, 0, 0.24);
+}
+
+.btn-neon:hover {
+    transform: translateY(-2px) scale(1.01);
+    filter: saturate(1.1);
+}
+
+.btn-neon-primary:hover {
+    box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.25), 0 14px 30px rgba(16, 185, 129, 0.45), 0 0 26px rgba(45, 212, 191, 0.45);
+}
+
+.btn-neon-secondary:hover {
+    box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.3), 0 14px 30px rgba(100, 116, 139, 0.4), 0 0 20px rgba(148, 163, 184, 0.35);
+}
+
+.btn-neon:active {
+    transform: translateY(1px) scale(0.99);
+}
+
+@media (max-width: 576px) {
+    .btn-neon {
+        width: 100%;
+    }
+
+    .btn-neon + .btn-neon {
+        margin-top: 0.75rem;
+        margin-left: 0 !important;
+    }
+}
+</style>
 {% endblock %} 

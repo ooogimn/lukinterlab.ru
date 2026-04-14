@@ -79,7 +79,10 @@
                                 'X-CSRFToken': getCookie('csrftoken')
                             },
                             credentials: 'same-origin',
-                            body: JSON.stringify({ access_token: token })
+                            body: JSON.stringify({
+                                access_token: token,
+                                next: '{{ next|default_if_none:""|escapejs }}'
+                            })
                         }).then(function (res) {
                             return res.json().then(function (j) {
                                 if (res.ok && j.redirect) {

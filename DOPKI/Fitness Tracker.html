@@ -1,0 +1,2511 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>💪 Fitness Tracker Pro - Ваши тренировки</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --color-primary: #6c5ce7;
+            --color-primary-light: rgba(108, 92, 231, 0.1);
+            --color-secondary: #00cec9;
+            --color-accent: #fd79a8;
+            --color-warning: #f39c12;
+            --color-success: #00b894;
+            --color-danger: #e74c3c;
+            --color-bg: #f0f2f5;
+            --color-surface: #ffffff;
+            --color-text: #2d3436;
+            --color-text-light: #636e72;
+            --color-border: #dfe6e9;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+            background: linear-gradient(135deg, #f0f2f5 0%, #e8eaf6 100%);
+            color: var(--color-text);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        /* Sticky Header */
+        .app-header {
+            background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 50%, #fd79a8 100%);
+            color: white;
+            padding: 20px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(108, 92, 231, 0.4);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-text h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-text p {
+            margin: 0;
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .header-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px;
+            padding-bottom: 100px;
+        }
+
+        /* Tabs */
+        .tabs-container {
+            background: var(--color-surface);
+            border-radius: var(--radius-lg);
+            padding: 8px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-sm);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            min-width: max-content;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 16px;
+            background: transparent;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-text-light);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.4);
+        }
+
+        .tab-btn:active {
+            transform: scale(0.98);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Accordion - Неоновое свечение */
+        .accordion {
+            margin-bottom: 16px;
+        }
+
+        .accordion-item {
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            margin-bottom: 12px;
+            overflow: hidden;
+            /* Неоновое свечение по умолчанию - наружу */
+            border: 2px solid transparent;
+            box-shadow:
+                0 0 8px rgba(108, 92, 231, 0.25),
+                0 0 16px rgba(108, 92, 231, 0.15),
+                0 2px 8px rgba(0, 0, 0, 0.08);
+            /* Цветная штриховка */
+            background-image:
+                repeating-linear-gradient(45deg,
+                    transparent,
+                    transparent 10px,
+                    rgba(108, 92, 231, 0.02) 10px,
+                    rgba(108, 92, 231, 0.02) 20px),
+                linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+            transition: all 0.3s ease;
+        }
+
+        .accordion-item:hover {
+            box-shadow:
+                0 0 12px rgba(108, 92, 231, 0.35),
+                0 0 24px rgba(108, 92, 231, 0.25),
+                0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .accordion-item.active {
+            /* При активации - свечение внутрь */
+            border-color: var(--color-primary);
+            box-shadow:
+                0 0 15px rgba(108, 92, 231, 0.5),
+                0 0 30px rgba(108, 92, 231, 0.3),
+                inset 0 0 25px rgba(108, 92, 231, 0.12);
+            background-image:
+                repeating-linear-gradient(-45deg,
+                    transparent,
+                    transparent 10px,
+                    rgba(108, 92, 231, 0.05) 10px,
+                    rgba(108, 92, 231, 0.05) 20px),
+                linear-gradient(135deg, rgba(108, 92, 231, 0.06) 0%, rgba(162, 155, 254, 0.04) 100%);
+        }
+
+        .accordion-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            cursor: pointer;
+            background: var(--color-surface);
+            border: none;
+            width: 100%;
+            text-align: left;
+            transition: background 0.2s;
+        }
+
+        .accordion-header:active {
+            background: #f8f9fa;
+        }
+
+        .accordion-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .accordion-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .accordion-icon.workout {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+        }
+
+        .accordion-icon.bmi {
+            background: linear-gradient(135deg, #00cec9, #81ecec);
+        }
+
+        .accordion-icon.water {
+            background: linear-gradient(135deg, #0984e3, #74b9ff);
+        }
+
+        .accordion-icon.meal {
+            background: linear-gradient(135deg, #fd79a8, #fab1c4);
+        }
+
+        .accordion-title h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .accordion-title span {
+            font-size: 12px;
+            color: var(--color-text-light);
+            display: block;
+            margin-top: 2px;
+        }
+
+        .accordion-arrow {
+            color: var(--color-text-light);
+            font-size: 14px;
+            transition: transform 0.3s ease;
+        }
+
+        .accordion-header.active .accordion-arrow {
+            transform: rotate(180deg);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.3s ease;
+        }
+
+        .accordion-content.active {
+            max-height: 1000px;
+            padding: 0 20px 20px;
+        }
+
+        /* Cards - Неоновое свечение */
+        .card {
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-bottom: 16px;
+            /* Неоновое свечение по умолчанию - наружу */
+            border: 2px solid transparent;
+            box-shadow:
+                0 0 8px rgba(108, 92, 231, 0.3),
+                0 0 16px rgba(108, 92, 231, 0.2),
+                0 4px 12px rgba(0, 0, 0, 0.08);
+            /* Цветная штриховка */
+            background-image:
+                repeating-linear-gradient(45deg,
+                    transparent,
+                    transparent 10px,
+                    rgba(108, 92, 231, 0.03) 10px,
+                    rgba(108, 92, 231, 0.03) 20px),
+                linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow:
+                0 0 12px rgba(108, 92, 231, 0.4),
+                0 0 24px rgba(108, 92, 231, 0.3),
+                0 6px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .card.active {
+            /* При активации - свечение внутрь */
+            border-color: var(--color-primary);
+            box-shadow:
+                0 0 15px rgba(108, 92, 231, 0.5),
+                0 0 30px rgba(108, 92, 231, 0.3),
+                inset 0 0 20px rgba(108, 92, 231, 0.15);
+            background-image:
+                repeating-linear-gradient(-45deg,
+                    transparent,
+                    transparent 10px,
+                    rgba(108, 92, 231, 0.06) 10px,
+                    rgba(108, 92, 231, 0.06) 20px),
+                linear-gradient(135deg, rgba(108, 92, 231, 0.08) 0%, rgba(162, 155, 254, 0.05) 100%);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-text);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Stats Cards Grid - Неоновое свечение */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            text-align: center;
+            /* Неоновое свечение по умолчанию - наружу */
+            border: 2px solid transparent;
+            box-shadow:
+                0 0 8px rgba(108, 92, 231, 0.3),
+                0 0 16px rgba(108, 92, 231, 0.2),
+                0 2px 8px rgba(0, 0, 0, 0.08);
+            /* Цветная штриховка */
+            background-image:
+                repeating-linear-gradient(45deg,
+                    transparent,
+                    transparent 8px,
+                    rgba(108, 92, 231, 0.025) 8px,
+                    rgba(108, 92, 231, 0.025) 16px),
+                linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: rgba(108, 92, 231, 0.5);
+            box-shadow:
+                0 0 15px rgba(108, 92, 231, 0.5),
+                0 0 30px rgba(108, 92, 231, 0.3),
+                0 4px 12px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .stat-card.primary {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            color: white;
+            box-shadow:
+                0 0 20px rgba(108, 92, 231, 0.5),
+                0 0 40px rgba(108, 92, 231, 0.3);
+            background-image:
+                repeating-linear-gradient(45deg,
+                    transparent,
+                    transparent 8px,
+                    rgba(255, 255, 255, 0.1) 8px,
+                    rgba(255, 255, 255, 0.1) 16px),
+                linear-gradient(135deg, #6c5ce7 0%, #fd79a8 100%);
+        }
+
+        .stat-card.primary .stat-value,
+        .stat-card.primary .stat-label {
+            color: white;
+        }
+
+        .stat-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--color-primary);
+            line-height: 1.2;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--color-text-light);
+            margin-top: 4px;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--color-text);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            font-size: 15px;
+            color: var(--color-text);
+            transition: all 0.2s;
+            background: var(--color-surface);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px var(--color-primary-light);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--color-secondary), #81ecec);
+            box-shadow: 0 4px 12px rgba(0, 206, 201, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--color-danger), #ff7675);
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+        }
+
+        /* Workout List */
+        .workout-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .workout-item {
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            border-left: 4px solid var(--color-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .workout-item:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .workout-item.cardio {
+            border-left-color: #e74c3c;
+        }
+
+        .workout-item.strength {
+            border-left-color: #6c5ce7;
+        }
+
+        .workout-item.yoga {
+            border-left-color: #00cec9;
+        }
+
+        .workout-item.swimming {
+            border-left-color: #0984e3;
+        }
+
+        .workout-item.cycling {
+            border-left-color: #fd79a8;
+        }
+
+        .workout-info {
+            flex: 1;
+        }
+
+        .workout-info h4 {
+            margin: 0 0 4px 0;
+            font-size: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .workout-info p {
+            margin: 0;
+            font-size: 12px;
+            color: var(--color-text-light);
+        }
+
+        .workout-badges {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge.duration {
+            background: var(--color-primary-light);
+            color: var(--color-primary);
+        }
+
+        .badge.calories {
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--color-warning);
+        }
+
+        .workout-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .icon-btn.delete {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--color-danger);
+        }
+
+        .icon-btn.delete:active {
+            background: var(--color-danger);
+            color: white;
+        }
+
+        /* BMI Result */
+        .bmi-result {
+            text-align: center;
+            padding: 24px;
+            background: linear-gradient(135deg, var(--color-primary-light) 0%, rgba(162, 155, 254, 0.1) 100%);
+            border-radius: var(--radius-md);
+            margin-top: 16px;
+        }
+
+        .bmi-value {
+            font-size: 48px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .bmi-status {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 8px 0;
+            padding: 6px 16px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .bmi-status.underweight {
+            background: #74b9ff;
+            color: white;
+        }
+
+        .bmi-status.normal {
+            background: #00b894;
+            color: white;
+        }
+
+        .bmi-status.overweight {
+            background: #f39c12;
+            color: white;
+        }
+
+        .bmi-status.obese {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .bmi-range {
+            font-size: 12px;
+            color: var(--color-text-light);
+            margin-top: 12px;
+        }
+
+        /* Water Tracker */
+        .water-tracker {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .water-glass {
+            width: 50px;
+            height: 60px;
+            border: 3px solid var(--color-border);
+            border-radius: 4px 4px 12px 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .water-glass.filled {
+            border-color: var(--color-secondary);
+            background: linear-gradient(to top, rgba(0, 206, 201, 0.8) 0%, rgba(0, 206, 201, 0.4) 100%);
+        }
+
+        .water-glass::after {
+            content: '🥛';
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            font-size: 12px;
+        }
+
+        .water-total {
+            text-align: center;
+            margin-top: 16px;
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(0, 206, 201, 0.1) 0%, rgba(129, 236, 236, 0.1) 100%);
+            border-radius: var(--radius-md);
+        }
+
+        .water-total-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--color-secondary);
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            margin: 16px 0;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: var(--color-border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        /* Chart */
+        .chart-container {
+            position: relative;
+            height: 200px;
+            padding: 20px 0;
+        }
+
+        .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 100%;
+            gap: 8px;
+        }
+
+        .bar-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            height: 100%;
+        }
+
+        .bar {
+            width: 100%;
+            max-width: 40px;
+            background: linear-gradient(to top, var(--color-primary), var(--color-accent));
+            border-radius: 4px 4px 0 0;
+            min-height: 8px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .bar:hover {
+            opacity: 0.8;
+            transform: scaleY(1.05);
+        }
+
+        .bar-label {
+            font-size: 11px;
+            color: var(--color-text-light);
+            margin-top: 8px;
+            font-weight: 500;
+        }
+
+        /* Achievements */
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .achievement-card {
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            opacity: 0.5;
+        }
+
+        .achievement-card.unlocked {
+            opacity: 1;
+            border: 2px solid var(--color-warning);
+            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
+        }
+
+        .achievement-icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+
+        .achievement-name {
+            font-size: 12px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        /* Дневник тренировок */
+        .program-selector {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .program-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 14px 16px;
+            background: var(--color-surface);
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-text);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            /* Неоновое свечение */
+            box-shadow: 0 0 8px rgba(108, 92, 231, 0.2);
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(108, 92, 231, 0.02) 8px, rgba(108, 92, 231, 0.02) 16px);
+        }
+
+        .program-btn:hover {
+            border-color: rgba(108, 92, 231, 0.5);
+            box-shadow: 0 0 15px rgba(108, 92, 231, 0.4);
+        }
+
+        .program-btn.active {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            color: white;
+            border-color: var(--color-primary);
+            box-shadow:
+                0 0 20px rgba(108, 92, 231, 0.5),
+                0 0 40px rgba(108, 92, 231, 0.3),
+                inset 0 0 20px rgba(255, 255, 255, 0.1);
+            background-image:
+                repeating-linear-gradient(-45deg, transparent, transparent 8px, rgba(255, 255, 255, 0.08) 8px, rgba(255, 255, 255, 0.08) 16px),
+                linear-gradient(135deg, #6c5ce7 0%, #fd79a8 100%);
+        }
+
+        .program-btn i {
+            font-size: 24px;
+        }
+
+        .week-planner {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 8px 0;
+            margin-bottom: 16px;
+        }
+
+        .day-btn {
+            flex: 0 0 auto;
+            padding: 12px 16px;
+            background: var(--color-surface);
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--color-text-light);
+            transition: all 0.3s ease;
+            text-align: center;
+            min-width: 70px;
+        }
+
+        .day-btn:hover {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+
+        .day-btn.active {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            color: white;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 15px rgba(108, 92, 231, 0.4);
+        }
+
+        .day-btn .day-name {
+            display: block;
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+
+        .day-btn .day-date {
+            display: block;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .exercises-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .exercise-item {
+            background: var(--color-surface);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            border: 2px solid var(--color-border);
+            transition: all 0.3s ease;
+            /* Неоновое свечение */
+            box-shadow: 0 0 6px rgba(108, 92, 231, 0.2);
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(108, 92, 231, 0.02) 8px, rgba(108, 92, 231, 0.02) 16px);
+        }
+
+        .exercise-item:hover {
+            border-color: rgba(108, 92, 231, 0.5);
+            box-shadow: 0 0 12px rgba(108, 92, 231, 0.35);
+        }
+
+        .exercise-item.completed {
+            border-color: var(--color-success);
+            background-image:
+                repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(0, 184, 148, 0.05) 8px, rgba(0, 184, 148, 0.05) 16px),
+                linear-gradient(135deg, rgba(0, 184, 148, 0.05) 0%, rgba(0, 184, 148, 0.02) 100%);
+            box-shadow: 0 0 12px rgba(0, 184, 148, 0.3);
+        }
+
+        .exercise-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .exercise-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--color-text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .exercise-sets {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .set-input {
+            width: 60px;
+            padding: 8px;
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .set-input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px var(--color-primary-light);
+        }
+
+        .exercise-check {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--color-border);
+            background: var(--color-surface);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            color: transparent;
+        }
+
+        .exercise-check:hover {
+            border-color: var(--color-success);
+        }
+
+        .exercise-check.completed {
+            background: linear-gradient(135deg, var(--color-success), #00d2aa);
+            border-color: var(--color-success);
+            color: white;
+            box-shadow: 0 0 15px rgba(0, 184, 148, 0.4);
+        }
+
+        .exercise-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--color-text-light);
+        }
+
+        .exercise-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .day-summary {
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.1) 0%, rgba(253, 121, 168, 0.1) 100%);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-top: 16px;
+            text-align: center;
+            border: 2px solid rgba(108, 92, 231, 0.3);
+            box-shadow: 0 0 15px rgba(108, 92, 231, 0.2);
+        }
+
+        .day-summary-value {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .day-summary-label {
+            font-size: 12px;
+            color: var(--color-text-light);
+            margin-top: 4px;
+        }
+
+        /* Mobile Nav */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--color-surface);
+            padding: 8px 16px;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+            z-index: 99;
+        }
+
+        .mobile-nav-items {
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .mobile-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--color-text-light);
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        .mobile-nav-item.active {
+            color: var(--color-primary);
+            background: var(--color-primary-light);
+        }
+
+        .mobile-nav-item i {
+            font-size: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .mobile-nav {
+                display: block;
+            }
+
+            .container {
+                padding-bottom: 80px;
+            }
+
+            .header-content {
+                max-width: 100%;
+            }
+
+            .logo-text h1 {
+                font-size: 18px;
+            }
+
+            .water-glass {
+                width: 40px;
+                height: 50px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .stat-value {
+                font-size: 24px;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">💪</div>
+                <div class="logo-text">
+                    <h1>Fitness Tracker Pro</h1>
+                    <p>Ваш персональный тренер</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="header-btn" onclick="resetData()" title="Сбросить данные">
+                    <i class="fas fa-redo"></i>
+                </button>
+                <button class="header-btn" onclick="toggleSettings()" title="Настройки">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Tabs -->
+        <div class="tabs-container">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('dashboard')">
+                    <i class="fas fa-home"></i> Главная
+                </button>
+                <button class="tab-btn" onclick="switchTab('workouts')">
+                    <i class="fas fa-dumbbell"></i> Тренировки
+                </button>
+                <button class="tab-btn" onclick="switchTab('diary')">
+                    <i class="fas fa-book"></i> Дневник
+                </button>
+                <button class="tab-btn" onclick="switchTab('calculator')">
+                    <i class="fas fa-calculator"></i> Калькулятор
+                </button>
+                <button class="tab-btn" onclick="switchTab('progress')">
+                    <i class="fas fa-chart-line"></i> Прогресс
+                </button>
+                <button class="tab-btn" onclick="switchTab('achievements')">
+                    <i class="fas fa-trophy"></i> Достижения
+                </button>
+            </div>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card primary">
+                    <div class="stat-icon">🔥</div>
+                    <div class="stat-value" id="dashCalories">0</div>
+                    <div class="stat-label">ккал сожжено</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-value" id="dashTime">0</div>
+                    <div class="stat-label">минут активно</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💧</div>
+                    <div class="stat-value" id="dashWater">0</div>
+                    <div class="stat-label">стаканов воды</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-value" id="dashWorkouts">0</div>
+                    <div class="stat-label">тренировок</div>
+                </div>
+            </div>
+
+            <!-- Accordion Sections -->
+            <div class="accordion">
+                <div class="accordion-item">
+                    <button class="accordion-header active" onclick="toggleAccordion(this)">
+                        <div class="accordion-title">
+                            <div class="accordion-icon workout">
+                                <i class="fas fa-running"></i>
+                            </div>
+                            <div>
+                                <h3>Последние тренировки</h3>
+                                <span>Ваши недавние активности</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-down accordion-arrow"></i>
+                    </button>
+                    <div class="accordion-content active">
+                        <div class="workout-list" id="dashboardWorkouts"></div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header" onclick="toggleAccordion(this)">
+                        <div class="accordion-title">
+                            <div class="accordion-icon water">
+                                <i class="fas fa-tint"></i>
+                            </div>
+                            <div>
+                                <h3>Трекер воды</h3>
+                                <span>Цель: 8 стаканов в день</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-down accordion-arrow"></i>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="water-tracker" id="waterTracker"></div>
+                        <div class="water-total">
+                            <div class="water-total-value" id="waterTotal">0 / 8</div>
+                            <div style="font-size: 12px; color: var(--color-text-light);">стаканов сегодня</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header" onclick="toggleAccordion(this)">
+                        <div class="accordion-title">
+                            <div class="accordion-icon bmi">
+                                <i class="fas fa-weight"></i>
+                            </div>
+                            <div>
+                                <h3>Быстрый BMI</h3>
+                                <span>Индекс массы тела</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-down accordion-arrow"></i>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label><i class="fas fa-ruler-vertical"></i> Рост (см)</label>
+                                <input type="number" id="quickHeight" placeholder="175">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-weight"></i> Вес (кг)</label>
+                                <input type="number" id="quickWeight" placeholder="70">
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary" onclick="calculateQuickBMI()">
+                            <i class="fas fa-calculator"></i> Рассчитать
+                        </button>
+                        <div id="quickBMIResult"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workouts Tab -->
+        <div id="workouts" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-plus-circle"></i> Добавить тренировку</h3>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-running"></i> Тип тренировки</label>
+                    <select id="workoutType">
+                        <option value="cardio">🏃 Кардио</option>
+                        <option value="strength">💪 Силовая</option>
+                        <option value="yoga">🧘 Йога</option>
+                        <option value="swimming">🏊 Плавание</option>
+                        <option value="cycling">🚴 Велоспорт</option>
+                        <option value="hiit">🔥 HIIT</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><i class="fas fa-clock"></i> Время (мин)</label>
+                        <input type="number" id="workoutDuration" placeholder="30" min="1" max="300">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-fire"></i> Калории</label>
+                        <input type="number" id="workoutCalories" placeholder="200" min="0" max="2000">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-comment"></i> Заметки</label>
+                    <input type="text" id="workoutNotes" placeholder="Как прошла тренировка?">
+                </div>
+                <button class="btn" onclick="addWorkout()">
+                    <i class="fas fa-save"></i> Сохранить
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-history"></i> История тренировок</h3>
+                </div>
+                <div class="workout-list" id="workoutsList"></div>
+            </div>
+        </div>
+
+        <!-- Diary Tab -->
+        <div id="diary" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-bullseye"></i> Программа тренировок</h3>
+                </div>
+                <div class="program-selector">
+                    <button class="program-btn active" onclick="selectProgram('strength')">
+                        <i class="fas fa-dumbbell"></i>
+                        <span>На силу</span>
+                    </button>
+                    <button class="program-btn" onclick="selectProgram('mass')">
+                        <i class="fas fa-weight"></i>
+                        <span>На массу</span>
+                    </button>
+                    <button class="program-btn" onclick="selectProgram('relief')">
+                        <i class="fas fa-fire"></i>
+                        <span>На рельеф</span>
+                    </button>
+                </div>
+                <div class="week-planner" id="weekPlanner"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-list-check"></i> План на день</h3>
+                    <span id="selectedDayName" style="font-size: 13px; color: var(--color-text-light);"></span>
+                </div>
+                <div class="exercises-list" id="exercisesList"></div>
+                <div class="day-summary" id="daySummary" style="display: none;">
+                    <div class="day-summary-value" id="completedCount">0/0</div>
+                    <div class="day-summary-label">выполнено упражнений</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calculator Tab -->
+        <div id="calculator" class="tab-content">
+            <div class="accordion">
+                <div class="accordion-item">
+                    <button class="accordion-header active" onclick="toggleAccordion(this)">
+                        <div class="accordion-title">
+                            <div class="accordion-icon bmi">
+                                <i class="fas fa-weight"></i>
+                            </div>
+                            <div>
+                                <h3>BMI Калькулятор</h3>
+                                <span>Индекс массы тела</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-down accordion-arrow"></i>
+                    </button>
+                    <div class="accordion-content active">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label><i class="fas fa-ruler-vertical"></i> Рост (см)</label>
+                                <input type="number" id="bmiHeight" placeholder="175">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-weight"></i> Вес (кг)</label>
+                                <input type="number" id="bmiWeight" placeholder="70">
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary" onclick="calculateBMI()">
+                            <i class="fas fa-calculator"></i> Рассчитать BMI
+                        </button>
+                        <div id="bmiResult"></div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header" onclick="toggleAccordion(this)">
+                        <div class="accordion-title">
+                            <div class="accordion-icon meal">
+                                <i class="fas fa-utensils"></i>
+                            </div>
+                            <div>
+                                <h3>Калории в день</h3>
+                                <span>Суточная норма калорий</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-down accordion-arrow"></i>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Пол</label>
+                                <select id="calcGender">
+                                    <option value="male">Мужской</option>
+                                    <option value="female">Женский</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Возраст</label>
+                                <input type="number" id="calcAge" placeholder="30">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Рост (см)</label>
+                                <input type="number" id="calcHeight" placeholder="175">
+                            </div>
+                            <div class="form-group">
+                                <label>Вес (кг)</label>
+                                <input type="number" id="calcWeight" placeholder="70">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Активность</label>
+                            <select id="calcActivity">
+                                <option value="1.2">Минимальная</option>
+                                <option value="1.375">Лёгкая (1-3 раза/нед)</option>
+                                <option value="1.55">Средняя (3-5 раз/нед)</option>
+                                <option value="1.725">Высокая (6-7 раз/нед)</option>
+                                <option value="1.9">Экстремальная</option>
+                            </select>
+                        </div>
+                        <button class="btn" onclick="calculateCalories()">
+                            <i class="fas fa-fire"></i> Рассчитать калории
+                        </button>
+                        <div id="caloriesResult" class="bmi-result" style="display: none;">
+                            <div class="bmi-value" id="dailyCalories">0</div>
+                            <div class="bmi-status" style="background: var(--color-success);">ккал/день</div>
+                            <p class="bmi-range" id="caloriesBreakdown"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header" onclick="toggleAccordion(this)">
+                        <div class="accordion-title">
+                            <div class="accordion-icon water">
+                                <i class="fas fa-tint"></i>
+                            </div>
+                            <div>
+                                <h3>Норма воды</h3>
+                                <span>Суточная потребность</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-down accordion-arrow"></i>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="form-group">
+                            <label><i class="fas fa-weight"></i> Ваш вес (кг)</label>
+                            <input type="number" id="waterWeight" placeholder="70">
+                        </div>
+                        <button class="btn btn-secondary" onclick="calculateWater()">
+                            <i class="fas fa-glass-whiskey"></i> Рассчитать норму
+                        </button>
+                        <div id="waterResult" class="bmi-result" style="display: none;">
+                            <div class="bmi-value" id="dailyWater">0</div>
+                            <div class="bmi-status" style="background: var(--color-secondary);">мл/день</div>
+                            <p class="bmi-range">≈ <span id="waterGlasses">0</span> стаканов по 250мл</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Tab -->
+        <div id="progress" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-chart-bar"></i> Активность по дням</h3>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-bars" id="weekChart"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-chart-pie"></i> Распределение тренировок</h3>
+                </div>
+                <div id="activityBreakdown" class="stats-grid"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-bullseye"></i> Цели</h3>
+                </div>
+                <div id="goalsList"></div>
+            </div>
+        </div>
+
+        <!-- Achievements Tab -->
+        <div id="achievements" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-medal"></i> Ваши достижения</h3>
+                </div>
+                <div class="achievements-grid" id="achievementsGrid"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-star"></i> Статистика</h3>
+                </div>
+                <div class="stats-grid" id="statsGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation -->
+    <nav class="mobile-nav">
+        <div class="mobile-nav-items">
+            <div class="mobile-nav-item active" onclick="switchTab('dashboard')">
+                <i class="fas fa-home"></i>
+                <span>Главная</span>
+            </div>
+            <div class="mobile-nav-item" onclick="switchTab('workouts')">
+                <i class="fas fa-dumbbell"></i>
+                <span>Тренировки</span>
+            </div>
+            <div class="mobile-nav-item" onclick="switchTab('diary')">
+                <i class="fas fa-book"></i>
+                <span>Дневник</span>
+            </div>
+            <div class="mobile-nav-item" onclick="switchTab('calculator')">
+                <i class="fas fa-calculator"></i>
+                <span>Расчёт</span>
+            </div>
+            <div class="mobile-nav-item" onclick="switchTab('progress')">
+                <i class="fas fa-chart-line"></i>
+                <span>Прогресс</span>
+            </div>
+            <div class="mobile-nav-item" onclick="switchTab('achievements')">
+                <i class="fas fa-trophy"></i>
+                <span>Достижения</span>
+            </div>
+        </div>
+    </nav>
+
+    <script>
+        // Данные
+        let workouts = [];
+        let waterIntake = 0;
+        const waterGoal = 8;
+
+        // Дневник тренировок
+        let currentProgram = 'strength';
+        let selectedDay = 0;
+        let diaryData = {};
+
+        let goals = [
+            { name: '100 часов тренировок', target: 100, current: 0, unit: 'часов', icon: '⏱️' },
+            { name: '50000 ккал сожжено', target: 50000, current: 0, unit: 'ккал', icon: '🔥' },
+            { name: '50 тренировок', target: 50, current: 0, unit: 'тренировок', icon: '💪' },
+            { name: '7 дней подряд', target: 7, current: 0, unit: 'дней', icon: '📅' }
+        ];
+
+        let achievements = [
+            { id: 1, name: 'Первая тренировка', icon: '🎉', requirement: 1, type: 'workouts' },
+            { id: 2, name: '10 тренировок', icon: '🏆', requirement: 10, type: 'workouts' },
+            { id: 3, name: '10000 ккал', icon: '🔥', requirement: 10000, type: 'calories' },
+            { id: 4, name: '10 часов', icon: '⏰', requirement: 10, type: 'hours' },
+            { id: 5, name: 'Водный баланс', icon: '💧', requirement: 7, type: 'waterDays' },
+            { id: 6, name: 'Неделя спорта', icon: '📆', requirement: 7, type: 'streak' }
+        ];
+
+        let unlockedAchievements = [];
+        let streak = 0;
+        let lastWorkoutDate = null;
+
+        // Программы тренировок
+        const programs = {
+            strength: {
+                name: 'На силу',
+                icon: '💪',
+                days: [
+                    {
+                        name: 'Понедельник',
+                        exercises: [
+                            { name: 'Жим лёжа', sets: 5, reps: 5, weight: '', muscle: 'Грудь' },
+                            { name: 'Приседания со штангой', sets: 5, reps: 5, weight: '', muscle: 'Ноги' },
+                            { name: 'Становая тяга', sets: 5, reps: 5, weight: '', muscle: 'Спина' },
+                            { name: 'Армейский жим', sets: 4, reps: 6, weight: '', muscle: 'Плечи' },
+                            { name: 'Тяга штанги в наклоне', sets: 4, reps: 6, weight: '', muscle: 'Спина' },
+                            { name: 'Подъём на бицепс', sets: 3, reps: 8, weight: '', muscle: 'Руки' }
+                        ]
+                    },
+                    {
+                        name: 'Вторник',
+                        exercises: [
+                            { name: 'Подтягивания', sets: 4, reps: 8, weight: '', muscle: 'Спина' },
+                            { name: 'Отжимания на брусьях', sets: 4, reps: 8, weight: '', muscle: 'Грудь' },
+                            { name: 'Тяга гантели', sets: 4, reps: 6, weight: '', muscle: 'Спина' },
+                            { name: 'Французский жим', sets: 3, reps: 8, weight: '', muscle: 'Руки' },
+                            { name: 'Планка', sets: 3, reps: '60 сек', weight: '', muscle: 'Пресс' }
+                        ]
+                    },
+                    {
+                        name: 'Среда',
+                        exercises: [
+                            { name: 'Приседания фронтальные', sets: 4, reps: 6, weight: '', muscle: 'Ноги' },
+                            { name: 'Румынская тяга', sets: 4, reps: 6, weight: '', muscle: 'Ноги' },
+                            { name: 'Выпады', sets: 3, reps: 10, weight: '', muscle: 'Ноги' },
+                            { name: 'Подъём на носки', sets: 4, reps: 15, weight: '', muscle: 'Икры' },
+                            { name: 'Скручивания', sets: 3, reps: 20, weight: '', muscle: 'Пресс' }
+                        ]
+                    },
+                    {
+                        name: 'Четверг',
+                        exercises: [
+                            { name: 'Жим гантелей на наклонной', sets: 4, reps: 6, weight: '', muscle: 'Грудь' },
+                            { name: 'Сведение гантелей', sets: 3, reps: 10, weight: '', muscle: 'Грудь' },
+                            { name: 'Тяга верхнего блока', sets: 4, reps: 8, weight: '', muscle: 'Спина' },
+                            { name: 'Разведение гантелей', sets: 3, reps: 10, weight: '', muscle: 'Плечи' },
+                            { name: 'Молотки на бицепс', sets: 3, reps: 10, weight: '', muscle: 'Руки' }
+                        ]
+                    },
+                    {
+                        name: 'Пятница',
+                        exercises: [
+                            { name: 'Жим ногами', sets: 4, reps: 8, weight: '', muscle: 'Ноги' },
+                            { name: 'Сгибание ног', sets: 3, reps: 10, weight: '', muscle: 'Ноги' },
+                            { name: 'Разгибание ног', sets: 3, reps: 12, weight: '', muscle: 'Ноги' },
+                            { name: 'Подъём на носки сидя', sets: 4, reps: 20, weight: '', muscle: 'Икры' },
+                            { name: 'Боковая планка', sets: 3, reps: '45 сек', weight: '', muscle: 'Пресс' }
+                        ]
+                    },
+                    {
+                        name: 'Суббота',
+                        exercises: [
+                            { name: 'Подтягивания обратным хватом', sets: 4, reps: 8, weight: '', muscle: 'Спина' },
+                            { name: 'Отжимания узким хватом', sets: 4, reps: 10, weight: '', muscle: 'Грудь' },
+                            { name: 'Тяга горизонтального блока', sets: 4, reps: 8, weight: '', muscle: 'Спина' },
+                            { name: 'Концентрированный подъём', sets: 3, reps: 10, weight: '', muscle: 'Руки' },
+                            { name: 'Велосипед', sets: 3, reps: 30, weight: '', muscle: 'Пресс' }
+                        ]
+                    },
+                    {
+                        name: 'Воскресенье',
+                        exercises: [
+                            { name: 'Растяжка всего тела', sets: 1, reps: '30 мин', weight: '', muscle: 'Все' },
+                            { name: 'Лёгкое кардио', sets: 1, reps: '20 мин', weight: '', muscle: 'Кардио' },
+                            { name: 'Медитация', sets: 1, reps: '10 мин', weight: '', muscle: 'Восстановление' }
+                        ]
+                    }
+                ]
+            },
+            mass: {
+                name: 'На массу',
+                icon: '🏋️',
+                days: [
+                    {
+                        name: 'Понедельник',
+                        exercises: [
+                            { name: 'Жим лёжа', sets: 4, reps: '8-10', weight: '', muscle: 'Грудь' },
+                            { name: 'Жим на наклонной', sets: 4, reps: '8-10', weight: '', muscle: 'Грудь' },
+                            { name: 'Сведение в кроссовере', sets: 3, reps: '12-15', weight: '', muscle: 'Грудь' },
+                            { name: 'Разведение гантелей', sets: 3, reps: '12-15', weight: '', muscle: 'Грудь' },
+                            { name: 'Отжимания на брусьях', sets: 3, reps: 'max', weight: '', muscle: 'Грудь' }
+                        ]
+                    },
+                    {
+                        name: 'Вторник',
+                        exercises: [
+                            { name: 'Подтягивания', sets: 4, reps: '8-10', weight: '', muscle: 'Спина' },
+                            { name: 'Тяга штанги в наклоне', sets: 4, reps: '8-10', weight: '', muscle: 'Спина' },
+                            { name: 'Тяга гантели', sets: 3, reps: '10-12', weight: '', muscle: 'Спина' },
+                            { name: 'Пуловер', sets: 3, reps: '12-15', weight: '', muscle: 'Спина' },
+                            { name: 'Гиперэкстензия', sets: 3, reps: 15, weight: '', muscle: 'Поясница' }
+                        ]
+                    },
+                    {
+                        name: 'Среда',
+                        exercises: [
+                            { name: 'Армейский жим', sets: 4, reps: '8-10', weight: '', muscle: 'Плечи' },
+                            { name: 'Махи гантелями в стороны', sets: 4, reps: '12-15', weight: '', muscle: 'Плечи' },
+                            { name: 'Тяга к подбородку', sets: 3, reps: '10-12', weight: '', muscle: 'Плечи' },
+                            { name: 'Махи в наклоне', sets: 3, reps: '15-20', weight: '', muscle: 'Плечи' },
+                            { name: 'Шраги', sets: 4, reps: '15-20', weight: '', muscle: 'Трапеции' }
+                        ]
+                    },
+                    {
+                        name: 'Четверг',
+                        exercises: [
+                            { name: 'Приседания со штангой', sets: 4, reps: '8-10', weight: '', muscle: 'Ноги' },
+                            { name: 'Жим ногами', sets: 4, reps: '10-12', weight: '', muscle: 'Ноги' },
+                            { name: 'Выпады', sets: 3, reps: '12-15', weight: '', muscle: 'Ноги' },
+                            { name: 'Разгибание ног', sets: 3, reps: '15-20', weight: '', muscle: 'Ноги' },
+                            { name: 'Подъём на носки', sets: 4, reps: '20-25', weight: '', muscle: 'Икры' }
+                        ]
+                    },
+                    {
+                        name: 'Пятница',
+                        exercises: [
+                            { name: 'Становая тяга', sets: 4, reps: '6-8', weight: '', muscle: 'Спина' },
+                            { name: 'Румынская тяга', sets: 3, reps: '8-10', weight: '', muscle: 'Ноги' },
+                            { name: 'Сгибание ног', sets: 3, reps: '10-12', weight: '', muscle: 'Ноги' },
+                            { name: 'Скручивания', sets: 3, reps: 20, weight: '', muscle: 'Пресс' },
+                            { name: 'Планка', sets: 3, reps: '60 сек', weight: '', muscle: 'Пресс' }
+                        ]
+                    },
+                    {
+                        name: 'Суббота',
+                        exercises: [
+                            { name: 'Подъём на бицепс', sets: 4, reps: '10-12', weight: '', muscle: 'Руки' },
+                            { name: 'Молотки', sets: 3, reps: '10-12', weight: '', muscle: 'Руки' },
+                            { name: 'Французский жим', sets: 4, reps: '10-12', weight: '', muscle: 'Руки' },
+                            { name: 'Разгибание на блоке', sets: 3, reps: '12-15', weight: '', muscle: 'Руки' },
+                            { name: 'Концентрированный подъём', sets: 3, reps: '12-15', weight: '', muscle: 'Руки' }
+                        ]
+                    },
+                    {
+                        name: 'Воскресенье',
+                        exercises: [
+                            { name: 'Активное восстановление', sets: 1, reps: '30 мин', weight: '', muscle: 'Все' },
+                            { name: 'Растяжка', sets: 1, reps: '20 мин', weight: '', muscle: 'Все' },
+                            { name: 'Прогулка', sets: 1, reps: '30 мин', weight: '', muscle: 'Кардио' }
+                        ]
+                    }
+                ]
+            },
+            relief: {
+                name: 'На рельеф',
+                icon: '🔥',
+                days: [
+                    {
+                        name: 'Понедельник',
+                        exercises: [
+                            { name: 'Круговая: приседания', sets: 4, reps: 20, weight: '', muscle: 'Ноги' },
+                            { name: 'Круговая: отжимания', sets: 4, reps: 20, weight: '', muscle: 'Грудь' },
+                            { name: 'Круговая: бёрпи', sets: 4, reps: 15, weight: '', muscle: 'Все' },
+                            { name: 'Круговая: планка', sets: 4, reps: '60 сек', weight: '', muscle: 'Пресс' },
+                            { name: 'Круговая: прыжки', sets: 4, reps: 30, weight: '', muscle: 'Кардио' },
+                            { name: 'HIIT кардио', sets: 1, reps: '20 мин', weight: '', muscle: 'Кардио' }
+                        ]
+                    },
+                    {
+                        name: 'Вторник',
+                        exercises: [
+                            { name: 'Жим гантелей', sets: 4, reps: 15, weight: '', muscle: 'Грудь' },
+                            { name: 'Тяга гантели', sets: 4, reps: 15, weight: '', muscle: 'Спина' },
+                            { name: 'Жим Арнольда', sets: 3, reps: 15, weight: '', muscle: 'Плечи' },
+                            { name: 'Подъём на бицепс', sets: 3, reps: 15, weight: '', muscle: 'Руки' },
+                            { name: 'Разгибание на трицепс', sets: 3, reps: 15, weight: '', muscle: 'Руки' }
+                        ]
+                    },
+                    {
+                        name: 'Среда',
+                        exercises: [
+                            { name: 'Приседания с выпрыгиванием', sets: 4, reps: 20, weight: '', muscle: 'Ноги' },
+                            { name: 'Выпады с прыжком', sets: 3, reps: 15, weight: '', muscle: 'Ноги' },
+                            { name: 'Зашагивания', sets: 3, reps: 15, weight: '', muscle: 'Ноги' },
+                            { name: 'Стульчик', sets: 3, reps: '60 сек', weight: '', muscle: 'Ноги' },
+                            { name: 'Скакалка', sets: 5, reps: '2 мин', weight: '', muscle: 'Кардио' }
+                        ]
+                    },
+                    {
+                        name: 'Четверг',
+                        exercises: [
+                            { name: 'Подтягивания', sets: 4, reps: 'max', weight: '', muscle: 'Спина' },
+                            { name: 'Отжимания', sets: 4, reps: 'max', weight: '', muscle: 'Грудь' },
+                            { name: 'Тяга верхнего блока', sets: 3, reps: 15, weight: '', muscle: 'Спина' },
+                            { name: 'Махи гантелями', sets: 3, reps: 20, weight: '', muscle: 'Плечи' },
+                            { name: 'Супермен', sets: 3, reps: 20, weight: '', muscle: 'Поясница' }
+                        ]
+                    },
+                    {
+                        name: 'Пятница',
+                        exercises: [
+                            { name: 'Бег на месте', sets: 1, reps: '5 мин', weight: '', muscle: 'Кардио' },
+                            { name: 'Джампинг Джек', sets: 4, reps: 50, weight: '', muscle: 'Кардио' },
+                            { name: 'Горизонт', sets: 4, reps: '30 сек', weight: '', muscle: 'Пресс' },
+                            { name: 'Велосипед', sets: 3, reps: 40, weight: '', muscle: 'Пресс' },
+                            { name: 'Бег', sets: 1, reps: '30 мин', weight: '', muscle: 'Кардио' }
+                        ]
+                    },
+                    {
+                        name: 'Суббота',
+                        exercises: [
+                            { name: 'Планка', sets: 4, reps: '60 сек', weight: '', muscle: 'Пресс' },
+                            { name: 'Боковая планка', sets: 3, reps: '45 сек', weight: '', muscle: 'Пресс' },
+                            { name: 'Скручивания', sets: 4, reps: 30, weight: '', muscle: 'Пресс' },
+                            { name: 'Подъём ног', sets: 3, reps: 20, weight: '', muscle: 'Пресс' },
+                            { name: 'Русский твист', sets: 3, reps: 40, weight: '', muscle: 'Пресс' }
+                        ]
+                    },
+                    {
+                        name: 'Воскресенье',
+                        exercises: [
+                            { name: 'Йога', sets: 1, reps: '45 мин', weight: '', muscle: 'Все' },
+                            { name: 'Растяжка', sets: 1, reps: '30 мин', weight: '', muscle: 'Все' },
+                            { name: 'Медитация', sets: 1, reps: '15 мин', weight: '', muscle: 'Восстановление' }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        // Инициализация
+        function init() {
+            loadData();
+            updateUI();
+            renderWaterTracker();
+            renderAchievements();
+            renderWeekPlanner();
+            renderExercises();
+        }
+
+        // Сохранение/загрузка данных
+        function saveData() {
+            localStorage.setItem('fitnessData', JSON.stringify({
+                workouts,
+                waterIntake,
+                unlockedAchievements,
+                streak,
+                lastWorkoutDate,
+                diaryData
+            }));
+        }
+
+        function loadData() {
+            const data = localStorage.getItem('fitnessData');
+            if (data) {
+                const parsed = JSON.parse(data);
+                workouts = parsed.workouts || [];
+                waterIntake = parsed.waterIntake || 0;
+                unlockedAchievements = parsed.unlockedAchievements || [];
+                streak = parsed.streak || 0;
+                lastWorkoutDate = parsed.lastWorkoutDate || null;
+                diaryData = parsed.diaryData || {};
+            }
+        }
+
+        function resetData() {
+            if (confirm('Сбросить все данные?')) {
+                localStorage.removeItem('fitnessData');
+                workouts = [];
+                waterIntake = 0;
+                unlockedAchievements = [];
+                streak = 0;
+                lastWorkoutDate = null;
+                updateUI();
+                renderWaterTracker();
+                renderAchievements();
+            }
+        }
+
+        function toggleSettings() {
+            alert('Настройки в разработке! 🛠️');
+        }
+
+        // Переключение табов
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.mobile-nav-item').forEach(item => item.classList.remove('active'));
+
+            document.getElementById(tabName).classList.add('active');
+
+            // Обновляем кнопки
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabNames = ['dashboard', 'workouts', 'diary', 'calculator', 'progress', 'achievements'];
+            tabBtns.forEach((btn, idx) => {
+                if (tabNames[idx] === tabName) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Мобильная навигация
+            document.querySelectorAll('.mobile-nav-item').forEach((item, idx) => {
+                const tabs = ['dashboard', 'workouts', 'diary', 'calculator', 'progress', 'achievements'];
+                if (tabs[idx] === tabName) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Вибрация на мобильных
+            if (navigator.vibrate) navigator.vibrate(20);
+
+            // Перерисовка при переключении
+            if (tabName === 'diary') {
+                renderWeekPlanner();
+                renderExercises();
+            }
+        }
+
+        // Аккордеон
+        function toggleAccordion(btn) {
+            const content = btn.nextElementSibling;
+            const isActive = btn.classList.contains('active');
+            const item = btn.closest('.accordion-item');
+
+            // Закрываем все
+            document.querySelectorAll('.accordion-header').forEach(h => {
+                h.classList.remove('active');
+                h.nextElementSibling.classList.remove('active');
+                h.closest('.accordion-item').classList.remove('active');
+            });
+
+            // Открываем текущий
+            if (!isActive) {
+                btn.classList.add('active');
+                content.classList.add('active');
+                if (item) item.classList.add('active');
+            }
+
+            if (navigator.vibrate) navigator.vibrate(15);
+        }
+
+        // Тренировки
+        function addWorkout() {
+            const type = document.getElementById('workoutType').value;
+            const duration = parseInt(document.getElementById('workoutDuration').value) || 0;
+            const calories = parseInt(document.getElementById('workoutCalories').value) || 0;
+            const notes = document.getElementById('workoutNotes').value;
+
+            if (duration <= 0) {
+                alert('Укажите время тренировки');
+                return;
+            }
+
+            const types = {
+                cardio: { emoji: '🏃', name: 'Кардио' },
+                strength: { emoji: '💪', name: 'Силовая' },
+                yoga: { emoji: '🧘', name: 'Йога' },
+                swimming: { emoji: '🏊', name: 'Плавание' },
+                cycling: { emoji: '🚴', name: 'Велоспорт' },
+                hiit: { emoji: '🔥', name: 'HIIT' }
+            };
+
+            // Проверка стрика
+            const today = new Date().toDateString();
+            if (lastWorkoutDate !== today) {
+                if (lastWorkoutDate === new Date(Date.now() - 86400000).toDateString()) {
+                    streak++;
+                } else if (lastWorkoutDate !== today) {
+                    streak = 1;
+                }
+                lastWorkoutDate = today;
+            }
+
+            workouts.unshift({
+                type,
+                typeEmoji: types[type].emoji,
+                typeName: types[type].name,
+                duration,
+                calories,
+                notes,
+                date: new Date().toLocaleDateString('ru-RU'),
+                timestamp: Date.now()
+            });
+
+            // Очистка формы
+            document.getElementById('workoutDuration').value = '';
+            document.getElementById('workoutCalories').value = '';
+            document.getElementById('workoutNotes').value = '';
+
+            checkAchievements();
+            saveData();
+            updateUI();
+
+            if (navigator.vibrate) navigator.vibrate(50);
+        }
+
+        function deleteWorkout(idx) {
+            workouts.splice(idx, 1);
+            saveData();
+            updateUI();
+        }
+
+        function renderWorkouts() {
+            const list = document.getElementById('workoutsList');
+            const dashList = document.getElementById('dashboardWorkouts');
+
+            if (workouts.length === 0) {
+                const html = '<div style="text-align:center;padding:40px;color:var(--color-text-light);"><i class="fas fa-dumbbell" style="font-size:48px;margin-bottom:16px;opacity:0.3;"></i><p>Начните добавлять тренировки!</p></div>';
+                list.innerHTML = html;
+                if (dashList) dashList.innerHTML = html;
+                return;
+            }
+
+            const html = workouts.slice(0, 5).map((w, idx) => `
+                <div class="workout-item ${w.type}">
+                    <div class="workout-info">
+                        <h4>${w.typeEmoji} ${w.typeName}</h4>
+                        <p>${w.date}${w.notes ? ' • ' + w.notes : ''}</p>
+                        <div class="workout-badges">
+                            <span class="badge duration"><i class="fas fa-clock"></i> ${w.duration} мин</span>
+                            <span class="badge calories"><i class="fas fa-fire"></i> ${w.calories} ккал</span>
+                        </div>
+                    </div>
+                    <div class="workout-actions">
+                        <button class="icon-btn delete" onclick="deleteWorkout(${idx})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            list.innerHTML = html;
+            if (dashList) dashList.innerHTML = html;
+        }
+
+        // Вода
+        function renderWaterTracker() {
+            const container = document.getElementById('waterTracker');
+            if (!container) return;
+
+            container.innerHTML = Array(8).fill(0).map((_, i) => `
+                <div class="water-glass ${i < waterIntake ? 'filled' : ''}" onclick="addWater(${i + 1})"></div>
+            `).join('');
+
+            document.getElementById('waterTotal').textContent = `${waterIntake} / ${waterGoal}`;
+            document.getElementById('dashWater').textContent = waterIntake;
+        }
+
+        function addWater(count) {
+            waterIntake = count;
+            if (waterIntake >= waterGoal) {
+                checkAchievements();
+                if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+            } else if (navigator.vibrate) {
+                navigator.vibrate(20);
+            }
+            saveData();
+            renderWaterTracker();
+        }
+
+        // BMI Калькулятор
+        function calculateBMI() {
+            const height = parseFloat(document.getElementById('bmiHeight').value);
+            const weight = parseFloat(document.getElementById('bmiWeight').value);
+
+            if (!height || !weight) {
+                alert('Введите рост и вес');
+                return;
+            }
+
+            const bmi = (weight / ((height / 100) ** 2)).toFixed(1);
+            let status, statusClass;
+
+            if (bmi < 18.5) { status = 'Недостаток веса'; statusClass = 'underweight'; }
+            else if (bmi < 25) { status = 'Норма'; statusClass = 'normal'; }
+            else if (bmi < 30) { status = 'Избыточный вес'; statusClass = 'overweight'; }
+            else { status = 'Ожирение'; statusClass = 'obese'; }
+
+            document.getElementById('bmiResult').innerHTML = `
+                <div class="bmi-result">
+                    <div class="bmi-value">${bmi}</div>
+                    <div class="bmi-status ${statusClass}">${status}</div>
+                    <p class="bmi-range">Норма: 18.5 - 24.9</p>
+                </div>
+            `;
+        }
+
+        function calculateQuickBMI() {
+            const height = parseFloat(document.getElementById('quickHeight').value);
+            const weight = parseFloat(document.getElementById('quickWeight').value);
+
+            if (!height || !weight) {
+                alert('Введите рост и вес');
+                return;
+            }
+
+            const bmi = (weight / ((height / 100) ** 2)).toFixed(1);
+            let status, statusClass;
+
+            if (bmi < 18.5) { status = 'Недостаток веса'; statusClass = 'underweight'; }
+            else if (bmi < 25) { status = 'Норма'; statusClass = 'normal'; }
+            else if (bmi < 30) { status = 'Избыточный вес'; statusClass = 'overweight'; }
+            else { status = 'Ожирение'; statusClass = 'obese'; }
+
+            document.getElementById('quickBMIResult').innerHTML = `
+                <div class="bmi-result">
+                    <div class="bmi-value">${bmi}</div>
+                    <div class="bmi-status ${statusClass}">${status}</div>
+                </div>
+            `;
+        }
+
+        // Калории
+        function calculateCalories() {
+            const gender = document.getElementById('calcGender').value;
+            const age = parseFloat(document.getElementById('calcAge').value);
+            const height = parseFloat(document.getElementById('calcHeight').value);
+            const weight = parseFloat(document.getElementById('calcWeight').value);
+            const activity = parseFloat(document.getElementById('calcActivity').value);
+
+            if (!age || !height || !weight) {
+                alert('Заполните все поля');
+                return;
+            }
+
+            // Формула Mifflin-St Jeor
+            let bmr = 10 * weight + 6.25 * height - 5 * age;
+            bmr += gender === 'male' ? 5 : -161;
+
+            const daily = Math.round(bmr * activity);
+
+            document.getElementById('dailyCalories').textContent = daily;
+            document.getElementById('caloriesBreakdown').innerHTML = `
+                <div style="margin-top:12px;">
+                    <span style="margin-right:12px;">📉 Для похудения: <b>${daily - 500}</b></span>
+                    <span>📈 Для набора: <b>${daily + 500}</b></span>
+                </div>
+            `;
+            document.getElementById('caloriesResult').style.display = 'block';
+        }
+
+        // Вода норма
+        function calculateWater() {
+            const weight = parseFloat(document.getElementById('waterWeight').value);
+
+            if (!weight) {
+                alert('Введите вес');
+                return;
+            }
+
+            const ml = Math.round(weight * 30);
+            const glasses = Math.round(ml / 250);
+
+            document.getElementById('dailyWater').textContent = ml;
+            document.getElementById('waterGlasses').textContent = glasses;
+            document.getElementById('waterResult').style.display = 'block';
+        }
+
+        // Обновление UI
+        function updateUI() {
+            const totalCalories = workouts.reduce((sum, w) => sum + w.calories, 0);
+            const totalMinutes = workouts.reduce((sum, w) => sum + w.duration, 0);
+
+            document.getElementById('dashCalories').textContent = totalCalories;
+            document.getElementById('dashTime').textContent = totalMinutes;
+            document.getElementById('dashWorkouts').textContent = workouts.length;
+
+            // Цели
+            goals[0].current = totalMinutes / 60;
+            goals[1].current = totalCalories;
+            goals[2].current = workouts.length;
+            goals[3].current = streak;
+
+            renderGoals();
+            renderWeekChart();
+            renderActivityBreakdown();
+            renderStats();
+        }
+
+        function renderGoals() {
+            const container = document.getElementById('goalsList');
+            if (!container) return;
+
+            container.innerHTML = goals.map(goal => {
+                const progress = Math.min((goal.current / goal.target) * 100, 100);
+                return `
+                    <div class="progress-container">
+                        <div class="progress-label">
+                            <span>${goal.icon} ${goal.name}</span>
+                            <span>${goal.current.toFixed(1)} / ${goal.target}</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progress}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderWeekChart() {
+            const container = document.getElementById('weekChart');
+            if (!container) return;
+
+            const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+            const data = [3, 5, 2, 6, 4, 7, 3];
+            const maxVal = Math.max(...data);
+
+            container.innerHTML = days.map((day, idx) => `
+                <div class="bar-wrapper">
+                    <div class="bar" style="height: ${(data[idx] / maxVal) * 140}px;"></div>
+                    <span class="bar-label">${day}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderActivityBreakdown() {
+            const container = document.getElementById('activityBreakdown');
+            if (!container) return;
+
+            const types = {};
+            workouts.forEach(w => {
+                types[w.typeName] = (types[w.typeName] || 0) + 1;
+            });
+
+            if (Object.keys(types).length === 0) {
+                container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--color-text-light);">Нет данных</div>';
+            } else {
+                container.innerHTML = Object.entries(types).map(([name, count]) => `
+                    <div class="stat-card">
+                        <div class="stat-value" style="font-size:24px;">${count}</div>
+                        <div class="stat-label">${name}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function renderStats() {
+            const container = document.getElementById('statsGrid');
+            if (!container) return;
+
+            const totalCalories = workouts.reduce((sum, w) => sum + w.calories, 0);
+            const avgCalories = workouts.length > 0 ? Math.round(totalCalories / workouts.length) : 0;
+            const avgDuration = workouts.length > 0 ? Math.round(workouts.reduce((sum, w) => sum + w.duration, 0) / workouts.length) : 0;
+
+            const stats = [
+                { label: 'Всего тренировок', value: workouts.length, icon: '📋' },
+                { label: 'Калорий сожжено', value: totalCalories, icon: '🔥' },
+                { label: 'Среднее время', value: avgDuration + ' мин', icon: '⏱️' },
+                { label: 'Серия дней', value: streak, icon: '🔥' }
+            ];
+
+            container.innerHTML = stats.map(stat => `
+                <div class="stat-card">
+                    <div class="stat-icon">${stat.icon}</div>
+                    <div class="stat-value">${stat.value}</div>
+                    <div class="stat-label">${stat.label}</div>
+                </div>
+            `).join('');
+        }
+
+        // Достижения
+        function checkAchievements() {
+            const totalCalories = workouts.reduce((sum, w) => sum + w.calories, 0);
+            const totalHours = workouts.reduce((sum, w) => sum + w.duration, 0) / 60;
+            const waterDays = waterIntake >= waterGoal ? 1 : 0;
+
+            achievements.forEach(ach => {
+                if (unlockedAchievements.includes(ach.id)) return;
+
+                let unlocked = false;
+                switch (ach.type) {
+                    case 'workouts': unlocked = workouts.length >= ach.requirement; break;
+                    case 'calories': unlocked = totalCalories >= ach.requirement; break;
+                    case 'hours': unlocked = totalHours >= ach.requirement; break;
+                    case 'waterDays': unlocked = waterDays >= 1 && ach.requirement <= 7; break;
+                    case 'streak': unlocked = streak >= ach.requirement; break;
+                }
+
+                if (unlocked) {
+                    unlockedAchievements.push(ach.id);
+                    showAchievement(ach);
+                }
+            });
+
+            saveData();
+        }
+
+        function showAchievement(ach) {
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
+            alert(`🏆 Достижение разблокировано!\n\n${ach.icon} ${ach.name}`);
+        }
+
+        function renderAchievements() {
+            const container = document.getElementById('achievementsGrid');
+            if (!container) return;
+
+            container.innerHTML = achievements.map(ach => {
+                const unlocked = unlockedAchievements.includes(ach.id);
+                return `
+                    <div class="achievement-card ${unlocked ? 'unlocked' : ''}">
+                        <div class="achievement-icon">${ach.icon}</div>
+                        <div class="achievement-name">${ach.name}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Дневник тренировок
+        function selectProgram(program) {
+            currentProgram = program;
+            document.querySelectorAll('.program-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.program-btn').classList.add('active');
+            renderWeekPlanner();
+            renderExercises();
+            if (navigator.vibrate) navigator.vibrate(20);
+        }
+
+        function renderWeekPlanner() {
+            const container = document.getElementById('weekPlanner');
+            if (!container) return;
+
+            const program = programs[currentProgram];
+            const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+            const today = new Date().getDay();
+
+            container.innerHTML = program.days.map((day, idx) => `
+                <div class="day-btn ${idx === selectedDay ? 'active' : ''}" onclick="selectDay(${idx})">
+                    <span class="day-name">${day.name.substring(0, 3)}</span>
+                    <span class="day-date">${idx + 1}</span>
+                </div>
+            `).join('');
+        }
+
+        function selectDay(dayIndex) {
+            selectedDay = dayIndex;
+            document.querySelectorAll('.day-btn').forEach((btn, idx) => {
+                btn.classList.toggle('active', idx === dayIndex);
+            });
+            renderExercises();
+            if (navigator.vibrate) navigator.vibrate(20);
+        }
+
+        function renderExercises() {
+            const container = document.getElementById('exercisesList');
+            const dayNameEl = document.getElementById('selectedDayName');
+            const summaryEl = document.getElementById('daySummary');
+
+            if (!container) return;
+
+            const program = programs[currentProgram];
+            const day = program.days[selectedDay];
+
+            dayNameEl.textContent = day.name;
+
+            const dayKey = `${currentProgram}-${selectedDay}`;
+            const completedExercises = diaryData[dayKey] || [];
+
+            let completed = 0;
+            container.innerHTML = day.exercises.map((ex, idx) => {
+                const isCompleted = completedExercises.includes(idx);
+                if (isCompleted) completed++;
+
+                return `
+                    <div class="exercise-item ${isCompleted ? 'completed' : ''}">
+                        <div class="exercise-header">
+                            <div class="exercise-name">
+                                <i class="fas fa-${getExerciseIcon(ex.muscle)}"></i>
+                                ${ex.name}
+                            </div>
+                            <div class="exercise-check ${isCompleted ? 'completed' : ''}" onclick="toggleExercise(${idx})">
+                                <i class="fas fa-check"></i>
+                            </div>
+                        </div>
+                        <div class="exercise-sets">
+                            <span style="font-size:12px;color:var(--color-text-light);">Подходы:</span>
+                            <input type="text" class="set-input" value="${ex.sets}" placeholder="3">
+                            <span style="font-size:12px;color:var(--color-text-light);">Повторы:</span>
+                            <input type="text" class="set-input" value="${ex.reps}" placeholder="10">
+                            <span style="font-size:12px;color:var(--color-text-light);">Вес:</span>
+                            <input type="text" class="set-input" value="${ex.weight || ''}" placeholder="кг">
+                        </div>
+                        <div class="exercise-meta">
+                            <span><i class="fas fa-bullseye"></i> ${ex.muscle}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            if (day.exercises.length > 0) {
+                summaryEl.style.display = 'block';
+                document.getElementById('completedCount').textContent = `${completed}/${day.exercises.length}`;
+            } else {
+                summaryEl.style.display = 'none';
+            }
+        }
+
+        function getExerciseIcon(muscle) {
+            const icons = {
+                'Грудь': 'heart',
+                'Спина': 'anchor',
+                'Ноги': 'shoe-prints',
+                'Руки': 'fist-raised',
+                'Плечи': 'arrows-alt',
+                'Пресс': 'bullseye',
+                'Кардио': 'running',
+                'Все': 'dumbbell',
+                'Икры': 'print',
+                'Поясница': 'archive',
+                'Трапеции': 'mountain',
+                'Восстановление': 'spa'
+            };
+            return icons[muscle] || 'dumbbell';
+        }
+
+        function toggleExercise(exerciseIdx) {
+            const dayKey = `${currentProgram}-${selectedDay}`;
+            if (!diaryData[dayKey]) {
+                diaryData[dayKey] = [];
+            }
+
+            const idx = diaryData[dayKey].indexOf(exerciseIdx);
+            if (idx > -1) {
+                diaryData[dayKey].splice(idx, 1);
+            } else {
+                diaryData[dayKey].push(exerciseIdx);
+            }
+
+            saveData();
+            renderExercises();
+
+            // Проверка на завершение дня
+            const day = programs[currentProgram].days[selectedDay];
+            if (diaryData[dayKey].length === day.exercises.length) {
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]);
+                setTimeout(() => alert('🎉 Поздравляем! День завершён!'), 100);
+            } else if (navigator.vibrate) {
+                navigator.vibrate(30);
+            }
+        }
+
+        // Демо данные
+        function addDemoData() {
+            if (workouts.length === 0) {
+                workouts = [
+                    { type: 'cardio', typeEmoji: '🏃', typeName: 'Кардио', duration: 30, calories: 250, notes: 'Лёгкий бег', date: new Date().toLocaleDateString('ru-RU'), timestamp: Date.now() },
+                    { type: 'strength', typeEmoji: '💪', typeName: 'Силовая', duration: 45, calories: 350, notes: 'Ноги', date: new Date().toLocaleDateString('ru-RU'), timestamp: Date.now() },
+                    { type: 'yoga', typeEmoji: '🧘', typeName: 'Йога', duration: 20, calories: 100, notes: 'Растяжка', date: new Date().toLocaleDateString('ru-RU'), timestamp: Date.now() }
+                ];
+                waterIntake = 5;
+                saveData();
+            }
+        }
+
+        // Инициализация при загрузке
+        init();
+        addDemoData();
+        updateUI();
+    </script>
+</body>
+
+</html>

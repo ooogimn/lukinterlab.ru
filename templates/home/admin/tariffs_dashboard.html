@@ -64,6 +64,18 @@
     </div>
 </div>
 
+<div class="bg-gradient-to-r from-emerald-50 to-cyan-50 border border-emerald-200 rounded-xl p-5 mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+        <h2 class="text-lg font-bold text-gray-900">Платежные провайдеры</h2>
+        <p class="text-sm text-gray-600 mt-1">
+            Настройка YooKassa (и будущих провайдеров) через форму админ-панели с записью в `.env`.
+        </p>
+    </div>
+    <a href="{% url 'home:admin_payment_settings' %}" class="inline-flex items-center justify-center px-4 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+        Открыть настройки оплаты
+    </a>
+</div>
+
 <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
     <div class="p-6 border-b border-gray-200 flex justify-between items-center">
         <div>

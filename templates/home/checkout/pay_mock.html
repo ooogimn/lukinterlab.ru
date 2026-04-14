@@ -1,0 +1,186 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block meny %}
+{% include "meny/sidibar-1.html" %}
+{% endblock meny %}
+
+{% block straniza %}
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="mock-pay-shell">
+                <div class="card mock-pay-card border-0">
+                    <div class="card-header mock-pay-header text-center">
+                        <h4 class="mb-0 text-dark fw-bold">
+                            <i class="fas fa-flask me-2"></i>
+                            Демо-оплата заказа №{{ order.order_number }}
+                        </h4>
+                    </div>
+                    <div class="card-body text-center p-4 p-md-5">
+                        <div class="alert alert-warning mock-pay-alert mb-4 text-center" role="alert">
+                            <strong>Режим разработки:</strong> оплата проходит без запроса в YooKassa.
+                            Используется для проверки UX: выбор способа оплаты и кнопка подтверждения.
+                        </div>
+
+                        <div class="mock-pay-amount mb-4">
+                            <p class="mb-1 text-muted fw-semibold">Сумма предоплаты</p>
+                            <p class="display-6 text-primary mb-0 fw-bold">{{ payment_amount|floatformat:0 }} ₽</p>
+                        </div>
+
+                        <form method="post">
+                            {% csrf_token %}
+
+                            <fieldset class="mb-4 text-start">
+                                <legend class="h6 mb-3 text-center fw-bold">Выберите способ оплаты</legend>
+                                <div class="payment-methods-wrap">
+                                    {% for value, label in payment_methods %}
+                                    <label class="payment-method-item" for="payment_method_{{ value }}">
+                                        <input
+                                            class="form-check-input mt-0"
+                                            type="radio"
+                                            name="payment_method"
+                                            id="payment_method_{{ value }}"
+                                            value="{{ value }}"
+                                            {% if forloop.first %}checked{% endif %}
+                                        >
+                                        <span>{{ label }}</span>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                            </fieldset>
+
+                            <div class="d-flex flex-wrap justify-content-center gap-3">
+                                <button type="submit" class="btn btn-success btn-lg px-4 mock-btn mock-btn-primary">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    Оплатить {{ payment_amount|floatformat:0 }} ₽
+                                </button>
+                                <a href="{% url 'home:order_detail' order.id %}" class="btn btn-lg px-4 mock-btn mock-btn-secondary">
+                                    Вернуться к заказу
+                                </a>
+                            </div>
+                        </form>
+
+                        <p class="text-muted small mt-4 mb-0 text-center">
+                            Для боевого режима добавьте валидные ключи YooKassa на сервере.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+.mock-pay-shell {
+    border-radius: 1.25rem;
+    padding: 2px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.45), rgba(16, 185, 129, 0.4), rgba(14, 116, 144, 0.45));
+    box-shadow: 0 20px 45px rgba(2, 6, 23, 0.14);
+}
+
+.mock-pay-card {
+    border-radius: 1.15rem;
+    overflow: hidden;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.mock-pay-header {
+    background: linear-gradient(135deg, rgba(250, 204, 21, 0.3), rgba(251, 191, 36, 0.22));
+    border-bottom: 1px solid rgba(245, 158, 11, 0.25);
+    padding: 1.15rem 1.25rem;
+}
+
+.mock-pay-alert {
+    border-radius: 0.9rem;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.mock-pay-amount {
+    border-radius: 0.9rem;
+    border: 1px solid rgba(59, 130, 246, 0.16);
+    background: #ffffff;
+    padding: 1rem;
+}
+
+.payment-methods-wrap {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.payment-method-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 0.75rem;
+    padding: 0.7rem 0.85rem;
+    background: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    cursor: pointer;
+}
+
+.payment-method-item:hover {
+    border-color: rgba(59, 130, 246, 0.45);
+    box-shadow: 0 8px 22px rgba(59, 130, 246, 0.12);
+    transform: translateY(-1px);
+}
+
+.mock-btn {
+    border: 0;
+    border-radius: 999px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.45), inset 0 -6px 10px rgba(0, 0, 0, 0.22), 0 12px 24px rgba(15, 23, 42, 0.2);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+.mock-btn-primary {
+    background: linear-gradient(145deg, #22c55e 0%, #16a34a 55%, #15803d 100%);
+    color: #fff;
+}
+
+.mock-btn-secondary {
+    background: linear-gradient(145deg, #94a3b8 0%, #64748b 55%, #475569 100%);
+    color: #fff;
+}
+
+.mock-btn:hover {
+    transform: translateY(-2px) scale(1.01);
+    filter: saturate(1.08);
+}
+
+.mock-btn-primary:hover {
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.26), 0 16px 30px rgba(22, 163, 74, 0.42), 0 0 22px rgba(34, 197, 94, 0.35);
+    color: #fff;
+}
+
+.mock-btn-secondary:hover {
+    box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.3), 0 16px 30px rgba(71, 85, 105, 0.35), 0 0 22px rgba(148, 163, 184, 0.3);
+    color: #fff;
+}
+
+.mock-btn:active {
+    transform: translateY(1px) scale(0.99);
+}
+
+@media (max-width: 576px) {
+    .mock-pay-shell {
+        border-radius: 0.95rem;
+    }
+
+    .mock-pay-card {
+        border-radius: 0.85rem;
+    }
+
+    .mock-pay-header h4 {
+        font-size: 1.15rem;
+    }
+
+    .mock-btn {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}

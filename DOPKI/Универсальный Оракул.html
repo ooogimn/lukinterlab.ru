@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🔮 Универсальный Оракул Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --color-primary: #8b5cf6;
+            --color-primary-glow: rgba(139, 92, 246, 0.5);
+            --color-secondary: #06b6d4;
+            --color-secondary-glow: rgba(6, 182, 212, 0.5);
+            --color-accent: #f59e0b;
+            --color-accent-glow: rgba(245, 158, 11, 0.5);
+            --color-pink: #ec4899;
+            --color-pink-glow: rgba(236, 72, 153, 0.5);
+            --color-bg: #0f0f1a;
+            --color-surface: #1a1a2e;
+            --color-surface-light: #252542;
+            --color-text: #f8fafc;
+            --color-text-light: #94a3b8;
+            --color-border: #334155;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        html, body {
+            margin: 0; padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%);
+            color: var(--color-text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .particles {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0; overflow: hidden;
+        }
+
+        .particle {
+            position: absolute; width: 4px; height: 4px;
+            background: var(--color-primary); border-radius: 50%;
+            opacity: 0.3; animation: float 15s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.5; }
+            90% { opacity: 0.5; }
+            100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .container {
+            max-width: 1000px; margin: 0 auto;
+            padding: 16px; padding-bottom: 80px;
+            position: relative; z-index: 1;
+        }
+
+        .header {
+            text-align: center; margin-bottom: 24px; padding: 24px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
+            border-radius: 20px;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.2);
+            animation: fadeIn 0.8s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header-logo { font-size: 64px; margin-bottom: 12px; animation: pulse 2s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px var(--color-primary-glow)); }
+            50% { transform: scale(1.1); filter: drop-shadow(0 0 40px var(--color-primary-glow)); }
+        }
+
+        .header h1 {
+            margin: 0 0 8px 0; font-size: 28px; font-weight: 800;
+            background: linear-gradient(135deg, #8b5cf6, #06b6d4, #f59e0b);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p { margin: 0; color: var(--color-text-light); font-size: 13px; }
+
+        .quick-actions {
+            display: flex; gap: 8px; justify-content: center; margin-bottom: 20px;
+        }
+
+        .action-btn {
+            width: 44px; height: 44px; border-radius: 50%;
+            background: var(--color-surface); border: 2px solid var(--color-border);
+            color: var(--color-text); font-size: 18px; cursor: pointer;
+            transition: all 0.3s; display: flex; align-items: center; justify-content: center;
+        }
+
+        .action-btn:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 20px var(--color-primary-glow);
+            transform: translateY(-2px);
+        }
+
+        .question-section {
+            background: var(--color-surface);
+            border: 2px solid var(--color-border);
+            border-radius: 20px; padding: 20px; margin-bottom: 24px;
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.15);
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(139, 92, 246, 0.03) 10px, rgba(139, 92, 246, 0.03) 20px), linear-gradient(135deg, #1a1a2e 0%, #252542 100%);
+            transition: all 0.3s;
+        }
+
+        .question-section:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 40px rgba(139, 92, 246, 0.25);
+        }
+
+        .question-label {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; font-weight: 600; margin-bottom: 12px;
+            color: var(--color-accent); text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        .question-input {
+            width: 100%; padding: 16px 20px;
+            background: rgba(0, 0, 0, 0.4); border: 2px solid var(--color-border);
+            border-radius: 12px; color: var(--color-text); font-size: 15px;
+            margin-bottom: 16px; transition: all 0.3s;
+        }
+
+        .question-input:focus {
+            outline: none; border-color: var(--color-accent);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2), 0 0 20px var(--color-accent-glow);
+        }
+
+        .oracle-methods {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px;
+        }
+
+        .method-btn {
+            padding: 12px 8px; background: var(--color-surface-light);
+            border: 2px solid var(--color-border); border-radius: 12px;
+            color: var(--color-text); cursor: pointer; font-size: 11px; font-weight: 600;
+            transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 6px;
+        }
+
+        .method-btn i { font-size: 20px; }
+
+        .method-btn:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 15px var(--color-primary-glow);
+            transform: translateY(-2px);
+        }
+
+        .method-btn.active {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-pink));
+            border-color: var(--color-primary);
+            box-shadow: 0 0 20px var(--color-primary-glow);
+        }
+
+        .ask-btn {
+            width: 100%; padding: 16px 24px;
+            background: linear-gradient(135deg, #8b5cf6, #06b6d4); color: white;
+            border: none; border-radius: 12px; font-size: 15px; font-weight: 700;
+            cursor: pointer; transition: all 0.3s;
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.4);
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+
+        .ask-btn:hover:not(.loading) {
+            transform: translateY(-3px);
+            box-shadow: 0 0 40px rgba(139, 92, 246, 0.6);
+        }
+
+        .ask-btn.loading { opacity: 0.8; cursor: not-allowed; }
+
+        .spinner {
+            display: inline-block; width: 20px; height: 20px;
+            border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid white;
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .result-section {
+            background: var(--color-surface);
+            border: 2px solid var(--color-border);
+            border-radius: 20px; padding: 24px; display: none;
+            box-shadow: 0 0 50px rgba(245, 158, 11, 0.2);
+            animation: slideIn 0.6s ease-out; margin-bottom: 24px;
+            background-image: repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(245, 158, 11, 0.03) 10px, rgba(245, 158, 11, 0.03) 20px), linear-gradient(135deg, #1a1a2e 0%, #252542 100%);
+        }
+
+        .result-section.show { display: block; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-header {
+            text-align: center; margin-bottom: 24px;
+            padding-bottom: 16px; border-bottom: 1px solid var(--color-border);
+        }
+
+        .result-method {
+            font-size: 11px; text-transform: uppercase;
+            color: var(--color-accent); margin-bottom: 8px; letter-spacing: 2px;
+        }
+
+        .result-icon {
+            font-size: 64px; margin: 16px 0;
+            animation: mysticSpin 4s linear infinite;
+        }
+
+        @keyframes mysticSpin {
+            0%, 100% { transform: rotate(-5deg) scale(1); filter: drop-shadow(0 0 20px var(--color-accent-glow)); }
+            50% { transform: rotate(5deg) scale(1.1); filter: drop-shadow(0 0 40px var(--color-accent-glow)); }
+        }
+
+        .result-answer {
+            font-size: 22px; font-weight: 700;
+            background: linear-gradient(135deg, var(--color-accent), var(--color-pink));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; text-align: center; margin-bottom: 16px; line-height: 1.5;
+        }
+
+        .result-description {
+            background: rgba(0, 0, 0, 0.3); border-left: 4px solid var(--color-accent);
+            padding: 16px; border-radius: 8px; color: var(--color-text-light);
+            line-height: 1.7; font-size: 14px; margin-bottom: 16px;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.1);
+        }
+
+        .interpretation {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
+            padding: 16px; border-radius: 12px; margin-bottom: 16px;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .interpretation h4 {
+            margin: 0 0 8px 0; color: var(--color-secondary);
+            font-size: 13px; text-transform: uppercase;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        .interpretation p {
+            margin: 0; color: var(--color-text-light); font-size: 13px; line-height: 1.6;
+        }
+
+        .tarot-card {
+            background: linear-gradient(135deg, #2a2a3e 0%, #1a1a2e 100%);
+            border: 3px solid var(--color-accent); border-radius: 16px;
+            padding: 24px; text-align: center; margin-bottom: 16px;
+            box-shadow: 0 0 30px var(--color-accent-glow);
+        }
+
+        .tarot-number {
+            font-size: 36px; color: var(--color-accent);
+            margin-bottom: 8px; font-weight: 700;
+            text-shadow: 0 0 20px var(--color-accent-glow);
+        }
+
+        .tarot-name { font-size: 18px; font-weight: 600; color: var(--color-text); }
+
+        .result-actions { display: flex; gap: 10px; margin-top: 16px; }
+
+        .result-btn {
+            flex: 1; padding: 14px 16px; background: var(--color-surface-light);
+            border: 2px solid var(--color-border); color: var(--color-text);
+            border-radius: 12px; font-size: 13px; font-weight: 600; cursor: pointer;
+            transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+
+        .result-btn:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 20px var(--color-primary-glow);
+        }
+
+        .result-btn.favorite.active {
+            background: linear-gradient(135deg, var(--color-pink), #f43f5e);
+            border-color: var(--color-pink);
+        }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8); display: none;
+            align-items: center; justify-content: center; z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-overlay.show { display: flex; }
+
+        .modal {
+            background: var(--color-surface); border-radius: 20px; padding: 24px;
+            width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto;
+            border: 2px solid var(--color-border);
+            box-shadow: 0 0 50px rgba(139, 92, 246, 0.3);
+            animation: modalIn 0.3s ease-out;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; padding-bottom: 16px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .modal-header h3 {
+            margin: 0; font-size: 18px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .modal-close {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: var(--color-surface-light); border: 2px solid var(--color-border);
+            color: var(--color-text); cursor: pointer; font-size: 18px; transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            border-color: var(--color-pink);
+            box-shadow: 0 0 15px var(--color-pink-glow);
+        }
+
+        .history-item {
+            background: var(--color-surface-light); border-radius: 12px;
+            padding: 16px; margin-bottom: 12px; border: 1px solid var(--color-border);
+            transition: all 0.3s;
+        }
+
+        .history-item:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 20px var(--color-primary-glow);
+        }
+
+        .history-question { font-size: 13px; color: var(--color-text); margin-bottom: 8px; font-weight: 500; }
+        .history-answer { font-size: 12px; color: var(--color-accent); margin-bottom: 8px; }
+        .history-meta { font-size: 11px; color: var(--color-text-light); display: flex; justify-content: space-between; align-items: center; }
+        .history-method { display: flex; align-items: center; gap: 4px; }
+
+        .mobile-nav {
+            display: none; position: fixed; bottom: 0; left: 0; right: 0;
+            background: var(--color-surface); padding: 8px 16px;
+            box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.5); z-index: 100;
+            border-top: 2px solid var(--color-border);
+        }
+
+        .mobile-nav-items { display: flex; justify-content: space-around; }
+
+        .mobile-nav-item {
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            padding: 8px 12px; border-radius: 12px; cursor: pointer;
+            transition: all 0.3s; color: var(--color-text-light); font-size: 10px; font-weight: 500;
+        }
+
+        .mobile-nav-item.active { color: var(--color-primary); background: rgba(139, 92, 246, 0.15); }
+        .mobile-nav-item i { font-size: 20px; }
+
+        .settings-panel {
+            display: none; background: var(--color-surface);
+            border-radius: 16px; padding: 20px; margin-bottom: 24px;
+            border: 2px solid var(--color-border);
+        }
+
+        .settings-panel.show { display: block; animation: slideIn 0.3s ease-out; }
+
+        .setting-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 0; border-bottom: 1px solid var(--color-border);
+        }
+
+        .setting-item:last-child { border-bottom: none; }
+
+        .setting-label { display: flex; align-items: center; gap: 12px; font-size: 14px; }
+        .setting-label i { width: 24px; color: var(--color-primary); }
+
+        .toggle {
+            width: 50px; height: 26px; background: var(--color-surface-light);
+            border-radius: 13px; position: relative; cursor: pointer;
+            transition: all 0.3s; border: 2px solid var(--color-border);
+        }
+
+        .toggle.active {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            border-color: var(--color-primary);
+        }
+
+        .toggle::after {
+            content: ''; position: absolute; width: 20px; height: 20px;
+            background: white; border-radius: 50%; top: 3px; left: 3px; transition: all 0.3s;
+        }
+
+        .toggle.active::after { left: 25px; }
+
+        .random-questions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+        .random-q {
+            padding: 8px 12px; background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 20px;
+            font-size: 12px; color: var(--color-text-light); cursor: pointer; transition: all 0.3s;
+        }
+
+        .random-q:hover {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: var(--color-primary); color: var(--color-text);
+        }
+
+        @media (max-width: 768px) {
+            .oracle-methods { grid-template-columns: repeat(3, 1fr); }
+            .method-btn { padding: 10px 6px; font-size: 10px; }
+            .method-btn i { font-size: 18px; }
+            .header h1 { font-size: 22px; }
+            .header-logo { font-size: 48px; }
+            .mobile-nav { display: block; }
+            .container { padding-bottom: 80px; }
+        }
+
+        @media (max-width: 400px) { .oracle-methods { grid-template-columns: repeat(2, 1fr); } }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--color-surface); }
+        ::-webkit-scrollbar-thumb { background: var(--color-primary); border-radius: 3px; }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--color-text-light); }
+        .empty-state i { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+
+    <div class="container">
+        <div class="header">
+            <div class="header-logo">🔮</div>
+            <h1>Универсальный Оракул</h1>
+            <p>Древняя мудрость для современных вопросов</p>
+        </div>
+
+        <div class="quick-actions">
+            <button class="action-btn" onclick="toggleSettings()" title="Настройки"><i class="fas fa-cog"></i></button>
+            <button class="action-btn" onclick="showHistory()" title="История"><i class="fas fa-history"></i></button>
+            <button class="action-btn" onclick="showFavorites()" title="Избранное"><i class="fas fa-heart"></i></button>
+            <button class="action-btn" onclick="toggleSound()" id="soundBtn" title="Звук"><i class="fas fa-volume-up"></i></button>
+        </div>
+
+        <div class="settings-panel" id="settingsPanel">
+            <div class="setting-item">
+                <div class="setting-label"><i class="fas fa-volume-up"></i><span>Звуковые эффекты</span></div>
+                <div class="toggle active" onclick="toggleSoundSetting(this)"></div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-label"><i class="fas fa-mobile-alt"></i><span>Вибрация</span></div>
+                <div class="toggle active" onclick="toggleVibration(this)"></div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-label"><i class="fas fa-magic"></i><span>Анимация частиц</span></div>
+                <div class="toggle active" onclick="toggleParticles(this)"></div>
+            </div>
+        </div>
+
+        <div class="question-section">
+            <label class="question-label"><i class="fas fa-sparkles"></i> Ваш вопрос:</label>
+            <input type="text" id="questionInput" class="question-input" placeholder="Сосредоточьтесь и задайте свой вопрос...">
+            
+            <div class="random-questions">
+                <span class="random-q" onclick="setQuestion('Что меня ждёт в будущем?')">💭 Будущее</span>
+                <span class="random-q" onclick="setQuestion('Как решить мою проблему?')">❓ Решение</span>
+                <span class="random-q" onclick="setQuestion('Стоит ли мне это делать?')">🤔 Выбор</span>
+                <span class="random-q" onclick="setQuestion('Что мне нужно знать сейчас?')">✨ Совет</span>
+            </div>
+
+            <label class="question-label" style="margin-top: 20px;"><i class="fas fa-gem"></i> Выберите систему:</label>
+            <div class="oracle-methods">
+                <button class="method-btn active" onclick="selectMethod('iching')"><i class="fas fa-yin-yang"></i><span>И-Цзин</span></button>
+                <button class="method-btn" onclick="selectMethod('tarot')"><i class="fas fa-playing-card"></i><span>Таро</span></button>
+                <button class="method-btn" onclick="selectMethod('runes')"><i class="fas fa-gem"></i><span>Руны</span></button>
+                <button class="method-btn" onclick="selectMethod('numerology')"><i class="fas fa-hashtag"></i><span>Числа</span></button>
+                <button class="method-btn" onclick="selectMethod('oracle')"><i class="fas fa-crystal-ball"></i><span>Оракул</span></button>
+                <button class="method-btn" onclick="selectMethod('fortune')"><i class="fas fa-magic"></i><span>Шар</span></button>
+            </div>
+            
+            <button class="ask-btn" onclick="askOracle()"><i class="fas fa-moon"></i> Получить ответ</button>
+        </div>
+
+        <div id="resultSection" class="result-section">
+            <div class="result-header">
+                <div class="result-method" id="resultMethod"></div>
+                <div class="result-icon" id="resultIcon">🔮</div>
+            </div>
+            <div class="result-answer" id="resultAnswer"></div>
+            <div class="result-description" id="resultDescription"></div>
+            <div class="interpretation" id="interpretation"></div>
+            <div class="result-actions">
+                <button class="result-btn favorite" onclick="toggleFavorite()"><i class="far fa-heart"></i> В избранное</button>
+                <button class="result-btn" onclick="askAgain()"><i class="fas fa-redo"></i> Ещё вопрос</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="mobile-nav">
+        <div class="mobile-nav-items">
+            <div class="mobile-nav-item active" onclick="switchTab('oracle')"><i class="fas fa-home"></i><span>Оракул</span></div>
+            <div class="mobile-nav-item" onclick="showHistory()"><i class="fas fa-history"></i><span>История</span></div>
+            <div class="mobile-nav-item" onclick="showFavorites()"><i class="fas fa-heart"></i><span>Избранное</span></div>
+            <div class="mobile-nav-item" onclick="toggleSettings()"><i class="fas fa-cog"></i><span>Настройки</span></div>
+        </div>
+    </nav>
+
+    <div class="modal-overlay" id="historyModal" onclick="closeModal(event, 'historyModal')">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-history"></i> История вопросов</h3>
+                <button class="modal-close" onclick="closeModal(null, 'historyModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="historyList"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="favoritesModal" onclick="closeModal(event, 'favoritesModal')">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-heart"></i> Избранное</h3>
+                <button class="modal-close" onclick="closeModal(null, 'favoritesModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="favoritesList"></div>
+        </div>
+    </div>
+
+    <script>
+        let settings = { sound: true, vibration: true, particles: true };
+        let selectedMethod = 'iching';
+        let history = [];
+        let favorites = [];
+        let currentResult = null;
+
+        function init() { loadSettings(); loadData(); createParticles(); }
+
+        function saveSettings() { localStorage.setItem('oracleSettings', JSON.stringify(settings)); }
+        function loadSettings() {
+            const saved = localStorage.getItem('oracleSettings');
+            if (saved) { settings = JSON.parse(saved); updateSettingsUI(); }
+        }
+        function updateSettingsUI() {
+            document.getElementById('soundBtn').innerHTML = settings.sound ? '<i class="fas fa-volume-up"></i>' : '<i class="fas fa-volume-mute"></i>';
+        }
+
+        function saveData() {
+            localStorage.setItem('oracleHistory', JSON.stringify(history));
+            localStorage.setItem('oracleFavorites', JSON.stringify(favorites));
+        }
+        function loadData() {
+            const h = localStorage.getItem('oracleHistory');
+            const f = localStorage.getItem('oracleFavorites');
+            if (h) history = JSON.parse(h);
+            if (f) favorites = JSON.parse(f);
+        }
+
+        function createParticles() {
+            const container = document.getElementById('particles');
+            if (!settings.particles) return;
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                const colors = ['#8b5cf6', '#06b6d4', '#f59e0b', '#ec4899'];
+                particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                container.appendChild(particle);
+            }
+        }
+
+        function toggleSettings() { document.getElementById('settingsPanel').classList.toggle('show'); vibrate(20); }
+        function toggleSound() { settings.sound = !settings.sound; saveSettings(); updateSettingsUI(); vibrate(20); }
+        function toggleSoundSetting(el) { settings.sound = !settings.sound; el.classList.toggle('active'); saveSettings(); updateSettingsUI(); }
+        function toggleVibration(el) { settings.vibration = !settings.vibration; el.classList.toggle('active'); saveSettings(); }
+        function toggleParticles(el) { settings.particles = !settings.particles; el.classList.toggle('active'); saveSettings(); location.reload(); }
+
+        function vibrate(pattern) { if (settings.vibration && navigator.vibrate) navigator.vibrate(pattern); }
+        function playSound() { if (!settings.sound) return; }
+
+        function selectMethod(method) {
+            selectedMethod = method;
+            document.querySelectorAll('.method-btn').forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            vibrate(15);
+        }
+
+        function setQuestion(q) { document.getElementById('questionInput').value = q; vibrate(10); }
+        function getRandomItem(array) { return array[Math.floor(Math.random() * array.length)]; }
+
+        function getMethodName() {
+            const names = { 'iching': 'Книга Перемен (И-Цзин)', 'tarot': 'Таро - Старшие Арканы', 'runes': 'Руны Одина', 'numerology': 'Нумерология', 'oracle': 'Универсальный Оракул', 'fortune': 'Магический Шар' };
+            return names[selectedMethod] || 'Оракул';
+        }
+
+        function getMethodIcon() {
+            const icons = { 'iching': '☯️', 'tarot': '🎴', 'runes': 'ᛟ', 'numerology': '🔢', 'oracle': '🔮', 'fortune': '🎱' };
+            return icons[selectedMethod] || '🔮';
+        }
+
+        function askOracle() {
+            const question = document.getElementById('questionInput').value.trim();
+            if (!question) { alert('✨ Пожалуйста, задайте вопрос!'); return; }
+
+            const btn = document.querySelector('.ask-btn');
+            btn.classList.add('loading');
+            btn.innerHTML = '<span class="spinner"></span>Оракул размышляет...';
+            playSound(); vibrate(50);
+
+            setTimeout(() => {
+                let result;
+                switch(selectedMethod) {
+                    case 'iching': result = getRandomItem(iching); displayIching(result); break;
+                    case 'tarot': result = getRandomItem(tarot); displayTarot(result); break;
+                    case 'runes': result = getRandomItem(runes); displayRunes(result); break;
+                    case 'numerology': result = getRandomItem(numerology); displayNumerology(result); break;
+                    case 'oracle': result = getRandomItem(oracle); displayOracle(result); break;
+                    case 'fortune': result = getRandomItem(fortune); displayFortune(result); break;
+                }
+
+                currentResult = { question, method: selectedMethod, result, date: new Date().toISOString() };
+                history.unshift(currentResult);
+                if (history.length > 50) history.pop();
+                saveData();
+
+                btn.classList.remove('loading');
+                btn.innerHTML = '<i class="fas fa-moon"></i> Получить ответ';
+                vibrate([50, 30, 50]);
+            }, 2000);
+        }
+
+        function displayIching(result) {
+            const rs = document.getElementById('resultSection');
+            document.getElementById('resultMethod').textContent = getMethodName();
+            document.getElementById('resultIcon').textContent = getMethodIcon();
+            document.getElementById('resultAnswer').textContent = result.name;
+            document.getElementById('resultDescription').textContent = result.meaning;
+            document.getElementById('interpretation').innerHTML = `<h4><i class="fas fa-book-open"></i> Истолкование</h4><p>И-Цзин говорит вам о текущем состоянии вашей ситуации. Прислушивайтесь к древней мудрости и действуйте в гармонии с потоком перемен.</p>`;
+            rs.classList.add('show'); rs.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function displayTarot(result) {
+            const rs = document.getElementById('resultSection');
+            document.getElementById('resultMethod').textContent = getMethodName();
+            document.getElementById('resultIcon').textContent = getMethodIcon();
+            document.getElementById('resultAnswer').innerHTML = `<div class="tarot-card"><div class="tarot-number">${result.num}</div><div class="tarot-name">${result.name}</div></div>`;
+            document.getElementById('resultDescription').textContent = result.meaning;
+            document.getElementById('interpretation').innerHTML = `<h4><i class="fas fa-moon"></i> Интерпретация</h4><p>Эта карта Таро раскрывает скрытые энергии вашей ситуации. Медитируйте над её символами и позвольте интуиции вести вас.</p>`;
+            rs.classList.add('show'); rs.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function displayRunes(result) {
+            const rs = document.getElementById('resultSection');
+            document.getElementById('resultMethod').textContent = getMethodName();
+            document.getElementById('resultIcon').textContent = getMethodIcon();
+            document.getElementById('resultAnswer').textContent = result.name;
+            document.getElementById('resultDescription').textContent = result.meaning;
+            document.getElementById('interpretation').innerHTML = `<h4><i class="fas fa-shield-alt"></i> Послание рун</h4><p>Древние руны Одина открывают вам путь. Эта руна несёт в себе силу северной мудрости для решения вашего вопроса.</p>`;
+            rs.classList.add('show'); rs.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function displayNumerology(result) {
+            const rs = document.getElementById('resultSection');
+            document.getElementById('resultMethod').textContent = getMethodName();
+            document.getElementById('resultIcon').textContent = getMethodIcon();
+            document.getElementById('resultAnswer').textContent = `Число ${result.num}`;
+            document.getElementById('resultDescription').textContent = result.meaning;
+            const meanings = ['новым началом', 'партнёрством', 'творчеством', 'стабильностью', 'свободой', 'гармонией', 'духовностью', 'успехом', 'завершением'];
+            document.getElementById('interpretation').innerHTML = `<h4><i class="fas fa-star"></i> Значение числа</h4><p>Число ${result.num} вибрационирует с энергией ${meanings[result.num - 1]}. В нумерологии это число указывает на ${result.meaning.toLowerCase()}</p>`;
+            rs.classList.add('show'); rs.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function displayOracle(result) {
+            const rs = document.getElementById('resultSection');
+            document.getElementById('resultMethod').textContent = getMethodName();
+            document.getElementById('resultIcon').textContent = getMethodIcon();
+            document.getElementById('resultAnswer').textContent = result.answer;
+            document.getElementById('resultDescription').textContent = result.meaning;
+            document.getElementById('interpretation').innerHTML = `<h4><i class="fas fa-hand-sparkles"></i> Совет оракула</h4><p>Оракул дал вам ясный ответ. Доверяйте этому посланию и действуйте с уверенностью. Вселенная поддерживает вас.</p>`;
+            rs.classList.add('show'); rs.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function displayFortune(result) {
+            const rs = document.getElementById('resultSection');
+            document.getElementById('resultMethod').textContent = getMethodName();
+            document.getElementById('resultIcon').textContent = getMethodIcon();
+            document.getElementById('resultAnswer').textContent = result.answer;
+            document.getElementById('resultDescription').textContent = result.meaning;
+            document.getElementById('interpretation').innerHTML = `<h4><i class="fas fa-magic"></i> Магическое видение</h4><p>Магический шар приоткрыл завесу будущего. Это послание пришло к вам из космических глубин именно в этот момент.</p>`;
+            rs.classList.add('show'); rs.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function toggleFavorite() {
+            if (!currentResult) return;
+            const idx = favorites.findIndex(f => f.question === currentResult.question && f.date === currentResult.date);
+            const btn = document.querySelector('.result-btn.favorite');
+            if (idx > -1) { favorites.splice(idx, 1); btn.classList.remove('active'); btn.innerHTML = '<i class="far fa-heart"></i> В избранное'; }
+            else { favorites.unshift(currentResult); btn.classList.add('active'); btn.innerHTML = '<i class="fas fa-heart"></i> В избранном'; }
+            saveData(); vibrate([30, 30, 30]);
+        }
+
+        function showHistory() {
+            const list = document.getElementById('historyList');
+            if (history.length === 0) { list.innerHTML = '<div class="empty-state"><i class="fas fa-history"></i><p>История пуста</p></div>'; }
+            else { list.innerHTML = history.map(item => `<div class="history-item"><div class="history-question">${item.question}</div><div class="history-answer">${item.result.name || item.result.answer}</div><div class="history-meta"><span class="history-method">${getMethodIcon()} ${getMethodName()}</span><span>${new Date(item.date).toLocaleDateString('ru-RU')}</span></div></div>`).join(''); }
+            document.getElementById('historyModal').classList.add('show'); vibrate(20);
+        }
+
+        function showFavorites() {
+            const list = document.getElementById('favoritesList');
+            if (favorites.length === 0) { list.innerHTML = '<div class="empty-state"><i class="far fa-heart"></i><p>Нет избранных ответов</p></div>'; }
+            else { list.innerHTML = favorites.map(item => `<div class="history-item"><div class="history-question">${item.question}</div><div class="history-answer">${item.result.name || item.result.answer}</div><div class="history-meta"><span class="history-method">${getMethodIcon()} ${getMethodName()}</span><span>${new Date(item.date).toLocaleDateString('ru-RU')}</span></div></div>`).join(''); }
+            document.getElementById('favoritesModal').classList.add('show'); vibrate(20);
+        }
+
+        function closeModal(event, modalId) { if (!event || event.target === event.currentTarget) document.getElementById(modalId).classList.remove('show'); }
+        function askAgain() { document.getElementById('resultSection').classList.remove('show'); document.getElementById('questionInput').value = ''; document.getElementById('questionInput').focus(); currentResult = null; vibrate(20); }
+        function switchTab(tab) { if (tab === 'oracle') window.scrollTo({ top: 0, behavior: 'smooth' }); vibrate(20); }
+
+        const iching = [
+            { name: '1. Творчество', meaning: 'Сила созидания. Активное действие принесёт успех. Начните с самого начала.' },
+            { name: '2. Восприятие', meaning: 'Пассивное восприятие. Слушайте и учитесь. Не спешите с действиями.' },
+            { name: '3. Затруднение', meaning: 'Преодоление препятствий. Трудный путь, но победа близка.' },
+            { name: '4. Неопытность', meaning: 'Невежество требует обучения. Ищите мудрого наставника.' },
+            { name: '5. Ожидание', meaning: 'Время требует терпения. Готовьтесь, но не действуйте.' },
+            { name: '6. Конфликт', meaning: 'Спор неизбежен. Ищите справедливый компромисс.' },
+            { name: '7. Войско', meaning: 'Организованная сила. Нужна дисциплина и лидерство.' },
+            { name: '8. Единение', meaning: 'Сплочённость и взаимопомощь принесут результат.' },
+            { name: '9. Малая пища', meaning: 'Довольствуйтесь малым. Большие планы ещё рано.' },
+            { name: '10. Поведение', meaning: 'Действуй осторожно. Твой шаг будет замечен.' },
+            { name: '11. Процветание', meaning: 'Гармония и благополучие. Начинайте новые проекты.' },
+            { name: '12. Застой', meaning: 'Препятствия на пути. Ждите перемен.' },
+            { name: '13. Соратники', meaning: 'Единомыслие с нужными людьми. Кооперация — ключ успеха.' },
+            { name: '14. Величие', meaning: 'Момент славы. Проявите смелость и уверенность.' },
+            { name: '15. Смирение', meaning: 'Скромность и уважение откроют двери.' },
+            { name: '16. Радость', meaning: 'Воодушевление и энтузиазм. Распространяйте позитив.' },
+            { name: '17. Последование', meaning: 'Слушай и следуй мудрому совету.' },
+            { name: '18. Исправление', meaning: 'Пора менять подход. Переосмыслите ситуацию.' },
+            { name: '19. Приближение', meaning: 'Благоприятный период начинается. Действуйте смело.' },
+            { name: '20. Созерцание', meaning: 'Посмотрите на ситуацию со стороны. Требуется размышление.' }
+        ];
+
+        const tarot = [
+            { num: '0', name: 'Шут', meaning: 'Новые начинания, спонтанность, риск' },
+            { num: 'I', name: 'Маг', meaning: 'Манипуляция, мастерство, сила воли' },
+            { num: 'II', name: 'Жрица', meaning: 'Интуиция, тайны, внутренняя мудрость' },
+            { num: 'III', name: 'Императрица', meaning: 'Плодородие, творчество, изобилие' },
+            { num: 'IV', name: 'Император', meaning: 'Власть, контроль, авторитет' },
+            { num: 'V', name: 'Иерофант', meaning: 'Традиции, образование, духовность' },
+            { num: 'VI', name: 'Влюблённые', meaning: 'Выбор, любовь, гармония' },
+            { num: 'VII', name: 'Колесница', meaning: 'Контроль, воля, путешествие' },
+            { num: 'VIII', name: 'Сила', meaning: 'Внутренняя сила, контроль, терпение' },
+            { num: 'IX', name: 'Отшельник', meaning: 'Поиск, исследование, одиночество' },
+            { num: 'X', name: 'Колесо судьбы', meaning: 'Судьба, циклы, перемены' },
+            { num: 'XI', name: 'Справедливость', meaning: 'Справедливость, истина, ясность' },
+            { num: 'XII', name: 'Повешенный', meaning: 'Жертва, новая точка зрения, пауза' },
+            { num: 'XIII', name: 'Смерть', meaning: 'Трансформация, конец, начало' },
+            { num: 'XIV', name: 'Воздержание', meaning: 'Баланс, умеренность, гармония' },
+            { num: 'XV', name: 'Дьявол', meaning: 'Материализм, страсть, зависимость' },
+            { num: 'XVI', name: 'Башня', meaning: 'Разрушение, откровение, кризис' },
+            { num: 'XVII', name: 'Звезда', meaning: 'Надежда, вера, ясность' },
+            { num: 'XVIII', name: 'Луна', meaning: 'Интуиция, страхи, иллюзии' },
+            { num: 'XIX', name: 'Солнце', meaning: 'Успех, радость, позитив' },
+            { num: 'XX', name: 'Суд', meaning: 'Пробуждение, призыв, новая жизнь' },
+            { num: 'XXI', name: 'Мир', meaning: 'Завершение, целостность, исполнение' }
+        ];
+
+        const runes = [
+            { name: 'Феху', meaning: 'Богатство, материальные ресурсы. Финансовый успех ждёт вас.' },
+            { name: 'Уруз', meaning: 'Сила и мужество. Справитесь со всеми трудностями.' },
+            { name: 'Турисаз', meaning: 'Врата перемен. Готовьтесь к значительным переменам.' },
+            { name: 'Ансуз', meaning: 'Знание и общение. Слушайте советы мудрых.' },
+            { name: 'Райдо', meaning: 'Путешествие и движение. Пора действовать.' },
+            { name: 'Кеназ', meaning: 'Огонь творчества. Воплощайте свои идеи.' },
+            { name: 'Гебо', meaning: 'Дар и обмен. Щедрость принесёт возврат.' },
+            { name: 'Вуньо', meaning: 'Радость и гармония. Светлые времена впереди.' },
+            { name: 'Халаз', meaning: 'Град препятствий. Терпение преодолеет всё.' },
+            { name: 'Наутиз', meaning: 'Нужда и силы. Напрягите волю для успеха.' },
+            { name: 'Иса', meaning: 'Лёд и стагнация. Время ждать и размышлять.' },
+            { name: 'Йера', meaning: 'Урожай. Плоды ваших трудов близко.' },
+            { name: 'Эйваз', meaning: 'Защита и преобразование. Вы на правильном пути.' },
+            { name: 'Перто', meaning: 'Тайна и инициация. Откроются новые возможности.' },
+            { name: 'Альгиз', meaning: 'Защита и поддержка высших сил.' },
+            { name: 'Соулу', meaning: 'Солнце и успех. Победа гарантирована.' },
+            { name: 'Тейваз', meaning: 'Справедливость и воин. Боритесь за своё.' },
+            { name: 'Беркана', meaning: 'Рост и возрождение. Новый цикл начинается.' },
+            { name: 'Эваз', meaning: 'Лошадь и движение. Прогресс неизбежен.' },
+            { name: 'Манназ', meaning: 'Человечество и сообщество. Помощь придёт.' },
+            { name: 'Лагуз', meaning: 'Вода и текучесть. Следуйте течению жизни.' },
+            { name: 'Ингуз', meaning: 'Завершение и новое начало. Цикл закрывается.' },
+            { name: 'Отала', meaning: 'Наследие и дом. Найдите свои корни.' },
+            { name: 'Дагаз', meaning: 'День и трансформация. Свет в конце туннеля.' }
+        ];
+
+        const numerology = [
+            { num: 1, meaning: 'Начало и лидерство. Вы - инициатор перемен.' },
+            { num: 2, meaning: 'Баланс и партнёрство. Кооперация важна.' },
+            { num: 3, meaning: 'Творчество и выражение. Проявите себя.' },
+            { num: 4, meaning: 'Стабильность и основание. Укрепляйте основы.' },
+            { num: 5, meaning: 'Перемены и свобода. Новые возможности ждут.' },
+            { num: 6, meaning: 'Гармония и забота. Служите окружающим.' },
+            { num: 7, meaning: 'Духовность и анализ. Ищите глубины.' },
+            { num: 8, meaning: 'Успех и материя. Достижение целей близко.' },
+            { num: 9, meaning: 'Завершение и сострадание. Цикл заканчивается.' }
+        ];
+
+        const oracle = [
+            { answer: '✅ Да, полностью', meaning: 'Все знаки указывают на положительный исход.' },
+            { answer: '👍 Вероятно да', meaning: 'Успех ждёт вас, но требуется некоторое усилие.' },
+            { answer: '❓ Неясно', meaning: 'Ситуация двоякая. Требуется больше информации.' },
+            { answer: '👎 Скорее нет', meaning: 'Препятствия существуют. Пересмотрите подход.' },
+            { answer: '❌ Нет, категорически', meaning: 'Судьба советует выбрать другой путь.' },
+            { answer: '⏳ Вскоре придёт ясность', meaning: 'Время раскроет истину. Ждите.' },
+            { answer: '🙏 Это зависит от вас', meaning: 'Выбор - в ваших руках. Действуйте мудро.' },
+            { answer: '💰 Потребуется жертва', meaning: 'Цена есть, но она стоит того.' },
+            { answer: '🌟 Большой успех', meaning: 'Вас ждут исключительные результаты.' },
+            { answer: '⚠️ Опасайтесь', meaning: 'Подготовьтесь к неожиданным препятствиям.' }
+        ];
+
+        const fortune = [
+            { answer: '✨ Судьба благоприятна', meaning: 'Вселенная поддерживает вас. Действуйте смело.' },
+            { answer: '🌙 Луна в вашей пользу', meaning: 'Интуиция подсказывает верный путь.' },
+            { answer: '⚡ Молния перемен', meaning: 'Неожиданное изменение в лучшую сторону.' },
+            { answer: '🔥 Огонь страсти', meaning: 'Энергия и энтузиазм - ваши помощники.' },
+            { answer: '💎 Драгоценное откровение', meaning: 'Вам откроется важная истина.' },
+            { answer: '🌊 Волны течения', meaning: 'Следуйте естественному ходу событий.' },
+            { answer: '🌟 Звёздный час', meaning: 'Ваше время пришло. Блистайте.' },
+            { answer: '🎴 Карта везения', meaning: 'Удача на вашей стороне. Рискуйте.' },
+            { answer: '🧿 Магия ожидания', meaning: 'Лучшее придёт к тому, кто терпелив.' },
+            { answer: '👁️ Всевидящий взор', meaning: 'Посмотрите глубже. Ответ уже перед вами.' }
+        ];
+
+        init();
+    </script>
+</body>
+</html>

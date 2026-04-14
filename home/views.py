@@ -17,7 +17,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_http_methods
 from django.db import transaction
-from yookassa import Payment
+from yookassa import Configuration, Payment
 from django.urls import reverse
 import uuid
 from django.contrib.auth import login, authenticate, logout, update_session_auth_hash
@@ -39,9 +39,14 @@ from decimal import Decimal
 import requests
 
 from django.core.cache import cache
+from pathlib import Path
 
 from identity_auth.models import LinkedSocialAccount
 from identity_auth.services import linked_labels_for_user
+
+# Конфигурация SDK YooKassa (актуальная сигнатура create/find_one).
+Configuration.account_id = settings.YOOKASSA_SHOP_ID
+Configuration.secret_key = settings.YOOKASSA_SECRET_KEY
 
 
 def _ordered_by_ids(queryset, id_list):
@@ -872,30 +877,48 @@ def checkout(request):
     if not cart_items.exists():
         messages.warning(request, 'Ваша корзина пуста.')
         return redirect('home:cart')
+
+    user_customer = None
+    if request.user.is_authenticated:
+        user_customer = Customer.objects.filter(user=request.user).first()
+
+    order_initial = {}
+    if request.user.is_authenticated:
+        full_name = (request.user.get_full_name() or request.user.username or '').strip()
+        order_initial = {
+            'customer_name': full_name,
+            'customer_email': request.user.email or '',
+            'customer_phone': (user_customer.phone if user_customer else '') or '',
+        }
     
     if request.method == 'POST':
-        print(f"DEBUG: POST request received")
-        print(f"DEBUG: POST data: {request.POST}")
-        print(f"DEBUG: Create account value: {request.POST.get('create_account')}")
+        if not request.user.is_authenticated:
+            messages.warning(
+                request,
+                'Для перехода к опросному листу необходимо авторизоваться или зарегистрироваться.'
+            )
+            return redirect('home:checkout')
         
         order_form = OrderForm(request.POST)
-        
-        print(f"DEBUG: Form is valid: {order_form.is_valid()}")
         if not order_form.is_valid():
-            print(f"DEBUG: Form errors: {order_form.errors}")
-            print(f"DEBUG: Form errors as JSON: {order_form.errors.as_json()}")
-            # Добавляем сообщения об ошибках для пользователя
             for field, errors in order_form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field}: {error}")
         
         if order_form.is_valid():
-            print(f"DEBUG: Creating order...")
-            # Создаем заказ
             order = order_form.save(total_price=cart.get_total_price())
-            print(f"DEBUG: Order created with ID: {order.id}")
+
+            customer_obj, _ = Customer.objects.get_or_create(
+                user=request.user,
+                defaults={'phone': order_form.cleaned_data.get('customer_phone', '')},
+            )
+            phone_from_form = (order_form.cleaned_data.get('customer_phone') or '').strip()
+            if phone_from_form and customer_obj.phone != phone_from_form:
+                customer_obj.phone = phone_from_form
+                customer_obj.save(update_fields=['phone'])
+            order.customer = customer_obj
+            order.save(update_fields=['customer'])
             
-            # Добавляем товары из корзины в заказ
             for item in cart_items:
                 OrderItem.objects.create(
                     order=order,
@@ -903,28 +926,22 @@ def checkout(request):
                     service_id=item.service_id,
                     title=item.title,
                     price=item.price,
+                    price_value=item.price_value,
+                    prepayment_percent=50,
                     quantity=item.quantity
                 )
             
-            # Очищаем корзину
             cart.delete()
-            
-            # Если создан аккаунт, авторизуем пользователя
-            if order.customer and order.customer.user:
-                login(request, order.customer.user)
-                messages.success(request, f'Заказ оформлен! Аккаунт создан. Добро пожаловать в личный кабинет, {order.customer.user.get_full_name() or order.customer.user.username}!')
-            else:
-                messages.success(request, 'Заказ оформлен! Мы свяжемся с вами в ближайшее время.')
-            
-            # Перенаправляем на опросный лист
+            messages.success(request, 'Контактные данные сохранены. Заполните опросный лист для запуска проекта.')
             return redirect('home:order_questionnaire', order_id=order.id)
     else:
-        order_form = OrderForm()
+        order_form = OrderForm(initial=order_initial)
     
     context = {
         'order_form': order_form,
         'cart_items': cart_items,
         'total_price': cart.get_total_price(),
+        'next_url': request.get_full_path(),
     }
     
     return render(request, 'home/checkout/checkout.html', context)
@@ -933,6 +950,39 @@ def checkout(request):
 def order_questionnaire(request, order_id):
     """Заполнение опросного листа заказа"""
     order = get_object_or_404(Order, id=order_id)
+    order_items = list(order.orderitem_set.all())
+
+    def item_total_decimal(item):
+        if item.price_value is not None:
+            return Decimal(item.price_value) * item.quantity
+        raw = (item.price or '').replace('₽', '').replace('от', '').replace(' ', '').replace(',', '')
+        try:
+            return Decimal(raw) * item.quantity
+        except Exception:
+            return Decimal('0')
+
+    items_payload = []
+    total_amount = Decimal('0')
+    for item in order_items:
+        item_total = item_total_decimal(item)
+        total_amount += item_total
+        items_payload.append({
+            'id': item.id,
+            'title': item.title,
+            'service_type': item.service_type,
+            'type_label': item.get_service_type_display(),
+            'price': item.price,
+            'quantity': item.quantity,
+            'total': item_total,
+            'prepayment_percent': item.prepayment_percent or 50,
+            'is_full_prepayment': (item.prepayment_percent or 50) >= 100,
+        })
+
+    prepayment_amount = sum(
+        payload['total'] * Decimal(str(payload['prepayment_percent'])) / Decimal('100')
+        for payload in items_payload
+    )
+    final_payment_amount = total_amount - prepayment_amount
     
     # Если пользователь не авторизован, но у заказа есть заказчик, авторизуем его
     if not request.user.is_authenticated and order.customer and order.customer.user:
@@ -943,10 +993,32 @@ def order_questionnaire(request, order_id):
         file_form = OrderFileForm(request.POST, request.FILES)
         
         if questionnaire_form.is_valid():
+            full_prepayment_ids = set(request.POST.getlist('full_prepayment_items'))
+            prepayment_amount = Decimal('0')
+            for item in order_items:
+                item.prepayment_percent = 100 if str(item.id) in full_prepayment_ids else 50
+                item.save(update_fields=['prepayment_percent'])
+                prepayment_amount += item_total_decimal(item) * Decimal(item.prepayment_percent) / Decimal('100')
+            final_payment_amount = total_amount - prepayment_amount
+
             # Сохраняем опросный лист
             questionnaire = questionnaire_form.save(commit=False)
             questionnaire.order = order
+            added_terms = (
+                "\n\nУсловия оплаты:\n"
+                f"- Предоплата заказа: {int(prepayment_amount)} ₽\n"
+                f"- Финальная оплата: {int(final_payment_amount)} ₽ после оказания услуги и подписания акта выполненных работ.\n"
+                "- Полная передача прав и кода — после 100% оплаты услуг и подписания акта.\n"
+                "- Если выполненные работы не соответствуют ТЗ/опросному листу, предоплата возвращается."
+            )
+            base_requirements = questionnaire.additional_requirements or ''
+            if "Условия оплаты:" not in base_requirements:
+                questionnaire.additional_requirements = base_requirements + added_terms
             questionnaire.save()
+
+            order.prepayment_amount = prepayment_amount
+            order.final_payment_amount = final_payment_amount
+            order.save(update_fields=['prepayment_amount', 'final_payment_amount'])
             
             # Сохраняем файлы (если они есть)
             files = request.FILES.getlist('file')
@@ -971,21 +1043,32 @@ def order_questionnaire(request, order_id):
                         description='Дополнительный файл'
                     )
             
-            # Если у заказа есть заказчик, перенаправляем в личный кабинет
-            if order.customer and order.customer.user:
-                messages.success(request, 'Заказ успешно оформлен! Переходим в личный кабинет.')
-                return redirect('home:customer_dashboard')
-            else:
-                messages.success(request, 'Заказ успешно оформлен! Мы свяжемся с вами в ближайшее время.')
-                return redirect('home:order_success', order_id=order.id)
+            messages.success(request, 'Опросный лист сохранен. Переходим к оплате предоплаты.')
+            return redirect('home:order_pay', order_id=order.id)
     else:
-        questionnaire_form = OrderQuestionnaireForm()
+        default_project_name = ', '.join([item.title for item in order_items][:2])[:200]
+        initial_project_description = (
+            f"Клиент: {order.customer_name}\n"
+            f"Email: {order.customer_email}\n"
+            f"Телефон: {order.customer_phone}\n\n"
+            "Состав заказа:\n" +
+            '\n'.join([f"- {item.title} ({item.quantity} шт.) — {item.price}" for item in order_items])
+        )
+        questionnaire_form = OrderQuestionnaireForm(initial={
+            'project_name': default_project_name,
+            'budget_range': f"{int(total_amount)} ₽",
+            'project_description': initial_project_description,
+        })
         file_form = OrderFileForm()
     
     context = {
         'order': order,
         'questionnaire_form': questionnaire_form,
         'file_form': file_form,
+        'order_items': items_payload,
+        'order_total_amount': total_amount,
+        'prepayment_amount': prepayment_amount,
+        'final_payment_amount': final_payment_amount,
     }
     
     return render(request, 'home/checkout/questionnaire.html', context)
@@ -1024,12 +1107,24 @@ def pay_order(request, order_id):
     
 
     
+    payment_amount = order.get_prepayment_amount()
+
     if request.method == 'POST':
         try:
+            shop_id = str(getattr(settings, 'YOOKASSA_SHOP_ID', '') or '').strip()
+            secret_key = str(getattr(settings, 'YOOKASSA_SECRET_KEY', '') or '').strip()
+
+            if settings.DEBUG and (not shop_id or not secret_key):
+                messages.warning(
+                    request,
+                    'YooKassa не настроена в локальном окружении. Открыт демо-режим оплаты.'
+                )
+                return redirect('home:order_pay_mock', order_id=order.id)
+
             # Создаем платеж в YooKassa
             payment = Payment.create({
                 "amount": {
-                    "value": str(order.total_price),
+                    "value": str(payment_amount),
                     "currency": "RUB"
                 },
                 "confirmation": {
@@ -1039,12 +1134,13 @@ def pay_order(request, order_id):
                     )
                 },
                 "capture": True,
-                "description": f"Оплата заказа №{order.order_number} - LukInterLab",
+                "description": f"Предоплата заказа №{order.order_number} - LukInterLab",
                 "metadata": {
                     "order_id": str(order.id),
-                    "order_number": order.order_number
+                    "order_number": order.order_number,
+                    "payment_stage": "prepayment",
                 }
-            }, settings.YOOKASSA_SHOP_ID, settings.YOOKASSA_SECRET_KEY)
+            }, str(uuid.uuid4()))
             
             # Сохраняем ID платежа в заказе
             order.payment_id = payment.id
@@ -1054,14 +1150,57 @@ def pay_order(request, order_id):
             return redirect(payment.confirmation.confirmation_url)
             
         except Exception as e:
+            error_text = str(e)
+            if settings.DEBUG and ('invalid_credentials' in error_text or 'Authentication by given credentials failed' in error_text):
+                messages.warning(
+                    request,
+                    'YooKassa отклонила ключи в локальном окружении. Открыт демо-режим оплаты.'
+                )
+                return redirect('home:order_pay_mock', order_id=order.id)
             messages.error(request, f'Ошибка при создании платежа: {str(e)}')
             return redirect('home:order_detail', order_id=order.id)
     
     context = {
         'order': order,
+        'payment_amount': payment_amount,
         'title': f'Оплата заказа №{order.order_number}'
     }
     return render(request, 'home/checkout/pay.html', context)
+
+
+def pay_order_mock(request, order_id):
+    """Демо-режим оплаты для локальной разработки (без обращения к YooKassa API)."""
+    order = get_object_or_404(Order, id=order_id)
+    if not settings.DEBUG:
+        return redirect('home:order_pay', order_id=order.id)
+
+    payment_amount = order.get_prepayment_amount()
+    payment_methods = [
+        ('bank_card', 'Банковская карта'),
+        ('sbp', 'СБП'),
+        ('yoo_money', 'ЮMoney'),
+    ]
+
+    if request.method == 'POST':
+        selected_method = request.POST.get('payment_method', 'bank_card')
+        selected_labels = {key: label for key, label in payment_methods}
+        selected_label = selected_labels.get(selected_method, 'Банковская карта')
+
+        order.payment_id = f"mock-{uuid.uuid4()}"
+        order.payment_status = 'paid'
+        order.status = 'confirmed'
+        order.save(update_fields=['payment_id', 'payment_status', 'status'])
+
+        messages.success(request, f'Демо-оплата выполнена. Способ оплаты: {selected_label}.')
+        return redirect('home:payment_success', order_id=order.id)
+
+    context = {
+        'order': order,
+        'payment_amount': payment_amount,
+        'payment_methods': payment_methods,
+        'title': f'Демо-оплата заказа №{order.order_number}',
+    }
+    return render(request, 'home/checkout/pay_mock.html', context)
 
 
 @csrf_exempt
@@ -1156,7 +1295,7 @@ def payment_success(request, order_id):
     # Проверяем статус платежа через API YooKassa
     if order.payment_id and order.payment_status == 'pending':
         try:
-            payment = Payment.find_one(order.payment_id, settings.YOOKASSA_SHOP_ID, settings.YOOKASSA_SECRET_KEY)
+            payment = Payment.find_one(order.payment_id)
             if payment.status == 'succeeded':
                 order.payment_status = 'paid'
                 order.status = 'confirmed'
@@ -1920,6 +2059,82 @@ def admin_tariffs_dashboard(request):
         'active_extra_services': active_extra_services,
     }
     return render(request, 'home/admin/tariffs_dashboard.html', context)
+
+
+def _quote_env_value(value: str) -> str:
+    escaped = str(value).replace('\\', '\\\\').replace('"', '\\"')
+    return f'"{escaped}"'
+
+
+def _upsert_env_file_values(values: dict[str, str]) -> Path:
+    env_path = Path(settings.BASE_DIR) / '.env'
+    if env_path.exists():
+        lines = env_path.read_text(encoding='utf-8-sig').splitlines()
+    else:
+        lines = []
+
+    pending = dict(values)
+    for idx, line in enumerate(lines):
+        stripped = line.strip()
+        if not stripped or stripped.startswith('#') or '=' not in line:
+            continue
+        key = line.split('=', 1)[0].strip()
+        if key in pending:
+            lines[idx] = f'{key}={_quote_env_value(pending[key])}'
+            pending.pop(key, None)
+
+    if pending:
+        if lines and lines[-1].strip():
+            lines.append('')
+        lines.append('# Payment providers')
+        for key, value in pending.items():
+            lines.append(f'{key}={_quote_env_value(value)}')
+
+    env_path.write_text('\n'.join(lines).rstrip() + '\n', encoding='utf-8')
+    return env_path
+
+
+@staff_member_required
+def admin_payment_settings(request):
+    """Настройки платежных провайдеров (через .env)."""
+    initial = {
+        'provider': 'yookassa',
+        'yookassa_shop_id': getattr(settings, 'YOOKASSA_SHOP_ID', ''),
+        'yookassa_secret_key': getattr(settings, 'YOOKASSA_SECRET_KEY', ''),
+    }
+
+    if request.method == 'POST':
+        form = PaymentGatewayEnvForm(request.POST)
+        if form.is_valid():
+            provider = form.cleaned_data['provider']
+            updates: dict[str, str] = {}
+            if provider == 'yookassa':
+                updates['YOOKASSA_SHOP_ID'] = form.cleaned_data['yookassa_shop_id'].strip()
+                updates['YOOKASSA_SECRET_KEY'] = form.cleaned_data['yookassa_secret_key'].strip()
+
+            env_path = _upsert_env_file_values(updates)
+
+            for key, value in updates.items():
+                os.environ[key] = value
+                setattr(settings, key, value)
+
+            Configuration.account_id = getattr(settings, 'YOOKASSA_SHOP_ID', '')
+            Configuration.secret_key = getattr(settings, 'YOOKASSA_SECRET_KEY', '')
+
+            messages.success(
+                request,
+                f'Настройки {provider} сохранены в {env_path.name}. Новые значения применены в текущем процессе.',
+            )
+            return redirect('home:admin_tariffs_dashboard')
+    else:
+        form = PaymentGatewayEnvForm(initial=initial)
+
+    context = {
+        'title': 'Платежные провайдеры',
+        'form': form,
+        'webhook_url': request.build_absolute_uri(reverse('home:yookassa_webhook')),
+    }
+    return render(request, 'home/admin/payment_settings.html', context)
 
 
 @staff_member_required

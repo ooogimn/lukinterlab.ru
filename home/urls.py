@@ -31,6 +31,7 @@ urlpatterns = [
     path('order/<int:order_id>/', order_detail, name='order_detail'),
     # YooKassa оплата
     path('order/<int:order_id>/pay/', pay_order, name='order_pay'),
+    path('order/<int:order_id>/pay/mock/', pay_order_mock, name='order_pay_mock'),
     path('yookassa/webhook/', yookassa_webhook, name='yookassa_webhook'),
     path('cookie-consent/', cookie_consent, name='cookie-consent'),
     path('privacy-policy/', privacy_policy, name='privacy_policy'),
@@ -75,6 +76,7 @@ urlpatterns = [
     path('manage/tariffs/extra-service/create/', admin_extra_service_create, name='admin_extra_service_create'),
     path('manage/tariffs/extra-service/<int:pk>/edit/', admin_extra_service_edit, name='admin_extra_service_edit'),
     path('manage/tariffs/extra-service/<int:pk>/delete/', admin_extra_service_delete, name='admin_extra_service_delete'),
+    path('manage/tariffs/payments/', admin_payment_settings, name='admin_payment_settings'),
 
     path('manage/marketing/', admin_marketing_settings, name='admin_marketing_settings'),
 ]

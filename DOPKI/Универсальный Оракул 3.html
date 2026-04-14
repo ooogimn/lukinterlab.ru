@@ -1,0 +1,14 @@
+<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Оракул 3</title>
+<style>body{margin:0;background:#09090b;color:#fde68a;font-family:Segoe UI,Arial}.app{max-width:860px;margin:16px auto;padding:12px}.card{background:#18181b;border:1px solid #3f3f46;border-radius:14px;padding:12px;margin-bottom:10px}input,select,button{padding:9px;border-radius:10px;border:1px solid #52525b;background:#0a0a0f;color:#fde68a}button{background:#ca8a04;border:none;cursor:pointer;font-weight:700}.muted{color:#d4d4d8}</style>
+</head><body><div class="app"><h1>🔮 Универсальный Оракул 3</h1>
+<div class="card"><input id="q" placeholder="Ваш вопрос" style="width:100%"><div style="margin-top:8px"><select id="m"><option>Таро</option><option>Руны</option><option>Оракул</option></select> <select id="tone"><option>Мягко</option><option>Прямо</option><option>Мотивирующе</option></select> <button onclick="ask()">Спросить</button> <button onclick="clr()">Очистить</button></div></div>
+<div class="card"><h3>Ответ</h3><div id="a" class="muted">Ожидание вопроса...</div></div><div class="card"><h3>История</h3><div id="h"></div></div></div>
+<script>
+const KEY="oracle3.h";let H=JSON.parse(localStorage.getItem(KEY)||"[]");
+const B=["Да, откройтесь возможности.","Сделайте паузу и перепроверьте факты.","Сфокусируйтесь на одном шаге сегодня.","Лучше идти через партнёрство.","Ситуация скоро прояснится."];
+function ask(){const qv=q.value.trim();if(!qv)return alert("Введите вопрос");let t=B[Math.floor(Math.random()*B.length)];
+if(tone.value==="Прямо")t="Действуйте без откладывания. "+t;if(tone.value==="Мотивирующе")t="У вас достаточно силы. "+t;
+a.textContent=`${m.value}: ${t}`;if("speechSynthesis"in window){speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(t));}
+H.unshift({q:qv,m:m.value,tone:tone.value,t,at:new Date().toLocaleString("ru-RU")});H=H.slice(0,30);localStorage.setItem(KEY,JSON.stringify(H));render();}
+function clr(){H=[];localStorage.removeItem(KEY);render()} function render(){h.innerHTML=H.map(x=>`<div><b>${x.m}</b> · ${x.at}<div class=muted>${x.q}</div><div>${x.t}</div><hr></div>`).join("")||"<p class='muted'>История пуста</p>"} render();
+</script></body></html>

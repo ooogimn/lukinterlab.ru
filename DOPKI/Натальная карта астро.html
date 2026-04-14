@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🌟 Натальная Карта Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --color-primary: #8b5cf6;
+            --color-primary-glow: rgba(139, 92, 246, 0.5);
+            --color-secondary: #06b6d4;
+            --color-secondary-glow: rgba(6, 182, 212, 0.5);
+            --color-accent: #f59e0b;
+            --color-accent-glow: rgba(245, 158, 11, 0.5);
+            --color-pink: #ec4899;
+            --color-pink-glow: rgba(236, 72, 153, 0.5);
+            --color-bg: #0f0f1a;
+            --color-surface: #1a1a2e;
+            --color-surface-light: #252542;
+            --color-text: #f8fafc;
+            --color-text-light: #94a3b8;
+            --color-border: #334155;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        html, body {
+            margin: 0; padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%);
+            color: var(--color-text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Анимированный фон со звёздами */
+        .stars {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
+        }
+
+        .star {
+            position: absolute; width: 2px; height: 2px;
+            background: white; border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.5); }
+        }
+
+        .container {
+            max-width: 1200px; margin: 0 auto;
+            padding: 16px; padding-bottom: 80px;
+            position: relative; z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            text-align: center; margin-bottom: 24px; padding: 24px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(6, 182, 212, 0.15) 100%);
+            border-radius: 24px;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            box-shadow: 0 0 40px rgba(139, 92, 246, 0.2);
+            animation: fadeIn 0.8s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header-logo { font-size: 64px; margin-bottom: 12px; animation: float 3s infinite; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .header h1 {
+            margin: 0 0 8px 0; font-size: 28px; font-weight: 800;
+            background: linear-gradient(135deg, #8b5cf6, #06b6d4, #f59e0b);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p { margin: 0; color: var(--color-text-light); font-size: 13px; }
+
+        /* Form Section */
+        .form-section {
+            background: var(--color-surface);
+            border: 2px solid var(--color-border);
+            border-radius: 20px; padding: 20px; margin-bottom: 24px;
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.15);
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(139, 92, 246, 0.03) 10px, rgba(139, 92, 246, 0.03) 20px), linear-gradient(135deg, #1a1a2e 0%, #252542 100%);
+            transition: all 0.3s;
+        }
+
+        .form-section:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 40px rgba(139, 92, 246, 0.25);
+        }
+
+        .form-label {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; font-weight: 600; margin-bottom: 12px;
+            color: var(--color-accent); text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        .form-row {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px; margin-bottom: 16px;
+        }
+
+        .form-group { display: flex; flex-direction: column; }
+
+        .form-group label {
+            font-size: 12px; font-weight: 500; margin-bottom: 6px;
+            color: var(--color-text-light);
+        }
+
+        .form-group input, .form-group select {
+            padding: 14px 16px; background: rgba(0, 0, 0, 0.4);
+            border: 2px solid var(--color-border); border-radius: 12px;
+            color: var(--color-text); font-size: 14px; transition: all 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none; border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2), 0 0 20px var(--color-primary-glow);
+        }
+
+        .btn-primary {
+            width: 100%; padding: 16px 24px;
+            background: linear-gradient(135deg, #8b5cf6, #06b6d4); color: white;
+            border: none; border-radius: 12px; font-size: 15px; font-weight: 700;
+            cursor: pointer; transition: all 0.3s;
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.4);
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 40px rgba(139, 92, 246, 0.6);
+        }
+
+        .btn-primary:active { transform: translateY(-1px); }
+
+        /* Results Grid */
+        .results-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px; margin-top: 24px;
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--color-surface);
+            border: 2px solid var(--color-border);
+            border-radius: 20px; padding: 20px;
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.15);
+            background-image: repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(139, 92, 246, 0.03) 10px, rgba(139, 92, 246, 0.03) 20px), linear-gradient(135deg, #1a1a2e 0%, #252542 100%);
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 40px rgba(139, 92, 246, 0.25);
+        }
+
+        .card-header {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 16px; padding-bottom: 12px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .card-icon {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-pink));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; box-shadow: 0 0 20px var(--color-primary-glow);
+        }
+
+        .card-title {
+            font-size: 16px; font-weight: 700;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        /* Zodiac Card */
+        .zodiac-card {
+            text-align: center; padding: 24px;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
+            border-radius: 16px; margin-bottom: 16px;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .zodiac-symbol { font-size: 64px; margin-bottom: 8px; animation: pulse 2s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px var(--color-accent-glow)); }
+            50% { transform: scale(1.1); filter: drop-shadow(0 0 40px var(--color-accent-glow)); }
+        }
+
+        .zodiac-name {
+            font-size: 22px; font-weight: 700; margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--color-accent), var(--color-pink));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .zodiac-dates { font-size: 12px; color: var(--color-text-light); margin-bottom: 12px; }
+
+        .zodiac-trait {
+            display: inline-block; padding: 6px 12px;
+            background: rgba(245, 158, 11, 0.15);
+            border-radius: 20px; font-size: 11px;
+            color: var(--color-accent); margin: 4px;
+        }
+
+        /* Planet Item */
+        .planet-item {
+            background: rgba(139, 92, 246, 0.08);
+            border-left: 3px solid var(--color-primary);
+            padding: 14px; margin-bottom: 12px; border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .planet-item:hover {
+            background: rgba(139, 92, 246, 0.15);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+        }
+
+        .planet-name {
+            display: flex; align-items: center; gap: 8px;
+            font-weight: 600; color: var(--color-primary); font-size: 14px; margin-bottom: 6px;
+        }
+
+        .planet-details { font-size: 12px; color: var(--color-text-light); line-height: 1.6; }
+
+        /* Pythagoras Quadrant */
+        .pythagoras-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 8px; margin: 16px 0;
+        }
+
+        .pythagoras-cell {
+            aspect-ratio: 1; background: var(--color-surface-light);
+            border: 2px solid var(--color-border); border-radius: 12px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .pythagoras-cell:hover {
+            border-color: var(--color-secondary);
+            box-shadow: 0 0 20px var(--color-secondary-glow);
+        }
+
+        .pythagoras-number { font-size: 24px; font-weight: 700; color: var(--color-secondary); }
+        .pythagoras-label { font-size: 10px; color: var(--color-text-light); margin-top: 4px; }
+
+        .quadrant-item {
+            background: rgba(6, 182, 212, 0.08);
+            border-left: 3px solid var(--color-secondary);
+            padding: 14px; margin-bottom: 12px; border-radius: 8px;
+        }
+
+        .quadrant-name {
+            display: flex; align-items: center; gap: 8px;
+            font-weight: 600; color: var(--color-secondary); font-size: 14px; margin-bottom: 6px;
+        }
+
+        .quadrant-value { font-size: 20px; font-weight: 700; color: var(--color-secondary); }
+        .quadrant-desc { font-size: 12px; color: var(--color-text-light); margin-top: 8px; line-height: 1.6; }
+
+        /* Canvas */
+        .chart-container {
+            background: var(--color-surface);
+            border: 2px solid var(--color-border);
+            border-radius: 20px; padding: 20px;
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.15);
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        canvas { max-width: 100%; height: auto; }
+
+        /* Mobile Nav */
+        .mobile-nav {
+            display: none; position: fixed; bottom: 0; left: 0; right: 0;
+            background: var(--color-surface); padding: 8px 16px;
+            box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.5); z-index: 100;
+            border-top: 2px solid var(--color-border);
+        }
+
+        .mobile-nav-items { display: flex; justify-content: space-around; }
+
+        .mobile-nav-item {
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            padding: 8px 12px; border-radius: 12px; cursor: pointer;
+            transition: all 0.3s; color: var(--color-text-light); font-size: 10px; font-weight: 500;
+        }
+
+        .mobile-nav-item.active { color: var(--color-primary); background: rgba(139, 92, 246, 0.15); }
+        .mobile-nav-item i { font-size: 20px; }
+
+        /* Tabs */
+        .tabs {
+            display: flex; gap: 8px; margin-bottom: 20px;
+            overflow-x: auto; padding: 4px;
+        }
+
+        .tab-btn {
+            flex: 0 0 auto; padding: 12px 20px;
+            background: var(--color-surface); border: 2px solid var(--color-border);
+            border-radius: 12px; color: var(--color-text-light);
+            font-size: 13px; font-weight: 600; cursor: pointer;
+            transition: all 0.3s; white-space: nowrap;
+        }
+
+        .tab-btn:hover { border-color: var(--color-primary); color: var(--color-text); }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-pink));
+            border-color: var(--color-primary); color: white;
+            box-shadow: 0 0 20px var(--color-primary-glow);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+
+        /* Loading */
+        .loading { text-align: center; padding: 40px; color: var(--color-text-light); }
+        .spinner {
+            display: inline-block; width: 40px; height: 40px;
+            border: 3px solid rgba(139, 92, 246, 0.2);
+            border-top-color: var(--color-primary); border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 22px; }
+            .header-logo { font-size: 48px; }
+            .form-row { grid-template-columns: 1fr; }
+            .results-grid { grid-template-columns: 1fr; }
+            .mobile-nav { display: block; }
+            .container { padding-bottom: 80px; }
+            .pythagoras-grid { gap: 6px; }
+            .pythagoras-cell { border-radius: 8px; }
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--color-surface); }
+        ::-webkit-scrollbar-thumb { background: var(--color-primary); border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+
+    <div class="container">
+        <div class="header">
+            <div class="header-logo">🌟</div>
+            <h1>Натальная Карта</h1>
+            <p>Раскройте тайны звёзд и чисел</p>
+        </div>
+
+        <!-- Форма -->
+        <div class="form-section">
+            <div class="form-label"><i class="fas fa-calendar-alt"></i> Данные рождения</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Дата рождения:</label>
+                    <input type="date" id="birthDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Время рождения:</label>
+                    <input type="time" id="birthTime" required>
+                </div>
+            </div>
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label>Город рождения:</label>
+                <select id="birthCity" required>
+                    <option value="">-- Выберите город --</option>
+                    <option value="Москва,55.75,37.62">Москва (55.75° N, 37.62° E)</option>
+                    <option value="Санкт-Петербург,59.93,30.34">Санкт-Петербург</option>
+                    <option value="Новосибирск,55.04,82.93">Новосибирск</option>
+                    <option value="Екатеринбург,56.84,60.65">Екатеринбург</option>
+                    <option value="Казань,55.79,49.12">Казань</option>
+                    <option value="Киев,50.45,30.52">Киев</option>
+                    <option value="Минск,53.90,27.57">Минск</option>
+                    <option value="Лондон,51.51,-0.13">Лондон</option>
+                    <option value="Нью-Йорк,40.71,-74.01">Нью-Йорк</option>
+                    <option value="Токио,35.68,139.69">Токио</option>
+                </select>
+            </div>
+            <button class="btn-primary" onclick="calculateChart()">
+                <i class="fas fa-magic"></i> Рассчитать карту
+            </button>
+        </div>
+
+        <!-- Табы -->
+        <div class="tabs" id="tabs" style="display: none;">
+            <button class="tab-btn active" onclick="switchTab('natal')"><i class="fas fa-star"></i> Натальная</button>
+            <button class="tab-btn" onclick="switchTab('zodiac')"><i class="fas fa-sun"></i> Знак Зодиака</button>
+            <button class="tab-btn" onclick="switchTab('pythagoras')"><i class="fas fa-square"></i> Квадрат Пифагора</button>
+        </div>
+
+        <!-- Результаты -->
+        <div id="results" style="display: none;">
+            <!-- Натальная карта -->
+            <div id="natalTab" class="tab-content active">
+                <div class="results-grid">
+                    <div class="chart-container">
+                        <canvas id="natalChart" width="400" height="400"></canvas>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon">🌟</div>
+                            <div class="card-title">Основная триада</div>
+                        </div>
+                        <div id="triaContent"></div>
+                    </div>
+                </div>
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-header">
+                        <div class="card-icon">🪐</div>
+                        <div class="card-title">Положение планет</div>
+                    </div>
+                    <div id="planetsContent"></div>
+                </div>
+            </div>
+
+            <!-- Знак Зодиака -->
+            <div id="zodiacTab" class="tab-content">
+                <div class="results-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon">♈</div>
+                            <div class="card-title">Ваш знак Зодиака</div>
+                        </div>
+                        <div id="zodiacContent"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon">💫</div>
+                            <div class="card-title">Характеристика</div>
+                        </div>
+                        <div id="zodiacTraits"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Квадрат Пифагора -->
+            <div id="pythagorasTab" class="tab-content">
+                <div class="results-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon">🔢</div>
+                            <div class="card-title">Психоматрица</div>
+                        </div>
+                        <div class="pythagoras-grid" id="pythagorasGrid"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon">📊</div>
+                            <div class="card-title">Квадранты</div>
+                        </div>
+                        <div id="quadrantsContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="emptyState" class="loading">
+            <div style="font-size: 64px; margin-bottom: 16px;">📅</div>
+            <p>Заполните форму и нажмите кнопку для расчёта</p>
+        </div>
+    </div>
+
+    <!-- Mobile Nav -->
+    <nav class="mobile-nav">
+        <div class="mobile-nav-items">
+            <div class="mobile-nav-item active" onclick="switchTab('natal')"><i class="fas fa-star"></i><span>Натальная</span></div>
+            <div class="mobile-nav-item" onclick="switchTab('zodiac')"><i class="fas fa-sun"></i><span>Зодиак</span></div>
+            <div class="mobile-nav-item" onclick="switchTab('pythagoras')"><i class="fas fa-square"></i><span>Пифагор</span></div>
+        </div>
+    </nav>
+
+    <script>
+        // Звёзды фона
+        function createStars() {
+            const container = document.getElementById('stars');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                container.appendChild(star);
+            }
+        }
+        createStars();
+
+        // Данные знаков зодиака
+        const zodiacSigns = [
+            { name: 'Овен', symbol: '♈', start: '21.03', end: '19.04', element: 'Огонь', quality: 'Кардинальный', planet: 'Марс', traits: ['Энергичный', 'Смелый', 'Импульсивный', 'Лидер'], description: 'Первопроходец зодиака, полный энергии и энтузиазма. Овны прирождённые лидеры, которые не боятся рисковать.' },
+            { name: 'Телец', symbol: '♉', start: '20.04', end: '20.05', element: 'Земля', quality: 'Фиксированный', planet: 'Венера', traits: ['Надёжный', 'Терпеливый', 'Упрямый', 'Сенсорный'], description: 'Ценитель красоты и комфорта. Тельцы упорны в достижении целей и любят стабильность.' },
+            { name: 'Близнецы', symbol: '♊', start: '21.05', end: '20.06', element: 'Воздух', quality: 'Мутабельный', planet: 'Меркурий', traits: ['Общительный', 'Любопытный', 'Адаптивный', 'Разносторонний'], description: 'Мастера коммуникации с живым умом. Близнецы всегда в движении и поиске новой информации.' },
+            { name: 'Рак', symbol: '♋', start: '21.06', end: '22.07', element: 'Вода', quality: 'Кардинальный', planet: 'Луна', traits: ['Заботливый', 'Интуитивный', 'Эмоциональный', 'Преданный'], description: 'Самый чувствительный знак. Раки глубоко привязаны к семье и дому.' },
+            { name: 'Лев', symbol: '♌', start: '23.07', end: '22.08', element: 'Огонь', quality: 'Фиксированный', planet: 'Солнце', traits: ['Харизматичный', 'Щедрый', 'Гордый', 'Творческий'], description: 'Короли зодиака с природным магнетизмом. Львы любят быть в центре внимания.' },
+            { name: 'Дева', symbol: '♍', start: '23.08', end: '22.09', element: 'Земля', quality: 'Мутабельный', planet: 'Меркурий', traits: ['Аналитичный', 'Практичный', 'Перфекционист', 'Служащий'], description: 'Мастера деталей с критическим умом. Девы стремятся к совершенству во всём.' },
+            { name: 'Весы', symbol: '♎', start: '23.09', end: '22.10', element: 'Воздух', quality: 'Кардинальный', planet: 'Венера', traits: ['Дипломатичный', 'Справедливый', 'Романтичный', 'Нерешительный'], description: 'Ценители гармонии и красоты. Весы всегда ищут баланс и справедливость.' },
+            { name: 'Скорпион', symbol: '♏', start: '23.10', end: '21.11', element: 'Вода', quality: 'Фиксированный', planet: 'Плутон', traits: ['Интенсивный', 'Страстный', 'Таинственный', 'Трансформирующий'], description: 'Самый глубокий и интенсивный знак. Скорпионы masters трансформации.' },
+            { name: 'Стрелец', symbol: '♐', start: '22.11', end: '21.12', element: 'Огонь', quality: 'Мутабельный', planet: 'Юпитер', traits: ['Оптимистичный', 'Приключенческий', 'Философский', 'Открытый'], description: 'Вечные искатели истины. Стрельцы любят путешествия и расширение горизонтов.' },
+            { name: 'Козерог', symbol: '♑', start: '22.12', end: '19.01', element: 'Земля', quality: 'Кардинальный', planet: 'Сатурн', traits: ['Амбициозный', 'Дисциплинированный', 'Практичный', 'Ответственный'], description: 'Мастера долгосрочных целей. Козероги строят успех шаг за шагом.' },
+            { name: 'Водолей', symbol: '♒', start: '20.01', end: '18.02', element: 'Воздух', quality: 'Фиксированный', planet: 'Уран', traits: ['Оригинальный', 'Независимый', 'Гуманный', 'Инновационный'], description: 'Визионеры зодиака. Водолеи мыслят нестандартно и ценят свободу.' },
+            { name: 'Рыбы', symbol: '♓', start: '19.02', end: '20.03', element: 'Вода', quality: 'Мутабельный', planet: 'Нептун', traits: ['Сострадательный', 'Интуитивный', 'Творческий', 'Мечтательный'], description: 'Самые духовные и чувствительные. Рыбы живут в мире воображения.' }
+        ];
+
+        const planets = [
+            { name: 'Солнце', symbol: '☉', color: '#FFD700', meaning: 'Суть личности, эго, воля' },
+            { name: 'Луна', symbol: '☾', color: '#C0C0C0', meaning: 'Эмоции, подсознание, инстинкты' },
+            { name: 'Меркурий', symbol: '☿', color: '#FFA500', meaning: 'Мышление, коммуникация, интеллект' },
+            { name: 'Венера', symbol: '♀', color: '#00FF7F', meaning: 'Любовь, красота, ценности' },
+            { name: 'Марс', symbol: '♂', color: '#FF4500', meaning: 'Энергия, действие, агрессия' },
+            { name: 'Юпитер', symbol: '♃', color: '#9370DB', meaning: 'Expansion, удача, философия' },
+            { name: 'Сатурн', symbol: '♄', color: '#A9A9A9', meaning: 'Ограничения, дисциплина, карма' },
+            { name: 'Уран', symbol: '♅', color: '#87CEEB', meaning: 'Инновации, внезапность, свобода' },
+            { name: 'Нептун', symbol: '♆', color: '#4169E1', meaning: 'Иллюзии, духовность, творчество' },
+            { name: 'Плутон', symbol: '♇', color: '#8B4513', meaning: 'Трансформация, власть, подсознание' }
+        ];
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.mobile-nav-item').forEach(i => i.classList.remove('active'));
+            
+            document.getElementById(tab + 'Tab').classList.add('active');
+            event.currentTarget.classList.add('active');
+            
+            if (navigator.vibrate) navigator.vibrate(20);
+        }
+
+        function calculateChart() {
+            const birthDate = document.getElementById('birthDate').value;
+            const birthTime = document.getElementById('birthTime').value;
+            const birthCitySelect = document.getElementById('birthCity').value;
+
+            if (!birthDate || !birthTime || !birthCitySelect) {
+                alert('✨ Пожалуйста, заполните все поля!');
+                return;
+            }
+
+            const [cityName, lat, lon] = birthCitySelect.split(',');
+            const date = new Date(birthDate);
+            const [hours, minutes] = birthTime.split(':');
+
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('tabs').style.display = 'flex';
+
+            const chartData = generateNatalChart(date, parseInt(hours), parseInt(minutes), parseFloat(lat), parseFloat(lon));
+            const zodiacSign = getZodiacByDate(date);
+            const pythagorasData = calculatePythagoras(birthDate);
+
+            displayNatalChart(chartData, cityName, date, birthTime);
+            displayZodiac(zodiacSign);
+            displayPythagoras(pythagorasData);
+            
+            if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+        }
+
+        function generateNatalChart(date, hours, minutes, latitude, longitude) {
+            const jd = getJulianDay(date, hours, minutes);
+            return {
+                sun: calculatePlanetPosition('sun', jd),
+                moon: calculatePlanetPosition('moon', jd),
+                ascendant: calculateAscendant(latitude, longitude, jd),
+                planets: planets.map(p => ({ ...p, position: calculatePlanetPosition(p.name.toLowerCase(), jd) }))
+            };
+        }
+
+        function getJulianDay(date, hours, minutes) {
+            const a = Math.floor((14 - (date.getMonth() + 1)) / 12);
+            const y = date.getFullYear() + 4800 - a;
+            const m = (date.getMonth() + 1) + 12 * a - 3;
+            let jdn = date.getDate() + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+            return jdn + (hours + minutes / 60 - 12) / 24;
+        }
+
+        function calculateAscendant(lat, lon, jd) {
+            const gmst = getGMST(jd);
+            const lst = (gmst + lon / 15) % 24;
+            return getZodiacByAngle((lst * 15) % 360);
+        }
+
+        function calculatePlanetPosition(planet, jd) {
+            let angle;
+            const days = jd - 2451545;
+            switch(planet) {
+                case 'sun': angle = (280.46 + 0.9856474 * days) % 360; break;
+                case 'moon': angle = (218.32 + 13.17635 * days) % 360; break;
+                case 'mercury': angle = (252.25 + 3.9701 * days) % 360; break;
+                case 'venus': angle = (181.98 + 1.602 * days) % 360; break;
+                case 'mars': angle = (355.45 + 0.524 * days) % 360; break;
+                case 'jupiter': angle = (34.35 + 0.0831 * days) % 360; break;
+                case 'saturn': angle = (50.08 + 0.034 * days) % 360; break;
+                case 'uranus': angle = (314.06 + 0.011 * days) % 360; break;
+                case 'neptune': angle = (304.88 + 0.006 * days) % 360; break;
+                case 'pluto': angle = (238.96 + 0.003 * days) % 360; break;
+                default: angle = 0;
+            }
+            angle = (angle + 360) % 360;
+            return { angle, sign: getZodiacByAngle(angle), degree: Math.floor(angle % 30), house: Math.floor(angle / 30) + 1 };
+        }
+
+        function getGMST(jd) {
+            const tu = (jd - 2451545) / 36525;
+            const gmst = 67310.54841 + (876600 * 3600 + 8640184.812866) * tu + 0.093104 * tu * tu;
+            return ((gmst / 3600) % 24 + 24) % 24;
+        }
+
+        function getZodiacByAngle(angle) {
+            const idx = Math.floor(((angle % 360) + 360) % 360 / 30);
+            return zodiacSigns[idx] || zodiacSigns[0];
+        }
+
+        function getZodiacByDate(date) {
+            const day = date.getDate();
+            const month = date.getMonth() + 1;
+            
+            if ((month === 3 && day >= 21) || (month === 4 && day <= 19)) return zodiacSigns[0];
+            if ((month === 4 && day >= 20) || (month === 5 && day <= 20)) return zodiacSigns[1];
+            if ((month === 5 && day >= 21) || (month === 6 && day <= 20)) return zodiacSigns[2];
+            if ((month === 6 && day >= 21) || (month === 7 && day <= 22)) return zodiacSigns[3];
+            if ((month === 7 && day >= 23) || (month === 8 && day <= 22)) return zodiacSigns[4];
+            if ((month === 8 && day >= 23) || (month === 9 && day <= 22)) return zodiacSigns[5];
+            if ((month === 9 && day >= 23) || (month === 10 && day <= 22)) return zodiacSigns[6];
+            if ((month === 10 && day >= 23) || (month === 11 && day <= 21)) return zodiacSigns[7];
+            if ((month === 11 && day >= 22) || (month === 12 && day <= 21)) return zodiacSigns[8];
+            if ((month === 12 && day >= 22) || (month === 1 && day <= 19)) return zodiacSigns[9];
+            if ((month === 1 && day >= 20) || (month === 2 && day <= 18)) return zodiacSigns[10];
+            return zodiacSigns[11];
+        }
+
+        function calculatePythagoras(dateStr) {
+            const digits = dateStr.replace(/-/g, '').split('').map(Number).filter(n => n > 0);
+            const counts = {};
+            for (let i = 1; i <= 9; i++) counts[i] = 0;
+            digits.forEach(d => { if (d > 0 && d <= 9) counts[d]++; });
+            
+            // Добавляем числа из суммы
+            const sum = digits.reduce((a, b) => a + b, 0);
+            const sumDigits = String(sum).split('').map(Number);
+            sumDigits.forEach(d => { if (d > 0 && d <= 9) counts[d]++; });
+            
+            // Первая разность
+            const firstDiff = sum - 2 * (digits[0] || 0);
+            const diffDigits = String(Math.abs(firstDiff)).split('').map(Number);
+            diffDigits.forEach(d => { if (d > 0 && d <= 9) counts[d]++; });
+            
+            // Вторая разность
+            const secondDiff = firstDiff - 2 * (digits[1] || 0);
+            const diff2Digits = String(Math.abs(secondDiff)).split('').map(Number);
+            diff2Digits.forEach(d => { if (d > 0 && d <= 9) counts[d]++; });
+
+            // Квадранты
+            const willpower = (counts[1] || 0);
+            const energy = (counts[2] || 0) + (counts[5] || 0) + (counts[8] || 0);
+            const interest = (counts[3] || 0) + (counts[6] || 0) + (counts[9] || 0);
+            const health = (counts[4] || 0) + (counts[7] || 0);
+
+            return { counts, willpower, energy, interest, health };
+        }
+
+        function displayNatalChart(chartData, cityName, date, time) {
+            document.getElementById('triaContent').innerHTML = `
+                <div class="planet-item">
+                    <div class="planet-name"><i class="fas fa-sun"></i> Солнце (Суть)</div>
+                    <div class="planet-details">${chartData.sun.sign.symbol} ${chartData.sun.sign.name} ${chartData.sun.degree}° • ${chartData.sun.house} дом</div>
+                </div>
+                <div class="planet-item">
+                    <div class="planet-name"><i class="fas fa-moon"></i> Луна (Эмоции)</div>
+                    <div class="planet-details">${chartData.moon.sign.symbol} ${chartData.moon.sign.name} ${chartData.moon.degree}° • ${chartData.moon.house} дом</div>
+                </div>
+                <div class="planet-item">
+                    <div class="planet-name"><i class="fas fa-arrow-up"></i> Асцендент (Маска)</div>
+                    <div class="planet-details">${chartData.ascendant.symbol} ${chartData.ascendant.name}</div>
+                </div>
+            `;
+
+            document.getElementById('planetsContent').innerHTML = chartData.planets.map((p, i) => {
+                if (i > 1) return `
+                    <div class="planet-item">
+                        <div class="planet-name">${p.symbol} ${p.name}</div>
+                        <div class="planet-details">${p.position.sign.symbol} ${p.position.sign.name} ${p.position.degree}° • ${p.position.house} дом<br><small>${p.meaning}</small></div>
+                    </div>
+                `;
+            }).join('');
+
+            drawNatalChart(chartData);
+        }
+
+        function displayZodiac(sign) {
+            document.getElementById('zodiacContent').innerHTML = `
+                <div class="zodiac-card">
+                    <div class="zodiac-symbol">${sign.symbol}</div>
+                    <div class="zodiac-name">${sign.name}</div>
+                    <div class="zodiac-dates">${sign.start} - ${sign.end}</div>
+                    <div>
+                        <span class="zodiac-trait">🔥 ${sign.element}</span>
+                        <span class="zodiac-trait">💎 ${sign.quality}</span>
+                        <span class="zodiac-trait">🪐 ${sign.planet}</span>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('zodiacTraits').innerHTML = `
+                <div style="margin-bottom: 16px;">
+                    <strong style="color: var(--color-accent);">Ключевые черты:</strong><br>
+                    ${sign.traits.map(t => `<span class="zodiac-trait" style="margin: 4px;">${t}</span>`).join('')}
+                </div>
+                <div style="line-height: 1.8; color: var(--color-text-light);">
+                    ${sign.description}
+                </div>
+            `;
+        }
+
+        function displayPythagoras(data) {
+            const grid = document.getElementById('pythagorasGrid');
+            const labels = ['1 Характер', '2 Энергия', '3 Интерес', '4 Здоровье', '5 Логика', '6 Труд', '7 Удача', '8 Долг', '9 Память'];
+            
+            grid.innerHTML = Array(9).fill(0).map((_, i) => {
+                const num = i + 1;
+                const count = data.counts[num] || 0;
+                return `
+                    <div class="pythagoras-cell">
+                        <div class="pythagoras-number">${count}</div>
+                        <div class="pythagoras-label">${labels[i].split(' ')[1]}</div>
+                    </div>
+                `;
+            }).join('');
+
+            const quadrantDesc = {
+                willpower: 'Сила воли и целеустремлённость',
+                energy: 'Энергия и активность',
+                interest: 'Интерес к наукам и творчеству',
+                health: 'Здоровье и физическая сила'
+            };
+
+            document.getElementById('quadrantsContent').innerHTML = `
+                <div class="quadrant-item">
+                    <div class="quadrant-name"><i class="fas fa-fire"></i> Сила воли</div>
+                    <div class="quadrant-value">${data.willpower} ед.</div>
+                    <div class="quadrant-desc">${getQuadDesc(data.willpower, 'willpower')}</div>
+                </div>
+                <div class="quadrant-item">
+                    <div class="quadrant-name"><i class="fas fa-bolt"></i> Энергия</div>
+                    <div class="quadrant-value">${data.energy} ед.</div>
+                    <div class="quadrant-desc">${getQuadDesc(data.energy, 'energy')}</div>
+                </div>
+                <div class="quadrant-item">
+                    <div class="quadrant-name"><i class="fas fa-lightbulb"></i> Интерес</div>
+                    <div class="quadrant-value">${data.interest} ед.</div>
+                    <div class="quadrant-desc">${getQuadDesc(data.interest, 'interest')}</div>
+                </div>
+                <div class="quadrant-item">
+                    <div class="quadrant-name"><i class="fas fa-heartbeat"></i> Здоровье</div>
+                    <div class="quadrant-value">${data.health} ед.</div>
+                    <div class="quadrant-desc">${getQuadDesc(data.health, 'health')}</div>
+                </div>
+            `;
+        }
+
+        function getQuadDesc(value, type) {
+            if (value <= 2) return 'Низкий уровень. Требуется развитие и работа над собой.';
+            if (value <= 4) return 'Средний уровень. Нормальное функционирование.';
+            if (value <= 6) return 'Высокий уровень. Хороший потенциал.';
+            return 'Очень высокий уровень. Исключительные способности в этой области.';
+        }
+
+        function drawNatalChart(chartData) {
+            const canvas = document.getElementById('natalChart');
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = 140;
+
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            zodiacSigns.forEach((sign, index) => {
+                const angle = (index * 30 - 90) * Math.PI / 180;
+                const startAngle = angle;
+                const endAngle = angle + (30 * Math.PI / 180);
+
+                ctx.fillStyle = sign.color + '15';
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.strokeStyle = sign.color + '40';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.stroke();
+
+                const symbolAngle = (index * 30 + 15 - 90) * Math.PI / 180;
+                const symbolX = centerX + Math.cos(symbolAngle) * (radius - 20);
+                const symbolY = centerY + Math.sin(symbolAngle) * (radius - 20);
+
+                ctx.fillStyle = sign.color;
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(sign.symbol, symbolX, symbolY);
+            });
+
+            chartData.planets.forEach((planet, index) => {
+                const angle = (planet.position.angle - 90) * Math.PI / 180;
+                const x = centerX + Math.cos(angle) * (radius - 50);
+                const y = centerY + Math.sin(angle) * (radius - 50);
+
+                ctx.fillStyle = planet.color + '30';
+                ctx.beginPath();
+                ctx.arc(x, y, 10, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = planet.color;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.fillStyle = planet.color;
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(planet.symbol, x, y);
+            });
+
+            ctx.fillStyle = '#8b5cf6';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        document.getElementById('birthDate').valueAsDate = new Date();
+        document.getElementById('birthTime').value = '12:00';
+    </script>
+</body>
+</html>

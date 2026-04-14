@@ -4,6 +4,7 @@ from django.urls import reverse
 from mptt.models import MPTTModel, TreeForeignKey
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
+from decimal import Decimal, InvalidOperation
 import uuid
 from imagekit.models import ImageSpecField
 from imagekit.processors import ResizeToFill, ResizeToFit
@@ -618,7 +619,7 @@ class Cart(models.Model):
 
     def get_total_price(self):
         """Получить общую стоимость корзины"""
-        return sum(item.get_total_price() for item in self.items.all())
+        return sum((item.get_total_price() for item in self.items.all()), Decimal('0'))
 
     def get_items_count(self):
         """Получить количество товаров в корзине"""
@@ -652,15 +653,15 @@ class CartItem(models.Model):
 
     def get_total_price(self):
         """Получить общую стоимость элемента"""
-        if self.price_value:
+        if self.price_value is not None:
             return self.price_value * self.quantity
             
         # Извлекаем числовое значение из строки цены (fallback)
         price_str = self.price.replace('₽', '').replace(',', '').replace('от', '').replace(' ', '')
         try:
-            return float(price_str) * self.quantity
-        except ValueError:
-            return 0
+            return Decimal(price_str) * self.quantity
+        except (InvalidOperation, ValueError):
+            return Decimal('0')
 
 
 class Customer(models.Model):
@@ -743,6 +744,8 @@ class Order(models.Model):
     customer_email = models.EmailField("Email клиента")
     customer_phone = models.CharField("Телефон клиента", max_length=20)
     total_price = models.DecimalField("Общая стоимость", max_digits=10, decimal_places=2)
+    prepayment_amount = models.DecimalField("Сумма предоплаты", max_digits=10, decimal_places=2, null=True, blank=True)
+    final_payment_amount = models.DecimalField("Сумма финальной оплаты", max_digits=10, decimal_places=2, null=True, blank=True)
     status = models.CharField("Статус заказа", max_length=20, choices=STATUS_CHOICES, default='new')
     payment_status = models.CharField("Статус оплаты", max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
     payment_id = models.CharField("ID платежа YooKassa", max_length=100, blank=True, null=True)
@@ -796,6 +799,16 @@ class Order(models.Model):
         }
         return payment_classes.get(self.payment_status, 'bg-gray-100 text-gray-800')
 
+    def get_prepayment_amount(self):
+        if self.prepayment_amount is not None:
+            return self.prepayment_amount
+        return self.total_price * 0.5
+
+    def get_final_payment_amount(self):
+        if self.final_payment_amount is not None:
+            return self.final_payment_amount
+        return self.total_price - self.get_prepayment_amount()
+
 
 class OrderItem(models.Model):
     """Модель элемента заказа"""
@@ -812,6 +825,7 @@ class OrderItem(models.Model):
     price = models.CharField("Цена", max_length=50)
     price_value = models.DecimalField("Цена (число)", max_digits=12, decimal_places=2, null=True, blank=True)
     quantity = models.PositiveIntegerField("Количество", default=1)
+    prepayment_percent = models.PositiveSmallIntegerField("Процент предоплаты", default=50)
 
     class Meta:
         verbose_name = "Элемент заказа"
@@ -822,15 +836,19 @@ class OrderItem(models.Model):
     
     def get_total_price(self):
         """Получить общую стоимость элемента"""
-        if self.price_value:
+        if self.price_value is not None:
             return self.price_value * self.quantity
             
         # Извлекаем числовое значение из строки цены (fallback)
         price_str = self.price.replace('₽', '').replace(',', '').replace('от', '').replace(' ', '')
         try:
-            return float(price_str) * self.quantity
-        except ValueError:
-            return 0
+            return Decimal(price_str) * self.quantity
+        except (InvalidOperation, ValueError):
+            return Decimal('0')
+
+    def get_prepayment_amount(self):
+        total = self.get_total_price()
+        return total * (Decimal(self.prepayment_percent) / Decimal('100'))
 
 
 class OrderQuestionnaire(models.Model):

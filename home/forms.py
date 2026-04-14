@@ -719,3 +719,44 @@ class SiteMarketingSettingsForm(forms.ModelForm):
             'active': forms.CheckboxInput(attrs={'class': 'rounded border-gray-300 text-primary-600'}),
         }
 
+
+class PaymentGatewayEnvForm(forms.Form):
+    """Форма переменных окружения для платежных шлюзов (расширяемая)."""
+
+    provider = forms.ChoiceField(
+        label='Платежный провайдер',
+        choices=[('yookassa', 'YooKassa')],
+        widget=forms.Select(attrs={'class': 'w-full rounded-lg border border-gray-300 px-3 py-2'}),
+    )
+    yookassa_shop_id = forms.CharField(
+        label='Shop ID',
+        max_length=64,
+        required=False,
+        widget=forms.TextInput(
+            attrs={'class': 'w-full rounded-lg border border-gray-300 px-3 py-2', 'placeholder': 'Например: 123456'}
+        ),
+    )
+    yookassa_secret_key = forms.CharField(
+        label='Secret Key',
+        max_length=255,
+        required=False,
+        widget=forms.PasswordInput(
+            render_value=True,
+            attrs={
+                'class': 'w-full rounded-lg border border-gray-300 px-3 py-2',
+                'placeholder': 'test_xxx или live_xxx',
+                'autocomplete': 'new-password',
+            },
+        ),
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        provider = cleaned_data.get('provider')
+        if provider == 'yookassa':
+            if not (cleaned_data.get('yookassa_shop_id') or '').strip():
+                self.add_error('yookassa_shop_id', 'Укажите Shop ID для YooKassa.')
+            if not (cleaned_data.get('yookassa_secret_key') or '').strip():
+                self.add_error('yookassa_secret_key', 'Укажите Secret Key для YooKassa.')
+        return cleaned_data
+

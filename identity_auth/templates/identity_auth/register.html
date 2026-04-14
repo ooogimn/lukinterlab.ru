@@ -42,6 +42,7 @@
 
                 <form method="post" class="space-y-6">
                     {% csrf_token %}
+                    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
 
                     <div class="grid md:grid-cols-2 gap-4">
                         <div>
@@ -118,7 +119,7 @@
                 <div class="mt-6 text-center">
                     <p class="text-gray-600">
                         Уже есть аккаунт?
-                        <a href="{% url 'identity_auth:customer_login' %}" class="text-primary-600 hover:text-primary-700 font-medium">Войти</a>
+                        <a href="{% url 'identity_auth:customer_login' %}{% if next %}?next={{ next|urlencode }}{% endif %}" class="text-primary-600 hover:text-primary-700 font-medium">Войти</a>
                     </p>
                 </div>
             </div>

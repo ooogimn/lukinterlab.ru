@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Планировщик воды</title>
+<style>body{margin:0;background:#ecfeff;color:#0c4a6e;font-family:Segoe UI,Arial}.app{max-width:850px;margin:16px auto;padding:12px}.card{background:#fff;border:1px solid #bae6fd;border-radius:12px;padding:12px;margin-bottom:10px}button,input{padding:8px;border-radius:8px;border:1px solid #7dd3fc}button{background:#0ea5e9;color:#fff;border:none;font-weight:700;cursor:pointer}</style>
+</head><body><div class="app"><h1>💧 Планировщик воды</h1>
+<div class="card">Вес (кг): <input id="kg" type="number" value="70"> <button onclick="setNorm()">Рассчитать норму</button> <span id="norm"></span></div>
+<div class="card"><button onclick="drink(200)">+200 мл</button> <button onclick="drink(300)">+300 мл</button> <button onclick="drink(500)">+500 мл</button> <button onclick="resetDay()">Сброс дня</button>
+<h3 id="today">Сегодня: 0 мл</h3><canvas id="cv" height="110"></canvas></div>
+<div class="card">Напоминание: <input id="mins" type="number" value="60"> мин <button onclick="startRem()">Старт</button> <button onclick="stopRem()">Стоп</button> <span id="st"></span></div>
+</div>
+<script>
+const K="water.plan.v1";let S=JSON.parse(localStorage.getItem(K)||'{"norm":2100,"log":{}}'),tm=null;
+function day(){return new Date().toISOString().slice(0,10)} function save(){localStorage.setItem(K,JSON.stringify(S));render()}
+function setNorm(){S.norm=Math.round((+kg.value||70)*35);save()} function drink(v){const d=day();S.log[d]=(S.log[d]||0)+v;save()}
+function resetDay(){S.log[day()]=0;save()}
+function render(){norm.textContent=`Норма: ${S.norm} мл`;const t=S.log[day()]||0;today.textContent=`Сегодня: ${t} мл (${Math.round(t/S.norm*100)}%)`;
+  const ds=[...Array(7)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-i);return d.toISOString().slice(0,10)}).reverse();const v=ds.map(d=>S.log[d]||0);draw(v);}
+function draw(v){const x=cv.getContext("2d"),w=cv.width=cv.clientWidth,h=110;x.clearRect(0,0,w,h);const mx=Math.max(S.norm,500,...v);v.forEach((n,i)=>{const bw=w/7-6,bh=n/mx*85,bx=i*(w/7)+3;x.fillStyle=n>=S.norm?"#22c55e":"#0ea5e9";x.fillRect(bx,95-bh,bw,bh);});}
+function startRem(){stopRem();const m=Math.max(5,+mins.value||60);if(Notification&&Notification.permission==="default")Notification.requestPermission();
+tm=setInterval(()=>{if(Notification&&Notification.permission==="granted")new Notification("Пора выпить воды 💧");else alert("Пора выпить воды 💧");},m*60000);st.textContent="Активно";}
+function stopRem(){if(tm)clearInterval(tm);tm=null;st.textContent="Остановлено";}
+render();setNorm();
+</script></body></html>

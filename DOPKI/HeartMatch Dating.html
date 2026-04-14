@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💕 HeartMatch - Знакомства</title>
+    <style>
+        :root {
+            --color-primary: #ff6b9d;
+            --color-primary-hover: #ff5588;
+            --color-secondary: #6c63ff;
+            --color-bg: #f5f5f5;
+            --color-surface: #ffffff;
+            --color-text: #2d3436;
+            --color-text-light: #636e72;
+            --color-border: #dfe6e9;
+            --color-success: #00b894;
+            --spacing-8: 8px;
+            --spacing-12: 12px;
+            --spacing-16: 16px;
+            --spacing-24: 24px;
+            --spacing-32: 32px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: var(--spacing-16);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+            color: white;
+            padding: var(--spacing-20) var(--spacing-16);
+            border-radius: 16px;
+            margin-bottom: var(--spacing-16);
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(255, 107, 157, 0.2);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        header p {
+            margin: var(--spacing-8) 0 0 0;
+            opacity: 0.9;
+            font-size: 13px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: var(--spacing-12);
+            margin-bottom: var(--spacing-16);
+            border-bottom: 2px solid var(--color-border);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: var(--spacing-12);
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text-light);
+            transition: all 0.3s;
+            margin-bottom: -2px;
+        }
+
+        .tab-btn.active {
+            color: var(--color-primary);
+            border-bottom-color: var(--color-primary);
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .tab-content {
+            display: none;
+            height: 100%;
+        }
+
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Swiping Section */
+        .swipe-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-stack {
+            position: relative;
+            width: 100%;
+            max-width: 350px;
+            height: 450px;
+            perspective: 1000px;
+        }
+
+        .profile-card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: var(--color-surface);
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            cursor: grab;
+            transition: transform 0.1s, opacity 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .profile-card.swiping {
+            cursor: grabbing;
+        }
+
+        .profile-photo {
+            width: 100%;
+            height: 60%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 80px;
+        }
+
+        .profile-info {
+            padding: var(--spacing-16);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .profile-header {
+            margin-bottom: var(--spacing-12);
+        }
+
+        .profile-name {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0;
+            color: var(--color-text);
+        }
+
+        .profile-meta {
+            font-size: 13px;
+            color: var(--color-text-light);
+            margin: var(--spacing-4) 0 0 0;
+        }
+
+        .profile-bio {
+            font-size: 12px;
+            color: var(--color-text-light);
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .profile-tags {
+            display: flex;
+            gap: var(--spacing-8);
+            flex-wrap: wrap;
+            margin-top: var(--spacing-8);
+        }
+
+        .tag {
+            background: rgba(108, 99, 255, 0.1);
+            color: var(--color-secondary);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .swipe-buttons {
+            display: flex;
+            gap: var(--spacing-16);
+            margin-top: var(--spacing-24);
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .swipe-btn {
+            flex: 1;
+            padding: var(--spacing-12) var(--spacing-16);
+            border: 2px solid var(--color-border);
+            border-radius: 50%;
+            background: var(--color-surface);
+            cursor: pointer;
+            font-size: 28px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            padding: 0;
+        }
+
+        .swipe-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .swipe-btn.pass {
+            border-color: var(--color-text-light);
+            color: var(--color-text-light);
+        }
+
+        .swipe-btn.like {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+
+        .swipe-btn.super {
+            border-color: var(--color-secondary);
+            color: var(--color-secondary);
+        }
+
+        /* Matches Section */
+        .matches-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-12);
+        }
+
+        .match-card {
+            background: var(--color-surface);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .match-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .match-photo {
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+
+        .match-info {
+            padding: var(--spacing-12);
+        }
+
+        .match-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0 0 var(--spacing-4) 0;
+        }
+
+        .match-status {
+            font-size: 11px;
+            color: var(--color-text-light);
+            margin: 0;
+        }
+
+        .match-online {
+            color: var(--color-success);
+        }
+
+        /* Chat Section */
+        .chat-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-12);
+        }
+
+        .chat-item {
+            background: var(--color-surface);
+            padding: var(--spacing-16);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        .chat-item:hover {
+            border-left-color: var(--color-primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        }
+
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-8);
+        }
+
+        .chat-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .chat-time {
+            font-size: 12px;
+            color: var(--color-text-light);
+        }
+
+        .chat-message {
+            font-size: 13px;
+            color: var(--color-text-light);
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Profile Section */
+        .profile-section {
+            background: var(--color-surface);
+            padding: var(--spacing-24);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px;
+            margin: 0 auto var(--spacing-16);
+        }
+
+        .profile-heading {
+            text-align: center;
+            margin-bottom: var(--spacing-24);
+        }
+
+        .profile-username {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0 0 var(--spacing-8) 0;
+        }
+
+        .profile-bio-full {
+            font-size: 13px;
+            color: var(--color-text-light);
+            margin: 0;
+            line-height: 1.6;
+            margin-bottom: var(--spacing-16);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--spacing-16);
+            margin-bottom: var(--spacing-24);
+            text-align: center;
+        }
+
+        .stat-item {
+            padding: var(--spacing-12);
+            background: var(--color-bg);
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--color-primary);
+            margin: 0;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--color-text-light);
+            margin: var(--spacing-4) 0 0 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-32) var(--spacing-16);
+            color: var(--color-text-light);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: var(--spacing-12);
+        }
+
+        .empty-text {
+            font-size: 14px;
+            margin: 0;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: var(--spacing-8);
+            }
+
+            .card-stack {
+                max-width: 100%;
+            }
+
+            header {
+                padding: var(--spacing-16) var(--spacing-12);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💕 HeartMatch</h1>
+            <p>Найди свою вторую половину</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('discover')">🔥 Открыть</button>
+            <button class="tab-btn" onclick="switchTab('matches')">💖 Матчи</button>
+            <button class="tab-btn" onclick="switchTab('chat')">💬 Чат</button>
+            <button class="tab-btn" onclick="switchTab('profile')">👤 Профиль</button>
+        </div>
+
+        <div class="content">
+            <!-- Discover Tab -->
+            <div id="discover" class="tab-content active">
+                <div class="swipe-section">
+                    <div class="card-stack" id="cardStack"></div>
+                    <div class="swipe-buttons">
+                        <button class="swipe-btn pass" onclick="swipeLeft()" title="Пропустить">✕</button>
+                        <button class="swipe-btn super" onclick="superLike()" title="Супер-лайк">⭐</button>
+                        <button class="swipe-btn like" onclick="swipeRight()" title="Нравится">❤️</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Matches Tab -->
+            <div id="matches" class="tab-content">
+                <div class="matches-grid" id="matchesGrid"></div>
+            </div>
+
+            <!-- Chat Tab -->
+            <div id="chat" class="tab-content">
+                <div class="chat-list" id="chatList"></div>
+            </div>
+
+            <!-- Profile Tab -->
+            <div id="profile" class="tab-content">
+                <div class="profile-section">
+                    <div class="profile-avatar">👤</div>
+                    <div class="profile-heading">
+                        <h2 class="profile-username">Александра, 26</h2>
+                        <p class="profile-bio-full">Люблю путешествия, йогу и хороший кофе ☕️ Ищу интересного человека для серьёзных отношений</p>
+                    </div>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <p class="stat-value">342</p>
+                            <p class="stat-label">Лайков</p>
+                        </div>
+                        <div class="stat-item">
+                            <p class="stat-value">28</p>
+                            <p class="stat-label">Матчей</p>
+                        </div>
+                        <div class="stat-item">
+                            <p class="stat-value">15</p>
+                            <p class="stat-label">Активный чат</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const profiles = [
+            { name: 'Мария', age: 24, emoji: '👩', bio: 'Дизайнер, люблю искусство и кино', tags: ['дизайн', 'кино', 'путешествия'], city: 'Москва' },
+            { name: 'Елена', age: 26, emoji: '👩‍🦰', bio: 'Врач, фитнес-тренер', tags: ['спорт', 'здоровье', 'путешествия'], city: 'СПб' },
+            { name: 'Анна', age: 23, emoji: '👩‍🦱', bio: 'Студентка, люблю музыку', tags: ['музыка', 'искусство', 'танцы'], city: 'Москва' },
+            { name: 'Софья', age: 25, emoji: '👱‍♀️', bio: 'Маркетолог, путешественница', tags: ['путешествия', 'маркетинг', 'кулинария'], city: 'Казань' },
+            { name: 'Ольга', age: 27, emoji: '👩‍💼', bio: 'Предпринимательница', tags: ['бизнес', 'инвестиции', 'саморазвитие'], city: 'Москва' },
+        ];
+
+        let currentIndex = 0;
+        let matches = [];
+        let chats = [];
+        let likes = [];
+
+        function renderCard(index) {
+            const cardStack = document.getElementById('cardStack');
+            if (index < profiles.length) {
+                const profile = profiles[index];
+                const card = document.createElement('div');
+                card.className = 'profile-card';
+                card.innerHTML = `
+                    <div class="profile-photo">${profile.emoji}</div>
+                    <div class="profile-info">
+                        <div>
+                            <p class="profile-name">${profile.name}, ${profile.age}</p>
+                            <p class="profile-meta">📍 ${profile.city}</p>
+                            <p class="profile-bio">${profile.bio}</p>
+                            <div class="profile-tags">
+                                ${profile.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                cardStack.appendChild(card);
+            }
+        }
+
+        function swipeRight() {
+            if (currentIndex < profiles.length) {
+                const profile = profiles[currentIndex];
+                matches.push(profile);
+                likes.push(profile);
+                createChatForMatch(profile);
+                removeCard();
+                currentIndex++;
+                renderCard(currentIndex);
+                updateUI();
+            }
+        }
+
+        function swipeLeft() {
+            if (currentIndex < profiles.length) {
+                removeCard();
+                currentIndex++;
+                renderCard(currentIndex);
+            }
+        }
+
+        function superLike() {
+            if (currentIndex < profiles.length) {
+                const profile = profiles[currentIndex];
+                matches.push(profile);
+                likes.push(profile);
+                createChatForMatch(profile);
+                removeCard();
+                currentIndex++;
+                renderCard(currentIndex);
+                updateUI();
+                alert('⭐ Супер-лайк отправлен!');
+            }
+        }
+
+        function removeCard() {
+            const cards = document.querySelectorAll('.profile-card');
+            if (cards.length > 0) {
+                cards[cards.length - 1].style.opacity = '0';
+                cards[cards.length - 1].style.transform = 'scale(0.8)';
+                setTimeout(() => cards[cards.length - 1].remove(), 300);
+            }
+        }
+
+        function createChatForMatch(profile) {
+            chats.push({
+                name: profile.name,
+                lastMessage: 'Привет! 👋',
+                time: 'Сейчас',
+                unread: true
+            });
+        }
+
+        function updateUI() {
+            renderMatches();
+            renderChats();
+        }
+
+        function renderMatches() {
+            const matchesGrid = document.getElementById('matchesGrid');
+            if (matches.length === 0) {
+                matchesGrid.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;"><div class="empty-icon">💔</div><p class="empty-text">Пока нет матчей. Начните свайпить!</p></div>';
+            } else {
+                matchesGrid.innerHTML = matches.map(profile => `
+                    <div class="match-card" onclick="alert('Чат с ${profile.name}')">
+                        <div class="match-photo">${profile.emoji}</div>
+                        <div class="match-info">
+                            <p class="match-name">${profile.name}</p>
+                            <p class="match-status"><span class="match-online">🟢 Онлайн</span></p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function renderChats() {
+            const chatList = document.getElementById('chatList');
+            if (chats.length === 0) {
+                chatList.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><p class="empty-text">Начните общаться с матчами!</p></div>';
+            } else {
+                chatList.innerHTML = chats.map((chat, idx) => `
+                    <div class="chat-item" onclick="alert('Чат с ${chat.name}')">
+                        <div class="chat-header">
+                            <h3 class="chat-name">${chat.name}</h3>
+                            <span class="chat-time">${chat.time}</span>
+                        </div>
+                        <p class="chat-message">${chat.lastMessage}</p>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Initialize
+        renderCard(currentIndex);
+    </script>
+</body>
+</html>

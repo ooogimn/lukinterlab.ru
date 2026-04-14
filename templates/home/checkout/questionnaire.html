@@ -1,5 +1,6 @@
 {% extends 'base/base.html' %}
 {% load static %}
+{% load l10n %}
 
 {% block title %}Опросный лист - Заказ {{ order.order_number }}{% endblock %}
 
@@ -48,6 +49,73 @@
             
             <form method="post" enctype="multipart/form-data" class="space-y-8">
                 {% csrf_token %}
+
+                <!-- Pulled Order Data -->
+                <div class="bg-white rounded-3xl p-8 shadow-lg">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Данные из оформления заказа</h2>
+
+                    <div class="grid md:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                            <p class="text-sm text-gray-500 mb-1">Клиент</p>
+                            <p class="font-semibold text-gray-900">{{ order.customer_name }}</p>
+                            <p class="text-sm text-gray-700">{{ order.customer_email }}</p>
+                            <p class="text-sm text-gray-700">{{ order.customer_phone }}</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                            <p class="text-sm text-gray-500 mb-1">Заказ</p>
+                            <p class="font-semibold text-gray-900">№{{ order.order_number }}</p>
+                            <p class="text-sm text-gray-700">Дата: {{ order.created|date:"d.m.Y H:i" }}</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        {% for item in order_items %}
+                        <div class="rounded-xl border border-gray-200 p-4 bg-gray-50" data-item-row data-item-total="{{ item.total|unlocalize }}">
+                            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                                <div>
+                                    <p class="font-semibold text-gray-900">{{ item.title }}</p>
+                                    <p class="text-sm text-gray-600">{{ item.type_label }} • {{ item.price }} • x{{ item.quantity }}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-bold text-gray-900">{{ item.total|floatformat:0 }} ₽</p>
+                                </div>
+                            </div>
+                            <label class="mt-3 flex items-center gap-2 text-sm text-gray-800">
+                                <input
+                                    type="checkbox"
+                                    name="full_prepayment_items"
+                                    value="{{ item.id }}"
+                                    class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                                    {% if item.is_full_prepayment %}checked{% endif %}
+                                    data-full-prepay-checkbox
+                                >
+                                Предоплата 100% для этой позиции (если не отмечено — 50%)
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mt-6 border-t border-gray-200 pt-6 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-600">Общая сумма заказа:</span>
+                            <span class="text-lg font-bold text-gray-900">{{ order_total_amount|floatformat:0 }} ₽</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-600">Предварительная оплата:</span>
+                            <span id="prepayment-amount" class="text-2xl font-bold text-primary-600">{{ prepayment_amount|floatformat:0 }} ₽</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-600">Финишная оплата:</span>
+                            <span id="final-payment-amount" class="text-lg font-semibold text-gray-900">{{ final_payment_amount|floatformat:0 }} ₽</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900">
+                        Финишная оплата (оставшиеся 50%) — после оказания услуги и подписания акта выполненных работ.
+                        Полная передача прав и кода — после 100% оплаты услуг и подписания акта.
+                        Если выполненные работы не соответствуют ТЗ/опросному листу — предоплата возвращается.
+                    </div>
+                </div>
                 
                 <!-- Project Information -->
                 <div class="bg-white rounded-3xl p-8 shadow-lg">
@@ -232,4 +300,41 @@
     @apply ring-2 ring-primary-500 border-primary-500;
 }
 </style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = Array.from(document.querySelectorAll('[data-full-prepay-checkbox]'));
+    const rows = Array.from(document.querySelectorAll('[data-item-row]'));
+    const prepaymentEl = document.getElementById('prepayment-amount');
+    const finalEl = document.getElementById('final-payment-amount');
+
+    function parseAmount(value) {
+        if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+        if (!value) return 0;
+        const normalized = String(value).replace(/\s+/g, '').replace(',', '.');
+        const parsed = Number(normalized);
+        return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    const total = rows.reduce((sum, row) => sum + parseAmount(row.dataset.itemTotal), 0);
+
+    function formatRub(value) {
+        return `${Math.round(value).toLocaleString('ru-RU')} ₽`;
+    }
+
+    function recalc() {
+        let prepayment = 0;
+        rows.forEach((row) => {
+            const checkbox = row.querySelector('[data-full-prepay-checkbox]');
+            const itemTotal = parseAmount(row.dataset.itemTotal);
+            prepayment += checkbox && checkbox.checked ? itemTotal : (itemTotal * 0.5);
+        });
+        const finalPayment = Math.max(total - prepayment, 0);
+        if (prepaymentEl) prepaymentEl.textContent = formatRub(prepayment);
+        if (finalEl) finalEl.textContent = formatRub(finalPayment);
+    }
+
+    checkboxes.forEach((checkbox) => checkbox.addEventListener('change', recalc));
+    recalc();
+});
+</script>
 {% endblock straniza %} 

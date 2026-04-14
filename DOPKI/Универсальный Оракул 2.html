@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Универсальный Оракул 2</title>
+  <style>
+    body{margin:0;background:#09090b;color:#f5d0fe;font-family:Segoe UI,Arial}.app{max-width:860px;margin:18px auto;padding:12px}
+    .card{background:#18181b;border:1px solid #3f3f46;border-radius:14px;padding:14px;margin-bottom:12px}
+    input,select,button{padding:10px;border-radius:10px;border:1px solid #52525b;background:#0a0a0f;color:#f5d0fe}button{background:#a855f7;cursor:pointer;font-weight:700}
+    .muted{color:#d4d4d8}.entry{border-top:1px dashed #52525b;padding-top:8px;margin-top:8px}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>🔮 Универсальный Оракул 2</h1>
+    <div class="card">
+      <input id="q" placeholder="Ваш вопрос" style="width:100%">
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+        <select id="m"><option>Таро</option><option>Руны</option><option>Оракул</option></select>
+        <select id="mood"><option>Спокойно</option><option>Тревожно</option><option>Воодушевлённо</option></select>
+        <button onclick="ask()">Получить ответ</button><button onclick="clearHist()">Очистить историю</button>
+      </div>
+      <p class="muted">Улучшения: журнал предсказаний, адаптация по настроению, озвучка ответа.</p>
+    </div>
+    <div class="card"><h3>Ответ</h3><div id="ans" class="muted">Задайте вопрос</div></div>
+    <div class="card"><h3>История</h3><div id="hist"></div></div>
+  </div>
+  <script>
+    const KEY="oracle2.hist"; const A=["Да, это ваш шанс.","Нужна пауза и анализ.","Лучший путь через партнёрство.","Смените стратегию на мягкую.","Ответ придёт через 3-7 дней."];
+    const byId=id=>document.getElementById(id); let H=JSON.parse(localStorage.getItem(KEY)||"[]");
+    function speak(t){if("speechSynthesis"in window){speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(t));}}
+    function ask(){const q=byId("q").value.trim();if(!q)return alert("Введите вопрос");const mood=byId("mood").value,method=byId("m").value;
+      let t=A[Math.floor(Math.random()*A.length)]; if(mood==="Тревожно") t+=" Сначала восстановите внутренний баланс.";
+      if(mood==="Воодушевлённо") t+=" Энергия на вашей стороне."; byId("ans").textContent=`${method}: ${t}`;
+      H.unshift({q,method,mood,t,at:new Date().toLocaleString("ru-RU")}); H=H.slice(0,20); localStorage.setItem(KEY,JSON.stringify(H)); render(); speak(t);}
+    function clearHist(){H=[];localStorage.removeItem(KEY);render();}
+    function render(){byId("hist").innerHTML=H.map(x=>`<div class=entry><b>${x.method}</b> · ${x.at}<div class=muted>${x.q}</div><div>${x.t}</div></div>`).join("")||"<p class='muted'>История пуста</p>";}
+    render();
+  </script>
+</body>
+</html>

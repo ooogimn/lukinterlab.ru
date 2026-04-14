@@ -22,7 +22,20 @@ from identity_auth.services import resolve_linked_user
 
 
 def customer_register(request):
+    def safe_next_url():
+        raw = (request.POST.get('next') or request.GET.get('next') or '').strip()
+        if raw and url_has_allowed_host_and_scheme(
+            raw,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
+            return raw
+        return None
+
+    next_url = safe_next_url()
     if request.user.is_authenticated:
+        if next_url:
+            return redirect(next_url)
         return redirect('home:customer_dashboard')
 
     if request.method == 'POST':
@@ -31,6 +44,9 @@ def customer_register(request):
             user = form.save()
             login(request, user)
             messages.success(request, 'Регистрация прошла успешно! Добро пожаловать в личный кабинет.')
+            next_url = safe_next_url()
+            if next_url:
+                return redirect(next_url)
             return redirect('home:customer_dashboard')
     else:
         form = CustomerRegistrationForm()
@@ -88,6 +104,16 @@ def customer_login(request):
 
 @require_POST
 def customer_vkid_complete(request):
+    def safe_next_url(raw):
+        raw = (raw or '').strip()
+        if raw and url_has_allowed_host_and_scheme(
+            raw,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
+            return raw
+        return ''
+
     app_id = auth_settings.get_vkid_app_id()
     if not app_id:
         return JsonResponse({'error': 'vkid_disabled'}, status=503)
@@ -148,7 +174,8 @@ def customer_vkid_complete(request):
         )
     else:
         messages.success(request, f'Добро пожаловать, {display}!')
-    return JsonResponse({'ok': True, 'redirect': reverse('home:customer_dashboard')})
+    next_url = safe_next_url(payload.get('next'))
+    return JsonResponse({'ok': True, 'redirect': next_url or reverse('home:customer_dashboard')})
 
 
 @login_required

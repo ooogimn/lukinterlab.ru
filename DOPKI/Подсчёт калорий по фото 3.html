@@ -1,0 +1,18 @@
+<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Калории по фото 3</title>
+<style>body{margin:0;background:#f0fdfa;color:#134e4a;font-family:Segoe UI,Arial}.app{max-width:900px;margin:16px auto;padding:12px}.card{background:#fff;border:1px solid #99f6e4;border-radius:14px;padding:12px;margin-bottom:10px}input,select,button{padding:9px;border-radius:10px;border:1px solid #5eead4}button{background:#14b8a6;color:#fff;border:none;font-weight:700;cursor:pointer}.muted{color:#0f766e}</style>
+</head><body><div class="app"><h1>📸 Подсчёт калорий по фото 3</h1>
+<div class="card"><input type="file" id="f" accept="image/*"><img id="img" style="max-width:100%;margin-top:8px;border-radius:10px"><p class="muted">Добавлены: цель дня, история за 7 дней, экспорт/импорт.</p></div>
+<div class="card"><select id="food"><option value="Курица|165">Курица 165</option><option value="Рис|130">Рис 130</option><option value="Салат|30">Салат 30</option><option value="Паста|220">Паста 220</option></select> <input id="gram" type="number" value="150"> <button onclick="add()">Добавить</button> <button onclick="exp()">Экспорт</button> <input type="file" id="imp" onchange="impF(event)"></div>
+<div class="card"><h3 id="sum">Сегодня: 0</h3><canvas id="cv" height="100"></canvas><div id="list"></div></div></div>
+<script>
+const K="kcal3.diary",GOAL=2200;let D=JSON.parse(localStorage.getItem(K)||"[]");
+f.onchange=e=>{const file=e.target.files[0];if(file)img.src=URL.createObjectURL(file);};
+function add(){const [n,k]=food.value.split("|"),g=+gram.value||0;if(g<1)return;const c=Math.round(+k*g/100);D.push({id:Date.now(),n,g,c,d:new Date().toISOString()});save();}
+function save(){localStorage.setItem(K,JSON.stringify(D));render()} function delI(id){D=D.filter(x=>x.id!==id);save()} window.delI=delI;
+function render(){const today=new Date().toDateString(),tod=D.filter(x=>new Date(x.d).toDateString()===today),sumC=tod.reduce((s,x)=>s+x.c,0),p=Math.round(sumC/GOAL*100);
+sum.textContent=`Сегодня: ${sumC} ккал (${p}% от ${GOAL})`;list.innerHTML=tod.map(x=>`<div>${x.n} ${x.g}г — ${x.c} ккал <button onclick="delI(${x.id})">✕</button></div>`).join("")||"<p class='muted'>Сегодня записей нет</p>";draw();}
+function draw(){const x=cv.getContext("2d"),w=cv.width=cv.clientWidth,h=100;x.clearRect(0,0,w,h);const ds=[...Array(7)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-i);return d.toDateString();}).reverse();const v=ds.map(d=>D.filter(x=>new Date(x.d).toDateString()===d).reduce((s,x)=>s+x.c,0));const m=Math.max(200,...v);v.forEach((n,i)=>{const bw=w/7-6,bh=n/m*75,bx=i*(w/7)+3;x.fillStyle="#14b8a6";x.fillRect(bx,88-bh,bw,bh);x.fillStyle="#0f766e";x.fillText(n,bx+2,85-bh);});}
+function exp(){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(D)],{type:"application/json"}));a.download="kcal3.json";a.click();}
+function impF(e){const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=()=>{try{D=JSON.parse(r.result);save()}catch{alert("Неверный JSON")}};r.readAsText(file);}
+render();addEventListener("resize",draw);
+</script></body></html>
