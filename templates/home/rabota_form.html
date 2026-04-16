@@ -149,6 +149,19 @@
                             {% endif %}
                             {{ form.image }}
                             <p class="text-xs text-gray-500 mt-1">{{ form.image.help_text }}</p>
+                            <p class="text-xs text-gray-500 mt-1">GIF поддерживается и будет анимирован в карточке портфолио.</p>
+                        </div>
+
+                        <div>
+                            <label for="{{ form.preview_video.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">{{ form.preview_video.label }}</label>
+                            {% if object.preview_video %}
+                            <div class="mb-3 rounded-xl overflow-hidden border-2 border-indigo-200 shadow-sm bg-black">
+                                <video src="{{ object.preview_video.url }}" class="h-40 w-full object-cover" autoplay loop muted playsinline></video>
+                            </div>
+                            {% endif %}
+                            {{ form.preview_video }}
+                            <p class="text-xs text-gray-500 mt-1">{{ form.preview_video.help_text }}</p>
+                            {% if form.preview_video.errors %}<p class="mt-1 text-xs text-red-500 font-medium">{{ form.preview_video.errors.0 }}</p>{% endif %}
                         </div>
 
                         <!-- Галерея -->

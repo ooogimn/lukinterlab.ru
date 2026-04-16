@@ -81,7 +81,9 @@
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-4">
                             <div class="flex-shrink-0 h-14 w-14 rounded-xl overflow-hidden border-2 {% if rabota.is_visible %}border-gray-200 shadow-sm{% else %}border-gray-300 opacity-50{% endif %}">
-                                {% if rabota.image %}
+                                {% if rabota.preview_video %}
+                                <video class="h-14 w-14 object-cover" src="{{ rabota.preview_video.url }}" autoplay loop muted playsinline></video>
+                                {% elif rabota.image %}
                                 <img class="h-14 w-14 object-cover" src="{{ rabota.image.url }}" alt="{{ rabota.name }}">
                                 {% else %}
                                 <div class="h-14 w-14 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">

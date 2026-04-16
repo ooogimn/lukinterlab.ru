@@ -130,6 +130,13 @@ class Rabota(models.Model):
         verbose_name='Скриншот проекта',
         help_text='Рекомендуемый размер: 800x600px'
     )
+    preview_video = models.FileField(
+        upload_to='rabotas/videos/',
+        blank=True,
+        null=True,
+        verbose_name='Главное видео проекта',
+        help_text='Опционально: MP4/WebM видео для карточки портфолио (автовоспроизведение, зацикливание).'
+    )
     
     # WebP версии
     image_webp = ImageSpecField(
@@ -266,6 +273,10 @@ class Rabota(models.Model):
             version = int(self.updated.timestamp()) if self.updated else ''
             return f"{self.thumbnail_webp.url}?v={version}"
         return None
+
+    def is_image_gif(self):
+        """Проверяет, загружен ли в image GIF, чтобы не заменять его WebP-превью."""
+        return bool(self.image and self.image.name.lower().endswith('.gif'))
 
     def get_tariff_display_price(self):
         """Возвращает форматированную цену тарифа проекта."""

@@ -76,7 +76,7 @@ class RabotaAdmin(admin.ModelAdmin):
             'fields': ('name', 'category', 'status', 'featured', 'order', 'related_service')
         }),
         ('Контент', {
-            'fields': ('body', 'technologies', 'image')
+            'fields': ('body', 'technologies', 'image', 'preview_video')
         }),
         ('SEO Оптимизация', {
             'fields': ('meta_title', 'meta_description', 'meta_keywords', 'focus_keyword', 'seo_score'),
@@ -100,6 +100,8 @@ class RabotaAdmin(admin.ModelAdmin):
     
     @admin.display(description="Изображение", ordering='name')
     def rabota_image(self, obj: Rabota):
+        if obj.preview_video:
+            return mark_safe("<span style='font-size: 12px; color: #4f46e5; font-weight: 600;'>Видео</span>")
         if obj.image:
             return mark_safe(f"<img src='{obj.image.url}' width=50 height=50 style='object-fit: cover; border-radius: 4px;'>")
         return "Без фото"

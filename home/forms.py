@@ -634,7 +634,7 @@ class RabotaForm(forms.ModelForm):
     class Meta:
         model = Rabota
         fields = [
-            'name', 'category', 'status', 'image', 'adres', 'body', 
+            'name', 'category', 'status', 'image', 'preview_video', 'adres', 'body',
             'technologies', 'game_html', 'tariff_short_description', 'tariff_price_value',
             'is_for_sale', 'sale_price_value', 'sale_description',
             'resources_text', 'parameters_text', 'instructions_text',
@@ -644,6 +644,8 @@ class RabotaForm(forms.ModelForm):
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Название проекта'}),
             'category': forms.Select(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
+            'image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*,.gif'}),
+            'preview_video': forms.FileInput(attrs={'class': 'form-control', 'accept': 'video/mp4,video/webm,video/ogg,.mp4,.webm,.ogg'}),
             'adres': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://example.com'}),
             'body': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Краткое описание'}),
             'technologies': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Например: Python, Django, Tailwind CSS'}),
@@ -656,6 +658,22 @@ class RabotaForm(forms.ModelForm):
             'featured': forms.CheckboxInput(attrs={'class': 'form-checkbox h-4 w-4 text-primary-600 border-gray-300 rounded'}),
             'order': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
         }
+
+    def clean_preview_video(self):
+        video = self.cleaned_data.get('preview_video')
+        if not video:
+            return video
+
+        allowed_ext = {'.mp4', '.webm', '.ogg'}
+        ext = '.' + video.name.split('.')[-1].lower()
+        if ext not in allowed_ext:
+            raise forms.ValidationError('Главное видео: разрешены только MP4, WebM или OGG.')
+
+        # Ограничиваем размер, чтобы карточки загружались быстро
+        if video.size > 50 * 1024 * 1024:
+            raise forms.ValidationError('Главное видео: размер не должен превышать 50 МБ.')
+
+        return video
 
 
 class ServiceAdminForm(forms.ModelForm):

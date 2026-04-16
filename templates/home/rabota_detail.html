@@ -37,7 +37,19 @@
 
 <!-- ═══ HERO: Главное изображение ═══ -->
 {% with hero_media=rabota.media_items.first %}
-{% if rabota.image %}
+{% if rabota.preview_video %}
+<div class="relative w-full overflow-hidden bg-gray-900" style="max-height: 560px;">
+    <video id="hero-video-player" src="{{ rabota.preview_video.url }}" autoplay loop muted playsinline controls class="w-full h-full object-cover" style="max-height: 560px;"></video>
+    <div class="absolute inset-0 pointer-events-none bg-gradient-to-t from-gray-900/80 via-transparent to-gray-900/20"></div>
+    <div class="absolute top-6 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
+        <nav class="text-sm text-white/70 font-medium tracking-wide">
+            <a href="/" class="hover:text-white transition-colors">Главная</a> <span class="mx-2">/</span>
+            <a href="/#portfolio" class="hover:text-white transition-colors">Портфолио</a> <span class="mx-2">/</span>
+            <span class="text-white">{{ rabota.name }}</span>
+        </nav>
+    </div>
+</div>
+{% elif rabota.image %}
 <div class="relative w-full overflow-hidden bg-gray-900" style="max-height: 560px;">
     <img src="{{ rabota.image.url }}" alt="{{ rabota.name }}" class="w-full h-full object-cover" style="max-height: 560px;">
     <!-- Gradient overlay -->
@@ -53,19 +65,14 @@
 </div>
 {% elif hero_media and hero_media.is_video %}
 <div class="relative w-full overflow-hidden bg-gray-900" style="max-height: 560px;">
-    <video id="hero-video-player" src="{{ hero_media.file.url }}" autoplay loop muted playsinline class="w-full h-full object-cover" style="max-height: 560px;"></video>
-    <div class="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-transparent to-gray-900/20"></div>
+    <video id="hero-video-player" src="{{ hero_media.file.url }}" autoplay loop muted playsinline controls class="w-full h-full object-cover" style="max-height: 560px;"></video>
+    <div class="absolute inset-0 pointer-events-none bg-gradient-to-t from-gray-900/80 via-transparent to-gray-900/20"></div>
     <div class="absolute top-6 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
         <nav class="text-sm text-white/70 font-medium tracking-wide">
             <a href="/" class="hover:text-white transition-colors">Главная</a> <span class="mx-2">/</span>
             <a href="/#portfolio" class="hover:text-white transition-colors">Портфолио</a> <span class="mx-2">/</span>
             <span class="text-white">{{ rabota.name }}</span>
         </nav>
-    </div>
-    <div class="absolute bottom-4 right-4 z-20 bg-black/55 backdrop-blur px-3 py-2 rounded-xl flex items-center gap-2 text-white">
-        <button type="button" data-video-toggle-play="hero-video-player" class="px-2 py-1 rounded bg-white/20 hover:bg-white/35 text-xs font-semibold">Пауза</button>
-        <button type="button" data-video-toggle-mute="hero-video-player" class="px-2 py-1 rounded bg-white/20 hover:bg-white/35 text-xs font-semibold">Без звука</button>
-        <input type="range" data-video-volume="hero-video-player" min="0" max="1" step="0.05" value="0.7" class="w-20">
     </div>
 </div>
 {% else %}
@@ -97,13 +104,7 @@
                 {% for media in rabota.media_items.all %}
                 <div class="swiper-slide flex items-center justify-center relative" style="height: 400px;">
                     {% if media.is_video %}
-                    <video id="detail-video-{{ forloop.counter }}" src="{{ media.file.url }}" autoplay loop muted playsinline class="w-full h-full object-contain transition-opacity opacity-95"></video>
-                    <div class="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 bg-black/60 backdrop-blur rounded-xl px-3 py-2 flex items-center gap-2 text-white">
-                        <button type="button" data-video-toggle-play="detail-video-{{ forloop.counter }}" class="px-2 py-1 rounded bg-white/20 hover:bg-white/35 text-xs font-semibold">Пауза</button>
-                        <button type="button" data-video-toggle-mute="detail-video-{{ forloop.counter }}" class="px-2 py-1 rounded bg-white/20 hover:bg-white/35 text-xs font-semibold">Без звука</button>
-                        <button type="button" data-video-restart="detail-video-{{ forloop.counter }}" class="px-2 py-1 rounded bg-white/20 hover:bg-white/35 text-xs font-semibold">С начала</button>
-                        <input type="range" data-video-volume="detail-video-{{ forloop.counter }}" min="0" max="1" step="0.05" value="0.7" class="w-20">
-                    </div>
+                    <video id="detail-video-{{ forloop.counter }}" src="{{ media.file.url }}" autoplay loop muted playsinline controls class="w-full h-full object-contain transition-opacity opacity-95"></video>
                     {% else %}
                     <img src="{{ media.file.url }}" alt="{{ rabota.name }}" class="w-full h-full object-contain">
                     {% endif %}
@@ -118,58 +119,6 @@
 </div>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        function bindVideoControls(root) {
-            root.querySelectorAll('[data-video-toggle-play]').forEach((btn) => {
-                btn.addEventListener('click', function() {
-                    const video = document.getElementById(this.dataset.videoTogglePlay);
-                    if (!video) {
-                        return;
-                    }
-                    if (video.paused) {
-                        video.play();
-                        this.textContent = 'Пауза';
-                    } else {
-                        video.pause();
-                        this.textContent = 'Плей';
-                    }
-                });
-            });
-            root.querySelectorAll('[data-video-toggle-mute]').forEach((btn) => {
-                btn.addEventListener('click', function() {
-                    const video = document.getElementById(this.dataset.videoToggleMute);
-                    if (!video) {
-                        return;
-                    }
-                    video.muted = !video.muted;
-                    this.textContent = video.muted ? 'Со звуком' : 'Без звука';
-                });
-            });
-            root.querySelectorAll('[data-video-volume]').forEach((input) => {
-                input.addEventListener('input', function() {
-                    const video = document.getElementById(this.dataset.videoVolume);
-                    if (!video) {
-                        return;
-                    }
-                    video.volume = Number(this.value);
-                    if (video.volume > 0 && video.muted) {
-                        video.muted = false;
-                    }
-                });
-            });
-            root.querySelectorAll('[data-video-restart]').forEach((btn) => {
-                btn.addEventListener('click', function() {
-                    const video = document.getElementById(this.dataset.videoRestart);
-                    if (!video) {
-                        return;
-                    }
-                    video.currentTime = 0;
-                    video.play();
-                });
-            });
-        }
-
-        bindVideoControls(document);
-
         new Swiper('.mediaSwiper', {
             loop: true,
             navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },

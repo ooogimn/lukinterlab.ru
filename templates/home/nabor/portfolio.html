@@ -58,12 +58,16 @@
                 data-detail-url="{{ rabota.get_absolute_url }}"
             >
                 {% with first_media=rabota.media_items.first %}
-                {% if first_media and first_media.is_video %}
+                {% if rabota.preview_video %}
+                    <video src="{{ rabota.preview_video.url }}?v={{ rabota.updated.timestamp|floatformat:0 }}" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none"></video>
+                {% elif first_media and first_media.is_video %}
                     <video src="{{ first_media.file.url }}?v={{ rabota.updated.timestamp|floatformat:0 }}" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none"></video>
                 {% elif first_media %}
                     <img src="{{ first_media.file.url }}?v={{ rabota.updated.timestamp|floatformat:0 }}" alt="{{ rabota.name }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none">
                 {% elif rabota.image %}
-                    {% if rabota.thumbnail_webp %}
+                    {% if rabota.is_image_gif %}
+                        <img src="{{ rabota.get_image_url_with_version }}" alt="{{ rabota.name }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none">
+                    {% elif rabota.thumbnail_webp %}
                         <picture>
                             <source srcset="{{ rabota.get_thumbnail_webp_url_with_version }}" type="image/webp">
                             <img src="{{ rabota.get_image_url_with_version }}" alt="{{ rabota.name }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none">
@@ -82,6 +86,9 @@
 
                 <script type="application/json" class="js-portfolio-media">
                     [
+                        {% if rabota.preview_video %}
+                            {"type":"video","url":"{{ rabota.preview_video.url|escapejs }}"}{% if rabota.image or rabota.media_items.exists %},{% endif %}
+                        {% endif %}
                         {% if rabota.image %}
                             {"type":"image","url":"{{ rabota.image.url|escapejs }}"}{% if rabota.media_items.exists %},{% endif %}
                         {% endif %}
@@ -193,16 +200,6 @@
                             <button type="button" class="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-semibold" id="img-zoom-in">+</button>
                         </div>
 
-                        <div id="modal-video-controls" class="hidden flex items-center gap-2 flex-wrap">
-                            <button type="button" id="video-play-toggle" class="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-semibold">Пауза</button>
-                            <button type="button" id="video-mute-toggle" class="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-semibold">Без звука</button>
-                            <button type="button" id="video-restart" class="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-semibold">С начала</button>
-                            <label class="flex items-center gap-2 text-sm text-gray-700">
-                                Громкость
-                                <input id="video-volume" type="range" min="0" max="1" step="0.05" value="0.8">
-                            </label>
-                        </div>
-
                         <div class="ml-auto flex items-center gap-2">
                             <a id="modal-detail-link" href="#" class="px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white font-semibold text-sm transition-colors">Детали</a>
                             <button type="button" id="modal-action-link" class="hidden px-4 py-2 rounded-lg bg-gray-900 hover:bg-black text-white font-semibold text-sm transition-colors">Перейти</button>
@@ -232,7 +229,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalDetailLink = document.getElementById('modal-detail-link');
     const modalActionLink = document.getElementById('modal-action-link');
     const modalImageControls = document.getElementById('modal-image-controls');
-    const modalVideoControls = document.getElementById('modal-video-controls');
     const modalGameWrapper = document.getElementById('modal-game-wrapper');
     const modalGameFrame = document.getElementById('modal-game-frame');
 
@@ -240,7 +236,6 @@ document.addEventListener('DOMContentLoaded', function() {
         media: [],
         currentIndex: 0,
         currentCard: null,
-        currentVideo: null,
         zoom: 1,
     };
 
@@ -300,20 +295,10 @@ document.addEventListener('DOMContentLoaded', function() {
             .join('');
     }
 
-    function syncVideoButtons() {
-        if (!modalState.currentVideo) {
-            return;
-        }
-        document.getElementById('video-play-toggle').textContent = modalState.currentVideo.paused ? 'Плей' : 'Пауза';
-        document.getElementById('video-mute-toggle').textContent = modalState.currentVideo.muted ? 'Со звуком' : 'Без звука';
-    }
-
     function renderCurrentMedia() {
         modalMediaStage.innerHTML = '';
-        modalState.currentVideo = null;
         modalState.zoom = 1;
         modalImageControls.classList.add('hidden');
-        modalVideoControls.classList.add('hidden');
 
         const media = modalState.media[modalState.currentIndex];
         if (!media) {
@@ -327,14 +312,11 @@ document.addEventListener('DOMContentLoaded', function() {
             video.className = 'w-full h-full object-contain';
             video.autoplay = true;
             video.loop = true;
-            video.controls = false;
+            video.controls = true;
             video.playsInline = true;
-            video.muted = false;
-            video.volume = Number(document.getElementById('video-volume').value || 0.8);
+            video.muted = true;
+            video.preload = 'metadata';
             modalMediaStage.appendChild(video);
-            modalState.currentVideo = video;
-            modalVideoControls.classList.remove('hidden');
-            syncVideoButtons();
             return;
         }
 
@@ -395,7 +377,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         modalMediaArea.classList.add('hidden');
         modalImageControls.classList.add('hidden');
-        modalVideoControls.classList.add('hidden');
         modalGameWrapper.classList.remove('hidden');
         modalGameFrame.srcdoc = card.dataset.gameHtml || '';
         modal.classList.remove('hidden');
@@ -406,7 +387,6 @@ document.addEventListener('DOMContentLoaded', function() {
         modal.classList.add('hidden');
         hideGameFrame();
         modalMediaStage.innerHTML = '';
-        modalState.currentVideo = null;
         document.body.style.overflow = '';
     }
 
@@ -455,43 +435,6 @@ document.addEventListener('DOMContentLoaded', function() {
         modalState.zoom = 1;
         img.style.transform = 'scale(1)';
         this.textContent = '100%';
-    });
-
-    document.getElementById('video-play-toggle').addEventListener('click', function () {
-        if (!modalState.currentVideo) {
-            return;
-        }
-        if (modalState.currentVideo.paused) {
-            modalState.currentVideo.play();
-        } else {
-            modalState.currentVideo.pause();
-        }
-        syncVideoButtons();
-    });
-    document.getElementById('video-mute-toggle').addEventListener('click', function () {
-        if (!modalState.currentVideo) {
-            return;
-        }
-        modalState.currentVideo.muted = !modalState.currentVideo.muted;
-        syncVideoButtons();
-    });
-    document.getElementById('video-restart').addEventListener('click', function () {
-        if (!modalState.currentVideo) {
-            return;
-        }
-        modalState.currentVideo.currentTime = 0;
-        modalState.currentVideo.play();
-        syncVideoButtons();
-    });
-    document.getElementById('video-volume').addEventListener('input', function () {
-        if (!modalState.currentVideo) {
-            return;
-        }
-        modalState.currentVideo.volume = Number(this.value);
-        if (modalState.currentVideo.volume > 0 && modalState.currentVideo.muted) {
-            modalState.currentVideo.muted = false;
-        }
-        syncVideoButtons();
     });
 
     modalActionLink.addEventListener('click', function () {
