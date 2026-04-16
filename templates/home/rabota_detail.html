@@ -17,29 +17,11 @@
 
 
 {% block straniza %}
-{% if rabota.adres or rabota.game_html %}
-<div class="fixed top-20 left-1/2 -translate-x-1/2 z-40 px-4 w-full max-w-6xl pointer-events-none">
-    <div class="flex justify-center pointer-events-auto">
-        {% if rabota.adres %}
-        <a href="{{ rabota.adres }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-primary-600 hover:bg-primary-500 text-white text-sm md:text-base font-extrabold shadow-[0_10px_25px_rgba(37,99,235,0.35)] transition-all hover:scale-[1.02]">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-            Перейти на сайт
-        </a>
-        {% else %}
-        <button type="button" id="open-detail-game-top" class="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-primary-600 hover:bg-primary-500 text-white text-sm md:text-base font-extrabold shadow-[0_10px_25px_rgba(37,99,235,0.35)] transition-all hover:scale-[1.02]">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.868v4.264a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            Запустить демо
-        </button>
-        {% endif %}
-    </div>
-</div>
-{% endif %}
-
 <!-- ═══ HERO: Главное изображение ═══ -->
 {% with hero_media=rabota.media_items.first %}
 {% if rabota.preview_video %}
-<div class="relative w-full overflow-hidden bg-gray-900" style="max-height: 560px;">
-    <video id="hero-video-player" src="{{ rabota.preview_video.url }}" autoplay loop muted playsinline controls class="w-full h-full object-cover" style="max-height: 560px;"></video>
+<div class="relative w-full overflow-hidden bg-gray-900 flex items-center justify-center" style="height: 560px; max-height: 560px;">
+    <video id="hero-video-player" src="{{ rabota.preview_video.url }}" autoplay loop muted playsinline controls class="w-full h-full object-contain transition-opacity opacity-95"></video>
     <div class="absolute inset-0 pointer-events-none bg-gradient-to-t from-gray-900/80 via-transparent to-gray-900/20"></div>
     <div class="absolute top-6 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
         <nav class="text-sm text-white/70 font-medium tracking-wide">
@@ -50,8 +32,8 @@
     </div>
 </div>
 {% elif rabota.image %}
-<div class="relative w-full overflow-hidden bg-gray-900" style="max-height: 560px;">
-    <img src="{{ rabota.image.url }}" alt="{{ rabota.name }}" class="w-full h-full object-cover" style="max-height: 560px;">
+<div class="relative w-full overflow-hidden bg-gray-900 flex items-center justify-center" style="height: 560px; max-height: 560px;">
+    <img src="{{ rabota.image.url }}" alt="{{ rabota.name }}" class="w-full h-full object-contain">
     <!-- Gradient overlay -->
     <div class="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-transparent to-gray-900/20"></div>
     <!-- Breadcrumb on image -->
@@ -64,8 +46,8 @@
     </div>
 </div>
 {% elif hero_media and hero_media.is_video %}
-<div class="relative w-full overflow-hidden bg-gray-900" style="max-height: 560px;">
-    <video id="hero-video-player" src="{{ hero_media.file.url }}" autoplay loop muted playsinline controls class="w-full h-full object-cover" style="max-height: 560px;"></video>
+<div class="relative w-full overflow-hidden bg-gray-900 flex items-center justify-center" style="height: 560px; max-height: 560px;">
+    <video id="hero-video-player" src="{{ hero_media.file.url }}" autoplay loop muted playsinline controls class="w-full h-full object-contain transition-opacity opacity-95"></video>
     <div class="absolute inset-0 pointer-events-none bg-gradient-to-t from-gray-900/80 via-transparent to-gray-900/20"></div>
     <div class="absolute top-6 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
         <nav class="text-sm text-white/70 font-medium tracking-wide">
@@ -151,6 +133,13 @@
                     <a href="#order" class="inline-flex items-center px-6 py-3 border-2 border-gray-300 text-base font-medium rounded-xl text-gray-700 hover:bg-gray-100 hover:border-gray-400 transition-all">
                         Узнать стоимость
                     </a>
+                </div>
+                {% elif rabota.game_html %}
+                <div class="mt-6 flex flex-wrap gap-3">
+                    <button type="button" id="open-detail-game" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-lg text-white bg-primary-600 hover:bg-primary-500 hover:scale-105 transition-all duration-300">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.868v4.264a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Запустить демо
+                    </button>
                 </div>
                 {% endif %}
             </div>
@@ -343,7 +332,7 @@
 </div>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const openBtn = document.getElementById('open-detail-game-top');
+        const openBtn = document.getElementById('open-detail-game');
         const modal = document.getElementById('detail-game-modal');
         const frame = document.getElementById('detail-game-frame');
         if (!openBtn || !modal || !frame) {

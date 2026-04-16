@@ -159,12 +159,12 @@
 </div>
 
 <!-- Portfolio Modal -->
-<div id="portfolio-modal" class="fixed inset-0 z-50 hidden">
+<div id="portfolio-modal" class="fixed inset-0 z-50 hidden overflow-hidden">
     <div class="absolute inset-0 bg-black/70" data-close-modal></div>
-    <div class="relative h-screen flex items-center justify-center p-3 md:p-6 pt-16 md:pt-20">
-        <div class="relative bg-white rounded-2xl max-w-6xl w-full overflow-hidden shadow-2xl" style="height: 70vh; max-height: calc(100vh - 2rem);">
-            <div class="h-full flex flex-col">
-                <div class="px-5 md:px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+    <div class="relative h-[100dvh] max-h-[100dvh] overflow-hidden px-2 md:px-4 pt-2 pb-6 flex items-start justify-center box-border">
+        <div id="portfolio-modal-window" class="relative bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col min-h-0 max-h-full w-full max-w-[1152px]">
+            <div class="flex flex-col min-h-0 flex-1 max-h-full overflow-hidden">
+                <div class="px-5 md:px-6 py-4 border-b border-gray-200 flex items-center justify-between shrink-0">
                     <h3 id="modal-title" class="text-xl md:text-2xl font-bold text-gray-900"></h3>
                     <button type="button" class="text-gray-400 hover:text-gray-700 transition-colors" data-close-modal>
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -173,41 +173,43 @@
                     </button>
                 </div>
 
-                <div class="flex-1 min-h-0 p-4 md:p-6 flex flex-col gap-4 overflow-y-auto">
-                    <div id="modal-media-area" class="relative flex-1 min-h-0 bg-gray-900 rounded-xl overflow-hidden flex items-center justify-center">
+                <div class="flex-1 min-h-0 p-3 md:p-4 flex flex-col gap-3 overflow-hidden">
+                    <div id="modal-media-area" class="relative flex-1 min-h-0 bg-gray-900 rounded-xl overflow-hidden flex flex-col">
                         <button type="button" data-close-modal class="absolute top-3 right-3 z-30 w-11 h-11 rounded-full bg-black/85 hover:bg-black text-white shadow-xl transition-colors flex items-center justify-center" aria-label="Закрыть модальное окно">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
                         </button>
-                        <button type="button" id="modal-prev" class="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/45 text-white hover:bg-black/70 transition-colors">
-                            &#10094;
+                        <button type="button" id="modal-media-prev" class="hidden absolute left-2 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-black/75 hover:bg-black text-white shadow-lg flex items-center justify-center" aria-label="Предыдущее фото">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                         </button>
-                        <div id="modal-media-stage" class="w-full h-full flex items-center justify-center overflow-hidden"></div>
-                        <button type="button" id="modal-next" class="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/45 text-white hover:bg-black/70 transition-colors">
-                            &#10095;
+                        <button type="button" id="modal-media-next" class="hidden absolute right-2 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-black/75 hover:bg-black text-white shadow-lg flex items-center justify-center" aria-label="Следующее фото">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </button>
+                        <div class="w-full flex-1 min-h-0 flex items-stretch">
+                            <div id="modal-media-stage" class="relative w-full min-h-0 flex-1 overflow-hidden bg-black p-1 md:p-2"></div>
+                        </div>
                     </div>
 
                     <div id="modal-game-wrapper" class="hidden flex-1 min-h-0 rounded-xl overflow-hidden border border-gray-200 bg-black">
-                        <iframe id="modal-game-frame" title="Приложение портфолио" class="w-full h-full" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups"></iframe>
+                        <div class="w-full h-full flex items-center justify-center">
+                            <div class="w-full h-full">
+                            <iframe id="modal-game-frame" title="Приложение портфолио" class="w-full h-full" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups"></iframe>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex flex-wrap items-center gap-3 shrink-0">
                         <div id="modal-image-controls" class="hidden flex items-center gap-2">
                             <button type="button" class="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-semibold" id="img-zoom-out">-</button>
                             <button type="button" class="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-semibold" id="img-zoom-reset">100%</button>
                             <button type="button" class="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-semibold" id="img-zoom-in">+</button>
                         </div>
-
                         <div class="ml-auto flex items-center gap-2">
                             <a id="modal-detail-link" href="#" class="px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white font-semibold text-sm transition-colors">Детали</a>
                             <button type="button" id="modal-action-link" class="hidden px-4 py-2 rounded-lg bg-gray-900 hover:bg-black text-white font-semibold text-sm transition-colors">Перейти</button>
                         </div>
                     </div>
-
-                    <div id="modal-description" class="text-gray-700 text-sm md:text-base leading-relaxed"></div>
-                    <div id="modal-tech-list" class="flex flex-wrap gap-2"></div>
                 </div>
             </div>
         </div>
@@ -219,18 +221,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const filterButtons = Array.from(document.querySelectorAll('.portfolio-filter-btn'));
     const portfolioItems = Array.from(document.querySelectorAll('.portfolio-item'));
     const modal = document.getElementById('portfolio-modal');
+    const modalWindow = document.getElementById('portfolio-modal-window');
     const modalTitle = document.getElementById('modal-title');
-    const modalDescription = document.getElementById('modal-description');
-    const modalTechList = document.getElementById('modal-tech-list');
     const modalMediaArea = document.getElementById('modal-media-area');
     const modalMediaStage = document.getElementById('modal-media-stage');
-    const modalPrev = document.getElementById('modal-prev');
-    const modalNext = document.getElementById('modal-next');
+    const modalImageControls = document.getElementById('modal-image-controls');
     const modalDetailLink = document.getElementById('modal-detail-link');
     const modalActionLink = document.getElementById('modal-action-link');
-    const modalImageControls = document.getElementById('modal-image-controls');
     const modalGameWrapper = document.getElementById('modal-game-wrapper');
     const modalGameFrame = document.getElementById('modal-game-frame');
+    const modalMediaPrev = document.getElementById('modal-media-prev');
+    const modalMediaNext = document.getElementById('modal-media-next');
+    const imgZoomResetBtn = document.getElementById('img-zoom-reset');
 
     const modalState = {
         media: [],
@@ -238,6 +240,55 @@ document.addEventListener('DOMContentLoaded', function() {
         currentCard: null,
         zoom: 1,
     };
+
+    function getHeaderOffset() {
+        const candidates = document.querySelectorAll('nav, header, #mobile-menu, #mobile-menu-content, .header, .header-main');
+        let maxBottom = 0;
+        candidates.forEach((el) => {
+            if (!el || !el.getBoundingClientRect) {
+                return;
+            }
+            const style = window.getComputedStyle(el);
+            if (style.display === 'none' || style.visibility === 'hidden') {
+                return;
+            }
+            const rect = el.getBoundingClientRect();
+            if (rect.height <= 0 || rect.width <= 0) {
+                return;
+            }
+            // Учитываем элементы в верхней части экрана
+            if (rect.top <= 120 && rect.bottom > 0) {
+                maxBottom = Math.max(maxBottom, rect.bottom);
+            }
+        });
+        return Math.max(120, Math.min(260, Math.ceil(maxBottom + 16)));
+    }
+
+    function updateModalWindowSize() {
+        if (!modalWindow) {
+            return;
+        }
+        const topOffset = getHeaderOffset();   // отступ ниже фактического меню
+        const bottomOffset = 28; // отступ от низа экрана
+        const sideOffset = window.innerWidth >= 768 ? 32 : 12;
+        const maxWidth = 1152; // 72rem
+        const minWidth = 320;
+
+        const availableHeight = Math.max(240, window.innerHeight - topOffset - bottomOffset);
+        const maxByHeight = (availableHeight * 13) / 9;
+        const maxByWidth = Math.max(minWidth, window.innerWidth - sideOffset * 2);
+        let width = Math.max(minWidth, Math.min(maxWidth, maxByHeight, maxByWidth));
+        let height = (width * 9) / 13;
+        if (height > availableHeight) {
+            height = availableHeight;
+            width = Math.max(minWidth, (height * 13) / 9);
+        }
+
+        modalWindow.style.width = `${Math.floor(width)}px`;
+        modalWindow.style.height = `${Math.floor(height)}px`;
+        modalWindow.style.maxHeight = `${Math.floor(availableHeight)}px`;
+        modalWindow.style.marginTop = `${topOffset}px`;
+    }
 
     function applyFilter(filter) {
         portfolioItems.forEach((item) => {
@@ -281,24 +332,22 @@ document.addEventListener('DOMContentLoaded', function() {
         modalGameFrame.srcdoc = '';
     }
 
-    function showTechList(techsRaw) {
-        const list = (techsRaw || '')
-            .split(',')
-            .map((item) => item.trim())
-            .filter(Boolean);
-        if (!list.length) {
-            modalTechList.innerHTML = '';
-            return;
+    function updateModalNavButtons() {
+        const n = modalState.media.length;
+        const show = n > 1;
+        if (modalMediaPrev) {
+            modalMediaPrev.classList.toggle('hidden', !show);
         }
-        modalTechList.innerHTML = list
-            .map((item) => `<span class="px-3 py-1 text-xs md:text-sm bg-gray-100 text-gray-700 rounded-full">${item}</span>`)
-            .join('');
+        if (modalMediaNext) {
+            modalMediaNext.classList.toggle('hidden', !show);
+        }
     }
 
     function renderCurrentMedia() {
         modalMediaStage.innerHTML = '';
         modalState.zoom = 1;
         modalImageControls.classList.add('hidden');
+        updateModalNavButtons();
 
         const media = modalState.media[modalState.currentIndex];
         if (!media) {
@@ -309,7 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (media.type === 'video') {
             const video = document.createElement('video');
             video.src = media.url;
-            video.className = 'w-full h-full object-contain';
+            video.className = 'absolute inset-0 w-full h-full object-contain object-center bg-black';
             video.autoplay = true;
             video.loop = true;
             video.controls = true;
@@ -323,23 +372,37 @@ document.addEventListener('DOMContentLoaded', function() {
         const image = document.createElement('img');
         image.src = media.url;
         image.alt = modalState.currentCard ? modalState.currentCard.dataset.title : '';
-        image.className = 'max-w-full max-h-full object-contain transition-transform duration-200';
+        image.className = 'absolute inset-0 w-full h-full object-contain object-center';
+        image.style.transformOrigin = 'center center';
         image.style.transform = 'scale(1)';
+        image.style.transition = 'transform 0.2s ease';
         modalMediaStage.appendChild(image);
         modalImageControls.classList.remove('hidden');
+        syncZoomLabel();
     }
 
-    modalMediaStage.addEventListener('wheel', function (e) {
-        const img = modalMediaStage.querySelector('img');
+    function syncZoomLabel() {
+        if (imgZoomResetBtn) {
+            imgZoomResetBtn.textContent = `${Math.round(modalState.zoom * 100)}%`;
+        }
+    }
+
+    function applyImageZoom(img) {
         if (!img) {
             return;
         }
-        e.preventDefault();
-        const delta = e.deltaY < 0 ? 0.12 : -0.12;
-        modalState.zoom = Math.max(0.5, Math.min(3, modalState.zoom + delta));
         img.style.transform = `scale(${modalState.zoom})`;
-        document.getElementById('img-zoom-reset').textContent = `${Math.round(modalState.zoom * 100)}%`;
-    }, { passive: false });
+        syncZoomLabel();
+    }
+
+    function stepModalMedia(delta) {
+        const n = modalState.media.length;
+        if (n <= 1) {
+            return;
+        }
+        modalState.currentIndex = (modalState.currentIndex + delta + n) % n;
+        renderCurrentMedia();
+    }
 
     function openMediaModal(card, startIndex = 0) {
         const media = parseCardMedia(card);
@@ -348,8 +411,6 @@ document.addEventListener('DOMContentLoaded', function() {
         modalState.currentIndex = media.length ? Math.max(0, Math.min(startIndex, media.length - 1)) : 0;
 
         modalTitle.textContent = card.dataset.title || '';
-        modalDescription.textContent = card.dataset.description || '';
-        showTechList(card.dataset.technologies || '');
         modalDetailLink.href = card.dataset.detailUrl || '#';
 
         const projectUrl = card.dataset.projectUrl || '';
@@ -363,6 +424,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         hideGameFrame();
         renderCurrentMedia();
+        updateModalWindowSize();
 
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
@@ -370,15 +432,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function openGameInModal(card) {
         modalTitle.textContent = card.dataset.title || '';
-        modalDescription.textContent = '';
-        modalTechList.innerHTML = '';
         modalDetailLink.href = card.dataset.detailUrl || '#';
         modalActionLink.classList.add('hidden');
 
         modalMediaArea.classList.add('hidden');
-        modalImageControls.classList.add('hidden');
         modalGameWrapper.classList.remove('hidden');
         modalGameFrame.srcdoc = card.dataset.gameHtml || '';
+        updateModalWindowSize();
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
@@ -394,20 +454,18 @@ document.addEventListener('DOMContentLoaded', function() {
         node.addEventListener('click', closePortfolioModal);
     });
 
-    modalPrev.addEventListener('click', function () {
-        if (!modalState.media.length) {
-            return;
-        }
-        modalState.currentIndex = (modalState.currentIndex - 1 + modalState.media.length) % modalState.media.length;
-        renderCurrentMedia();
-    });
-    modalNext.addEventListener('click', function () {
-        if (!modalState.media.length) {
-            return;
-        }
-        modalState.currentIndex = (modalState.currentIndex + 1) % modalState.media.length;
-        renderCurrentMedia();
-    });
+    if (modalMediaPrev) {
+        modalMediaPrev.addEventListener('click', function (e) {
+            e.stopPropagation();
+            stepModalMedia(-1);
+        });
+    }
+    if (modalMediaNext) {
+        modalMediaNext.addEventListener('click', function (e) {
+            e.stopPropagation();
+            stepModalMedia(1);
+        });
+    }
 
     document.getElementById('img-zoom-in').addEventListener('click', function () {
         const img = modalMediaStage.querySelector('img');
@@ -415,8 +473,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         modalState.zoom = Math.min(3, modalState.zoom + 0.2);
-        img.style.transform = `scale(${modalState.zoom})`;
-        document.getElementById('img-zoom-reset').textContent = `${Math.round(modalState.zoom * 100)}%`;
+        applyImageZoom(img);
     });
     document.getElementById('img-zoom-out').addEventListener('click', function () {
         const img = modalMediaStage.querySelector('img');
@@ -424,8 +481,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         modalState.zoom = Math.max(0.5, modalState.zoom - 0.2);
-        img.style.transform = `scale(${modalState.zoom})`;
-        document.getElementById('img-zoom-reset').textContent = `${Math.round(modalState.zoom * 100)}%`;
+        applyImageZoom(img);
     });
     document.getElementById('img-zoom-reset').addEventListener('click', function () {
         const img = modalMediaStage.querySelector('img');
@@ -433,9 +489,33 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         modalState.zoom = 1;
-        img.style.transform = 'scale(1)';
-        this.textContent = '100%';
+        applyImageZoom(img);
     });
+
+    if (modalMediaStage) {
+        modalMediaStage.addEventListener(
+            'wheel',
+            function (e) {
+                if (modal.classList.contains('hidden') || !modalImageControls || modalImageControls.classList.contains('hidden')) {
+                    return;
+                }
+                const img = modalMediaStage.querySelector('img');
+                if (!img) {
+                    return;
+                }
+                e.preventDefault();
+                const delta = e.deltaY;
+                const factor = delta > 0 ? 1 / 1.06 : 1.06;
+                modalState.zoom = Math.min(3, Math.max(0.5, modalState.zoom * factor));
+                img.style.transition = 'none';
+                applyImageZoom(img);
+                window.requestAnimationFrame(function () {
+                    img.style.transition = 'transform 0.2s ease';
+                });
+            },
+            { passive: false }
+        );
+    }
 
     modalActionLink.addEventListener('click', function () {
         if (!modalState.currentCard) {
@@ -481,14 +561,27 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.addEventListener('keydown', function (e) {
+        if (!modal || modal.classList.contains('hidden')) {
+            return;
+        }
         if (e.key === 'Escape') {
             closePortfolioModal();
-        } else if (e.key === 'ArrowLeft' && !modal.classList.contains('hidden')) {
-            modalPrev.click();
-        } else if (e.key === 'ArrowRight' && !modal.classList.contains('hidden')) {
-            modalNext.click();
+            return;
+        }
+        if (modalGameWrapper && !modalGameWrapper.classList.contains('hidden')) {
+            return;
+        }
+        if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            stepModalMedia(-1);
+        } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            stepModalMedia(1);
         }
     });
+
+    window.addEventListener('resize', updateModalWindowSize);
+    updateModalWindowSize();
 
     applyFilter('all');
     window.closePortfolioModal = closePortfolioModal;
