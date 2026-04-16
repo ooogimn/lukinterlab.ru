@@ -96,8 +96,8 @@ class Rabota(models.Model):
         ('website', 'Сайт'),
         ('bot', 'Бот'),
         ('app', 'Приложение'),
-        ('shop', 'Магазин'),
-        ('other', 'Другое'),
+        ('shop', 'ИИследуем'),
+        ('other', 'ИИскуство'),
     ]
     
     STATUS_CHOICES = [
@@ -180,6 +180,24 @@ class Rabota(models.Model):
         verbose_name='Тарифы и стоимость: цена (числом)',
         help_text='Укажите стоимость в цифрах, например 150000.'
     )
+    is_for_sale = models.BooleanField(
+        default=False,
+        verbose_name='Продаётся',
+        help_text='Отметьте, если проект доступен к продаже.'
+    )
+    sale_price_value = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Стоимость продажи (числом)',
+        help_text='Укажите стоимость продажи в цифрах, например 450000.'
+    )
+    sale_description = models.TextField(
+        blank=True,
+        verbose_name='Что входит в комплект продажи',
+        help_text='Опишите, что покупатель получает вместе с проектом.'
+    )
     history_text = RichTextUploadingField(blank=True, verbose_name='История развития', help_text='Описание процесса создания и развития проекта')
     resources_text = RichTextUploadingField(blank=True, verbose_name='Ресурсы', help_text='Список использованных ресурсов (команда, время, ассеты)')
     parameters_text = RichTextUploadingField(blank=True, verbose_name='Технические параметры', help_text='Спецификации, архитектура, нагрузки')
@@ -254,6 +272,13 @@ class Rabota(models.Model):
         if self.tariff_price_value is None:
             return ""
         formatted = "{:,}".format(int(self.tariff_price_value)).replace(',', ' ')
+        return f"{formatted} ₽"
+
+    def get_sale_display_price(self):
+        """Возвращает форматированную стоимость продажи проекта."""
+        if self.sale_price_value is None:
+            return ""
+        formatted = "{:,}".format(int(self.sale_price_value)).replace(',', ' ')
         return f"{formatted} ₽"
 
 

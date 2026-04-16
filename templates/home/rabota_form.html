@@ -99,6 +99,29 @@
                             {% if form.tariff_price_value.errors %}<p class="mt-1 text-xs text-red-500 font-medium">{{ form.tariff_price_value.errors.0 }}</p>{% endif %}
                         </div>
 
+                        <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-4">
+                            <div class="flex items-center gap-3">
+                                {{ form.is_for_sale }}
+                                <label for="{{ form.is_for_sale.id_for_label }}" class="text-sm font-bold text-emerald-800 cursor-pointer">
+                                    ПРОДАЁТСЯ
+                                </label>
+                            </div>
+
+                            <div>
+                                <label for="{{ form.sale_price_value.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">{{ form.sale_price_value.label }}</label>
+                                {{ form.sale_price_value }}
+                                {% if form.sale_price_value.help_text %}<p class="text-xs text-gray-500 mt-1">{{ form.sale_price_value.help_text }}</p>{% endif %}
+                                {% if form.sale_price_value.errors %}<p class="mt-1 text-xs text-red-500 font-medium">{{ form.sale_price_value.errors.0 }}</p>{% endif %}
+                            </div>
+
+                            <div>
+                                <label for="{{ form.sale_description.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">{{ form.sale_description.label }}</label>
+                                {{ form.sale_description }}
+                                {% if form.sale_description.help_text %}<p class="text-xs text-gray-500 mt-1">{{ form.sale_description.help_text }}</p>{% endif %}
+                                {% if form.sale_description.errors %}<p class="mt-1 text-xs text-red-500 font-medium">{{ form.sale_description.errors.0 }}</p>{% endif %}
+                            </div>
+                        </div>
+
                         <div>
                             <label for="{{ form.body.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">{{ form.body.label }}</label>
                             {{ form.body }}
@@ -151,9 +174,9 @@
                                 {% endfor %}
                             </div>
                             {% endif %}
-                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Добавить новые файлы (фото/видео)</label>
-                            <input type="file" name="new_media" multiple accept="image/*,video/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 cursor-pointer">
-                            <p class="text-xs text-gray-500 mt-1">Можно выбрать несколько файлов.</p>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Добавить новые файлы (изображения / GIF / видео)</label>
+                            <input type="file" name="new_media" multiple accept="image/*,.gif,video/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 cursor-pointer">
+                            <p class="text-xs text-gray-500 mt-1">Можно выбрать несколько файлов. GIF и видео будут воспроизводиться автоматически.</p>
                         </div>
 
                         <!-- Переключатели -->

@@ -35,6 +35,7 @@ from django.conf import settings
 import json
 import os
 from decimal import Decimal
+from collections import Counter
 
 import requests
 
@@ -123,6 +124,7 @@ def home(request):
             .only(
                 'id', 'name', 'category', 'image', 'adres', 'body',
                 'technologies', 'status', 'featured', 'order', 'created', 'updated',
+                'is_for_sale', 'sale_price_value', 'sale_description',
             )
             .order_by('-featured', '-order', '-created')[:24]
         )
@@ -134,6 +136,7 @@ def home(request):
             .only(
                 'id', 'name', 'category', 'image', 'adres', 'body',
                 'technologies', 'status', 'featured', 'order', 'created', 'updated',
+                'is_for_sale', 'sale_price_value', 'sale_description',
             ),
             rabota_ids,
         )
@@ -148,6 +151,7 @@ def home(request):
             rabota.technologies_list = [tech.strip() for tech in rabota.technologies.split(',')]
         else:
             rabota.technologies_list = []
+    category_counts = Counter(r.category for r in rabotas)
     
     service_ids = cache.get(cache_key_services)
     if not isinstance(service_ids, list):
@@ -221,6 +225,7 @@ def home(request):
                   'home/page_home-1.html',
                   {'otzivs': otzivs,
                    'rabotas': rabotas,
+                   'portfolio_category_counts': dict(category_counts),
                    'services': services,
                    'standalone_extra_services': standalone_extra_services,
                    'title': "LukInterLab - Главная",

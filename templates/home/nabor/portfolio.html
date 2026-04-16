@@ -2,176 +2,215 @@
 
 <!-- Portfolio Content -->
 <div class="max-w-7xl mx-auto px-4">
-        <!-- Section Header -->
-        <div class="text-center mb-16">
-            <h2 class="text-4xl md:text-5xl font-extrabold text-primary-600 mb-4 header-3d">
-                Наши работы
-            </h2>
-        </div>
-        
-        <!-- Portfolio Filter -->
-        <div class="flex flex-wrap justify-center gap-4 mb-12">
-            <button class="portfolio-filter-btn active px-6 py-3 rounded-full bg-primary-600 text-white font-semibold transition-all duration-300 hover:bg-primary-700" data-filter="all">
-                Все работы
-            </button>
-            <button class="portfolio-filter-btn px-6 py-3 rounded-full bg-gray-100 text-gray-700 font-semibold transition-all duration-300 hover:bg-primary-100 hover:text-primary-600" data-filter="website">
-                Сайты
-            </button>
-            <button class="portfolio-filter-btn px-6 py-3 rounded-full bg-gray-100 text-gray-700 font-semibold transition-all duration-300 hover:bg-primary-100 hover:text-primary-600" data-filter="bot">
-                Боты
-            </button>
-            <button class="portfolio-filter-btn px-6 py-3 rounded-full bg-gray-100 text-gray-700 font-semibold transition-all duration-300 hover:bg-primary-100 hover:text-primary-600" data-filter="app">
-                Приложения
-            </button>
-            <button class="portfolio-filter-btn px-6 py-3 rounded-full bg-gray-100 text-gray-700 font-semibold transition-all duration-300 hover:bg-primary-100 hover:text-primary-600" data-filter="shop">
-                Магазины
-            </button>
-        </div>
-        
-        <!-- Portfolio Grid -->
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-10" id="portfolio-grid">
-            {% for rabota in rabotas %}
-            <div class="portfolio-item group" data-category="{{ rabota.category }}">
-                <div
-                    class="portfolio-card-glow relative bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 cursor-pointer"
-                    style="aspect-ratio: 4/3;"
-                    role="button"
-                    tabindex="0"
-                    data-title="{{ rabota.name|escape }}"
-                    data-description="{{ rabota.body|default_if_none:''|escape }}"
-                    data-technologies="{{ rabota.technologies|default_if_none:''|escape }}"
-                    data-project-url="{{ rabota.adres|default_if_none:''|escape }}"
-                    data-game-html="{{ rabota.game_html|default_if_none:''|escape }}"
-                    data-detail-url="{{ rabota.get_absolute_url }}"
-                >
-                    <!-- Full-card Image -->
-                    {% with first_media=rabota.media_items.first %}
-                    {% if first_media and first_media.is_video %}
-                        <video src="{{ first_media.file.url }}?v={{ rabota.updated.timestamp|floatformat:0 }}" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none"></video>
-                    {% elif rabota.image %}
-                        {% if rabota.thumbnail_webp %}
-                            <picture>
-                                <source srcset="{{ rabota.get_thumbnail_webp_url_with_version }}" type="image/webp">
-                                <img src="{{ rabota.get_image_url_with_version }}" alt="{{ rabota.name }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-                            </picture>
-                        {% else %}
-                            <img src="{{ rabota.get_image_url_with_version }}" alt="{{ rabota.name }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-                        {% endif %}
-                    {% elif first_media %}
-                        <img src="{{ first_media.file.url }}?v={{ rabota.updated.timestamp|floatformat:0 }}" alt="{{ rabota.name }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+    <!-- Section Header -->
+    <div class="text-center mb-16">
+        <h2 class="text-4xl md:text-5xl font-extrabold text-primary-600 mb-4 header-3d">
+            Наши работы
+        </h2>
+    </div>
+
+    <!-- Portfolio Filter -->
+    <div class="flex flex-wrap justify-center gap-4 mb-12">
+        <button class="portfolio-filter-btn active px-6 py-3 rounded-full bg-primary-600 text-white font-semibold transition-all duration-300 hover:bg-primary-700" data-filter="all">
+            Все работы
+        </button>
+        {% if portfolio_category_counts.website %}
+        <button class="portfolio-filter-btn px-6 py-3 rounded-full bg-gray-100 text-gray-700 font-semibold transition-all duration-300 hover:bg-primary-100 hover:text-primary-600" data-filter="website">
+            Сайты
+        </button>
+        {% endif %}
+        {% if portfolio_category_counts.bot %}
+        <button class="portfolio-filter-btn px-6 py-3 rounded-full bg-gray-100 text-gray-700 font-semibold transition-all duration-300 hover:bg-primary-100 hover:text-primary-600" data-filter="bot">
+            Боты
+        </button>
+        {% endif %}
+        {% if portfolio_category_counts.app %}
+        <button class="portfolio-filter-btn px-6 py-3 rounded-full bg-gray-100 text-gray-700 font-semibold transition-all duration-300 hover:bg-primary-100 hover:text-primary-600" data-filter="app">
+            Приложения
+        </button>
+        {% endif %}
+        {% if portfolio_category_counts.shop %}
+        <button class="portfolio-filter-btn px-6 py-3 rounded-full bg-gray-100 text-gray-700 font-semibold transition-all duration-300 hover:bg-primary-100 hover:text-primary-600" data-filter="shop">
+            ИИследуем
+        </button>
+        {% endif %}
+        {% if portfolio_category_counts.other %}
+        <button class="portfolio-filter-btn px-6 py-3 rounded-full bg-gray-100 text-gray-700 font-semibold transition-all duration-300 hover:bg-primary-100 hover:text-primary-600" data-filter="other">
+            ИИскуство
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- Portfolio Grid -->
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-10" id="portfolio-grid">
+        {% for rabota in rabotas %}
+        <div class="portfolio-item group" data-category="{{ rabota.category }}">
+            <article
+                class="portfolio-card-glow js-portfolio-card relative bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 cursor-pointer"
+                style="aspect-ratio: 4/3;{% if rabota.is_for_sale or rabota.sale_price_value or rabota.sale_description %} border: 4px solid #ff1a1a; box-shadow: 0 0 24px rgba(255, 0, 0, 0.95), 0 0 12px rgba(255, 60, 60, 0.9);{% endif %}"
+                role="button"
+                tabindex="0"
+                data-title="{{ rabota.name|escape }}"
+                data-description="{{ rabota.body|default_if_none:''|escape }}"
+                data-technologies="{{ rabota.technologies|default_if_none:''|escape }}"
+                data-project-url="{{ rabota.adres|default_if_none:''|escape }}"
+                data-game-html="{{ rabota.game_html|default_if_none:''|escape }}"
+                data-detail-url="{{ rabota.get_absolute_url }}"
+            >
+                {% with first_media=rabota.media_items.first %}
+                {% if first_media and first_media.is_video %}
+                    <video src="{{ first_media.file.url }}?v={{ rabota.updated.timestamp|floatformat:0 }}" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none"></video>
+                {% elif first_media %}
+                    <img src="{{ first_media.file.url }}?v={{ rabota.updated.timestamp|floatformat:0 }}" alt="{{ rabota.name }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none">
+                {% elif rabota.image %}
+                    {% if rabota.thumbnail_webp %}
+                        <picture>
+                            <source srcset="{{ rabota.get_thumbnail_webp_url_with_version }}" type="image/webp">
+                            <img src="{{ rabota.get_image_url_with_version }}" alt="{{ rabota.name }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none">
+                        </picture>
                     {% else %}
-                        <div class="absolute inset-0 w-full h-full bg-gradient-to-br from-primary-50 to-blue-50 flex items-center justify-center">
-                            <svg class="w-12 h-12 text-primary-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                            </svg>
-                        </div>
+                        <img src="{{ rabota.get_image_url_with_version }}" alt="{{ rabota.name }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none">
                     {% endif %}
-                    {% endwith %}
-                    
-                    <!-- Hover Overlay with Links -->
-                    <div class="absolute inset-0 bg-primary-600/60 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center z-10">
-                        <div class="transform translate-y-8 group-hover:translate-y-0 transition-all duration-500 flex space-x-3">
-                            <a href="{{ rabota.get_absolute_url }}" class="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-primary-600 hover:bg-gray-900 hover:text-white transition-all shadow-xl">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                </svg>
-                            </a>
-                            {% if rabota.adres %}
-                            <a href="{{ rabota.adres }}" target="_blank" class="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-primary-600 hover:bg-gray-900 hover:text-white transition-all shadow-xl portfolio-external-link">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                </svg>
-                            </a>
-                            {% elif rabota.game_html %}
-                            <button type="button" class="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-primary-600 hover:bg-gray-900 hover:text-white transition-all shadow-xl portfolio-external-link js-open-game-fallback">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                </svg>
-                            </button>
-                            {% endif %}
-                        </div>
+                {% else %}
+                    <div class="absolute inset-0 w-full h-full bg-gradient-to-br from-primary-50 to-blue-50 flex items-center justify-center">
+                        <svg class="w-12 h-12 text-primary-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
                     </div>
-                    
-                    <!-- Category Badge -->
-                    <div class="absolute top-4 left-4 z-20 flex flex-col gap-2">
-                        <span class="px-3 py-1 text-[10px] uppercase tracking-wider font-bold rounded-lg bg-white/90 backdrop-blur shadow-sm text-gray-900 border border-white">
-                            {{ rabota.get_category_display_name }}
-                        </span>
-                        {% if rabota.featured %}
-                        <span class="px-3 py-1 text-[10px] uppercase tracking-wider font-bold rounded-lg bg-yellow-400 shadow-sm text-yellow-950 border border-yellow-200">
-                            Best
-                        </span>
+                {% endif %}
+                {% endwith %}
+
+                <script type="application/json" class="js-portfolio-media">
+                    [
+                        {% if rabota.image %}
+                            {"type":"image","url":"{{ rabota.image.url|escapejs }}"}{% if rabota.media_items.exists %},{% endif %}
                         {% endif %}
-                    </div>
-                    
-                    <!-- Title Bar at Bottom -->
-                    <div class="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/70 via-black/40 to-transparent px-5 pb-4 pt-10">
-                        <h3 class="text-white text-lg font-bold drop-shadow-lg line-clamp-1">
-                            {{ rabota.name }}
-                        </h3>
+                        {% for media in rabota.media_items.all %}
+                            {"type":"{% if media.is_video %}video{% else %}image{% endif %}","url":"{{ media.file.url|escapejs }}"}{% if not forloop.last %},{% endif %}
+                        {% endfor %}
+                    ]
+                </script>
+
+                <!-- Hover Overlay with action links -->
+                <div class="absolute inset-0 bg-primary-600/60 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center z-10">
+                    <div class="transform translate-y-8 group-hover:translate-y-0 transition-all duration-500 flex space-x-3">
+                        <a href="{{ rabota.get_absolute_url }}" class="portfolio-action-link w-12 h-12 bg-white rounded-xl flex items-center justify-center text-primary-600 hover:bg-gray-900 hover:text-white transition-all shadow-xl" title="Открыть детальную страницу">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                        </a>
+                        {% if rabota.adres %}
+                        <a href="{{ rabota.adres }}" target="_blank" class="portfolio-action-link w-12 h-12 bg-white rounded-xl flex items-center justify-center text-primary-600 hover:bg-gray-900 hover:text-white transition-all shadow-xl" title="Перейти на сайт">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                            </svg>
+                        </a>
+                        {% elif rabota.game_html %}
+                        <button type="button" class="portfolio-action-link js-open-game-fallback w-12 h-12 bg-white rounded-xl flex items-center justify-center text-primary-600 hover:bg-gray-900 hover:text-white transition-all shadow-xl" title="Запустить код">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.868v4.264a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </button>
+                        {% endif %}
                     </div>
                 </div>
-            </div>
-            {% empty %}
-            <div class="col-span-full text-center py-20 bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-200">
-                <p class="text-gray-400 font-medium">No projects available in this category.</p>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</div>
 
-        
-        <!-- Load More Button - убрано, показываем все работы -->
+                <div class="absolute top-4 left-4 z-20 flex flex-col gap-2">
+                    <span class="px-3 py-1 text-[10px] uppercase tracking-wider font-bold rounded-lg bg-white/90 backdrop-blur shadow-sm text-gray-900 border border-white">
+                        {{ rabota.get_category_display_name }}
+                    </span>
+                    {% if rabota.featured %}
+                    <span class="px-3 py-1 text-[10px] uppercase tracking-wider font-bold rounded-lg bg-yellow-400 shadow-sm text-yellow-950 border border-yellow-200">
+                        Best
+                    </span>
+                    {% endif %}
+                </div>
+
+                {% if rabota.is_for_sale or rabota.sale_price_value or rabota.sale_description %}
+                <div class="absolute bottom-4 right-4 z-20 pointer-events-none">
+                    <span class="inline-block px-4 py-2 text-xs md:text-sm uppercase tracking-wider font-extrabold rounded-lg text-white border-4" style="transform: rotate(-30deg); background: linear-gradient(90deg, #ff0000 0%, #ff2a2a 55%, #ff4d4d 100%); border-color: #7a0000; box-shadow: 0 0 20px rgba(255, 0, 0, 0.98), 0 0 10px rgba(255, 64, 64, 0.95);">
+                        ПРОДАЁТСЯ
+                    </span>
+                </div>
+                {% endif %}
+
+                <div class="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-5 pb-4 pt-10">
+                    <a href="{{ rabota.get_absolute_url }}" class="portfolio-title-link inline-block text-white text-lg font-bold line-clamp-1 hover:text-primary-100 transition-colors" style="text-shadow: 0 0 6px rgba(139, 92, 246, 0.95), 0 0 12px rgba(59, 130, 246, 0.85), 0 2px 6px rgba(0, 0, 0, 0.75);">
+                        {{ rabota.name }}
+                    </a>
+                </div>
+            </article>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-20 bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-200">
+            <p class="text-gray-400 font-medium">No projects available in this category.</p>
+        </div>
+        {% endfor %}
     </div>
 </div>
 
 <!-- Portfolio Modal -->
 <div id="portfolio-modal" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0 bg-black bg-opacity-50" onclick="closePortfolioModal()"></div>
-    <div class="relative h-screen flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-6xl w-full overflow-hidden" style="height: calc(100vh - 2rem);">
-            <div class="p-6 flex flex-col" style="height: calc(100vh - 2rem);">
-                <!-- Modal Header -->
-                <div class="flex items-center justify-between mb-6 shrink-0">
-                    <h3 id="modal-title" class="text-2xl font-bold text-gray-900"></h3>
-                    <button onclick="closePortfolioModal()" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
+    <div class="absolute inset-0 bg-black/70" data-close-modal></div>
+    <div class="relative h-screen flex items-center justify-center p-3 md:p-6 pt-16 md:pt-20">
+        <div class="relative bg-white rounded-2xl max-w-6xl w-full overflow-hidden shadow-2xl" style="height: 70vh; max-height: calc(100vh - 2rem);">
+            <div class="h-full flex flex-col">
+                <div class="px-5 md:px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                    <h3 id="modal-title" class="text-xl md:text-2xl font-bold text-gray-900"></h3>
+                    <button type="button" class="text-gray-400 hover:text-gray-700 transition-colors" data-close-modal>
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
                 </div>
-                
-                <!-- Modal Content -->
-                <div id="modal-game-wrapper" class="hidden flex-1 min-h-0">
-                    <div class="rounded-xl overflow-hidden border border-gray-200 bg-black h-full">
+
+                <div class="flex-1 min-h-0 p-4 md:p-6 flex flex-col gap-4 overflow-y-auto">
+                    <div id="modal-media-area" class="relative flex-1 min-h-0 bg-gray-900 rounded-xl overflow-hidden flex items-center justify-center">
+                        <button type="button" data-close-modal class="absolute top-3 right-3 z-30 w-11 h-11 rounded-full bg-black/85 hover:bg-black text-white shadow-xl transition-colors flex items-center justify-center" aria-label="Закрыть модальное окно">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                        <button type="button" id="modal-prev" class="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/45 text-white hover:bg-black/70 transition-colors">
+                            &#10094;
+                        </button>
+                        <div id="modal-media-stage" class="w-full h-full flex items-center justify-center overflow-hidden"></div>
+                        <button type="button" id="modal-next" class="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/45 text-white hover:bg-black/70 transition-colors">
+                            &#10095;
+                        </button>
+                    </div>
+
+                    <div id="modal-game-wrapper" class="hidden flex-1 min-h-0 rounded-xl overflow-hidden border border-gray-200 bg-black">
                         <iframe id="modal-game-frame" title="Приложение портфолио" class="w-full h-full" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups"></iframe>
                     </div>
-                </div>
 
-                <div id="modal-default-content" class="grid lg:grid-cols-2 gap-8 flex-1 min-h-0 overflow-hidden">
-                    <!-- Project Image -->
-                    <div id="modal-image" class="rounded-xl overflow-hidden">
-                        <img src="" alt="" class="w-full h-64 object-cover">
-                    </div>
-                    
-                    <!-- Project Details -->
-                    <div>
-                        <div id="modal-description" class="text-green-600 mb-6"></div>
-                        <div id="modal-technologies" class="mb-6 hidden">
-                            <h4 class="font-semibold text-gray-900 mb-2">Использованные технологии:</h4>
-                            <div id="modal-tech-list" class="flex flex-wrap gap-2"></div>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div id="modal-image-controls" class="hidden flex items-center gap-2">
+                            <button type="button" class="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-semibold" id="img-zoom-out">-</button>
+                            <button type="button" class="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-semibold" id="img-zoom-reset">100%</button>
+                            <button type="button" class="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-semibold" id="img-zoom-in">+</button>
                         </div>
-                        <div id="modal-link" class="hidden">
-                            <a href="" target="_blank" class="inline-flex items-center space-x-2 bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors duration-300">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                </svg>
-                                <span>Посмотреть проект</span>
-                            </a>
+
+                        <div id="modal-video-controls" class="hidden flex items-center gap-2 flex-wrap">
+                            <button type="button" id="video-play-toggle" class="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-semibold">Пауза</button>
+                            <button type="button" id="video-mute-toggle" class="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-semibold">Без звука</button>
+                            <button type="button" id="video-restart" class="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-semibold">С начала</button>
+                            <label class="flex items-center gap-2 text-sm text-gray-700">
+                                Громкость
+                                <input id="video-volume" type="range" min="0" max="1" step="0.05" value="0.8">
+                            </label>
+                        </div>
+
+                        <div class="ml-auto flex items-center gap-2">
+                            <a id="modal-detail-link" href="#" class="px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white font-semibold text-sm transition-colors">Детали</a>
+                            <button type="button" id="modal-action-link" class="hidden px-4 py-2 rounded-lg bg-gray-900 hover:bg-black text-white font-semibold text-sm transition-colors">Перейти</button>
                         </div>
                     </div>
+
+                    <div id="modal-description" class="text-gray-700 text-sm md:text-base leading-relaxed"></div>
+                    <div id="modal-tech-list" class="flex flex-wrap gap-2"></div>
                 </div>
             </div>
         </div>
@@ -179,199 +218,351 @@
 </div>
 
 <script>
-// Portfolio filtering
 document.addEventListener('DOMContentLoaded', function() {
-    const filterButtons = document.querySelectorAll('.portfolio-filter-btn');
+    const filterButtons = Array.from(document.querySelectorAll('.portfolio-filter-btn'));
     const portfolioItems = Array.from(document.querySelectorAll('.portfolio-item'));
-    
-    // Функция для перемешивания массива (Fisher-Yates shuffle)
-    function shuffleArray(array) {
-        const shuffled = [...array];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
-        return shuffled;
-    }
-    
-    // Показываем ВСЕ карточки при загрузке (по запросу пользователя)
-    function showAllItems() {
-        portfolioItems.forEach(item => {
-            item.style.display = 'block';
-            item.style.animation = 'fadeInUp 0.6s ease-out';
+    const modal = document.getElementById('portfolio-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalDescription = document.getElementById('modal-description');
+    const modalTechList = document.getElementById('modal-tech-list');
+    const modalMediaArea = document.getElementById('modal-media-area');
+    const modalMediaStage = document.getElementById('modal-media-stage');
+    const modalPrev = document.getElementById('modal-prev');
+    const modalNext = document.getElementById('modal-next');
+    const modalDetailLink = document.getElementById('modal-detail-link');
+    const modalActionLink = document.getElementById('modal-action-link');
+    const modalImageControls = document.getElementById('modal-image-controls');
+    const modalVideoControls = document.getElementById('modal-video-controls');
+    const modalGameWrapper = document.getElementById('modal-game-wrapper');
+    const modalGameFrame = document.getElementById('modal-game-frame');
+
+    const modalState = {
+        media: [],
+        currentIndex: 0,
+        currentCard: null,
+        currentVideo: null,
+        zoom: 1,
+    };
+
+    function applyFilter(filter) {
+        portfolioItems.forEach((item) => {
+            const matches = filter === 'all' || item.dataset.category === filter;
+            item.style.display = matches ? 'block' : 'none';
+            if (matches) {
+                item.style.animation = 'fadeInUp 0.45s ease-out';
+            }
         });
     }
-    
-    // Изначально показываем все
-    showAllItems();
-    
-    filterButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const filter = this.getAttribute('data-filter');
-            
-            // Update active button
-            filterButtons.forEach(btn => {
+
+    filterButtons.forEach((button) => {
+        button.addEventListener('click', function () {
+            const filter = this.dataset.filter;
+            filterButtons.forEach((btn) => {
                 btn.classList.remove('active', 'bg-primary-600', 'text-white');
                 btn.classList.add('bg-gray-100', 'text-gray-700');
             });
             this.classList.add('active', 'bg-primary-600', 'text-white');
             this.classList.remove('bg-gray-100', 'text-gray-700');
-            
-            if (filter === 'all') {
-                showAllItems();
-            } else {
-                // Для конкретных категорий - показываем все работы этой категории
-                portfolioItems.forEach(item => {
-                    const category = item.getAttribute('data-category');
-                    if (category === filter) {
-                        item.style.display = 'block';
-                        item.style.animation = 'fadeInUp 0.6s ease-out';
-                    } else {
-                        item.style.display = 'none';
-                    }
-                });
-            }
+            applyFilter(filter);
         });
     });
-});
 
-// Portfolio modal functions
-function openPortfolioModal(title, description, imageUrl, projectUrl, technologies, gameHtml = '') {
-    const modal = document.getElementById('portfolio-modal');
-    const modalTitle = document.getElementById('modal-title');
-    const modalDescription = document.getElementById('modal-description');
-    const modalImage = document.getElementById('modal-image');
-    const modalLink = document.getElementById('modal-link');
-    const modalTechnologies = document.getElementById('modal-technologies');
-    const modalTechList = document.getElementById('modal-tech-list');
-    const modalDefaultContent = document.getElementById('modal-default-content');
-    const modalGameWrapper = document.getElementById('modal-game-wrapper');
-    const modalGameFrame = document.getElementById('modal-game-frame');
-    const hasGameHtml = Boolean(gameHtml && gameHtml.trim());
-    
-    modalTitle.textContent = title;
+    function parseCardMedia(card) {
+        const mediaJson = card.querySelector('.js-portfolio-media');
+        if (!mediaJson) {
+            return [];
+        }
+        try {
+            const parsed = JSON.parse(mediaJson.textContent);
+            return Array.isArray(parsed) ? parsed.filter((item) => item && item.url) : [];
+        } catch (error) {
+            return [];
+        }
+    }
 
-    if (hasGameHtml) {
-        modalDefaultContent.classList.add('hidden');
-        modalGameWrapper.classList.remove('hidden');
-        modalGameFrame.srcdoc = gameHtml;
-    } else {
+    function hideGameFrame() {
         modalGameWrapper.classList.add('hidden');
-        modalDefaultContent.classList.remove('hidden');
+        modalMediaArea.classList.remove('hidden');
         modalGameFrame.srcdoc = '';
-        modalDescription.textContent = description;
     }
-    
-    if (!hasGameHtml && imageUrl) {
-        modalImage.innerHTML = `<img src="${imageUrl}" alt="${title}" class="w-full h-64 object-cover">`;
-    } else if (!hasGameHtml) {
-        modalImage.innerHTML = `
-            <div class="w-full h-64 bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center">
-                <svg class="w-16 h-16 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                </svg>
-            </div>
-        `;
-    }
-    
-    if (!hasGameHtml && technologies && technologies.trim()) {
-        modalTechnologies.classList.remove('hidden');
-        const techArray = technologies.split(',').map(tech => tech.trim());
-        modalTechList.innerHTML = techArray.map(tech => 
-            `<span class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-full">${tech}</span>`
-        ).join('');
-    } else {
-        modalTechnologies.classList.add('hidden');
-    }
-    
-    if (projectUrl) {
-        modalLink.classList.remove('hidden');
-        modalLink.querySelector('a').href = projectUrl;
-    } else {
-        modalLink.classList.add('hidden');
-    }
-    
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-}
 
-function closePortfolioModal() {
-    const modal = document.getElementById('portfolio-modal');
-    const modalGameFrame = document.getElementById('modal-game-frame');
-    modal.classList.add('hidden');
-    modalGameFrame.srcdoc = '';
-    document.body.style.overflow = 'auto';
-}
-
-// Close modal on escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closePortfolioModal();
+    function showTechList(techsRaw) {
+        const list = (techsRaw || '')
+            .split(',')
+            .map((item) => item.trim())
+            .filter(Boolean);
+        if (!list.length) {
+            modalTechList.innerHTML = '';
+            return;
+        }
+        modalTechList.innerHTML = list
+            .map((item) => `<span class="px-3 py-1 text-xs md:text-sm bg-gray-100 text-gray-700 rounded-full">${item}</span>`)
+            .join('');
     }
-});
 
-document.addEventListener('DOMContentLoaded', function() {
-    const portfolioCards = document.querySelectorAll('.portfolio-card-glow');
-    const fallbackButtons = document.querySelectorAll('.js-open-game-fallback');
+    function syncVideoButtons() {
+        if (!modalState.currentVideo) {
+            return;
+        }
+        document.getElementById('video-play-toggle').textContent = modalState.currentVideo.paused ? 'Плей' : 'Пауза';
+        document.getElementById('video-mute-toggle').textContent = modalState.currentVideo.muted ? 'Со звуком' : 'Без звука';
+    }
 
-    portfolioCards.forEach(card => {
-        card.addEventListener('click', function(e) {
-            if (e.target.closest('a, button')) {
+    function renderCurrentMedia() {
+        modalMediaStage.innerHTML = '';
+        modalState.currentVideo = null;
+        modalState.zoom = 1;
+        modalImageControls.classList.add('hidden');
+        modalVideoControls.classList.add('hidden');
+
+        const media = modalState.media[modalState.currentIndex];
+        if (!media) {
+            modalMediaStage.innerHTML = '<div class="text-gray-200">Нет медиа для просмотра</div>';
+            return;
+        }
+
+        if (media.type === 'video') {
+            const video = document.createElement('video');
+            video.src = media.url;
+            video.className = 'w-full h-full object-contain';
+            video.autoplay = true;
+            video.loop = true;
+            video.controls = false;
+            video.playsInline = true;
+            video.muted = false;
+            video.volume = Number(document.getElementById('video-volume').value || 0.8);
+            modalMediaStage.appendChild(video);
+            modalState.currentVideo = video;
+            modalVideoControls.classList.remove('hidden');
+            syncVideoButtons();
+            return;
+        }
+
+        const image = document.createElement('img');
+        image.src = media.url;
+        image.alt = modalState.currentCard ? modalState.currentCard.dataset.title : '';
+        image.className = 'max-w-full max-h-full object-contain transition-transform duration-200';
+        image.style.transform = 'scale(1)';
+        modalMediaStage.appendChild(image);
+        modalImageControls.classList.remove('hidden');
+    }
+
+    modalMediaStage.addEventListener('wheel', function (e) {
+        const img = modalMediaStage.querySelector('img');
+        if (!img) {
+            return;
+        }
+        e.preventDefault();
+        const delta = e.deltaY < 0 ? 0.12 : -0.12;
+        modalState.zoom = Math.max(0.5, Math.min(3, modalState.zoom + delta));
+        img.style.transform = `scale(${modalState.zoom})`;
+        document.getElementById('img-zoom-reset').textContent = `${Math.round(modalState.zoom * 100)}%`;
+    }, { passive: false });
+
+    function openMediaModal(card, startIndex = 0) {
+        const media = parseCardMedia(card);
+        modalState.media = media;
+        modalState.currentCard = card;
+        modalState.currentIndex = media.length ? Math.max(0, Math.min(startIndex, media.length - 1)) : 0;
+
+        modalTitle.textContent = card.dataset.title || '';
+        modalDescription.textContent = card.dataset.description || '';
+        showTechList(card.dataset.technologies || '');
+        modalDetailLink.href = card.dataset.detailUrl || '#';
+
+        const projectUrl = card.dataset.projectUrl || '';
+        const gameHtml = card.dataset.gameHtml || '';
+        if (projectUrl || gameHtml.trim()) {
+            modalActionLink.classList.remove('hidden');
+            modalActionLink.textContent = projectUrl ? 'Перейти на сайт' : 'Запустить код';
+        } else {
+            modalActionLink.classList.add('hidden');
+        }
+
+        hideGameFrame();
+        renderCurrentMedia();
+
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function openGameInModal(card) {
+        modalTitle.textContent = card.dataset.title || '';
+        modalDescription.textContent = '';
+        modalTechList.innerHTML = '';
+        modalDetailLink.href = card.dataset.detailUrl || '#';
+        modalActionLink.classList.add('hidden');
+
+        modalMediaArea.classList.add('hidden');
+        modalImageControls.classList.add('hidden');
+        modalVideoControls.classList.add('hidden');
+        modalGameWrapper.classList.remove('hidden');
+        modalGameFrame.srcdoc = card.dataset.gameHtml || '';
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePortfolioModal() {
+        modal.classList.add('hidden');
+        hideGameFrame();
+        modalMediaStage.innerHTML = '';
+        modalState.currentVideo = null;
+        document.body.style.overflow = '';
+    }
+
+    modal.querySelectorAll('[data-close-modal]').forEach((node) => {
+        node.addEventListener('click', closePortfolioModal);
+    });
+
+    modalPrev.addEventListener('click', function () {
+        if (!modalState.media.length) {
+            return;
+        }
+        modalState.currentIndex = (modalState.currentIndex - 1 + modalState.media.length) % modalState.media.length;
+        renderCurrentMedia();
+    });
+    modalNext.addEventListener('click', function () {
+        if (!modalState.media.length) {
+            return;
+        }
+        modalState.currentIndex = (modalState.currentIndex + 1) % modalState.media.length;
+        renderCurrentMedia();
+    });
+
+    document.getElementById('img-zoom-in').addEventListener('click', function () {
+        const img = modalMediaStage.querySelector('img');
+        if (!img) {
+            return;
+        }
+        modalState.zoom = Math.min(3, modalState.zoom + 0.2);
+        img.style.transform = `scale(${modalState.zoom})`;
+        document.getElementById('img-zoom-reset').textContent = `${Math.round(modalState.zoom * 100)}%`;
+    });
+    document.getElementById('img-zoom-out').addEventListener('click', function () {
+        const img = modalMediaStage.querySelector('img');
+        if (!img) {
+            return;
+        }
+        modalState.zoom = Math.max(0.5, modalState.zoom - 0.2);
+        img.style.transform = `scale(${modalState.zoom})`;
+        document.getElementById('img-zoom-reset').textContent = `${Math.round(modalState.zoom * 100)}%`;
+    });
+    document.getElementById('img-zoom-reset').addEventListener('click', function () {
+        const img = modalMediaStage.querySelector('img');
+        if (!img) {
+            return;
+        }
+        modalState.zoom = 1;
+        img.style.transform = 'scale(1)';
+        this.textContent = '100%';
+    });
+
+    document.getElementById('video-play-toggle').addEventListener('click', function () {
+        if (!modalState.currentVideo) {
+            return;
+        }
+        if (modalState.currentVideo.paused) {
+            modalState.currentVideo.play();
+        } else {
+            modalState.currentVideo.pause();
+        }
+        syncVideoButtons();
+    });
+    document.getElementById('video-mute-toggle').addEventListener('click', function () {
+        if (!modalState.currentVideo) {
+            return;
+        }
+        modalState.currentVideo.muted = !modalState.currentVideo.muted;
+        syncVideoButtons();
+    });
+    document.getElementById('video-restart').addEventListener('click', function () {
+        if (!modalState.currentVideo) {
+            return;
+        }
+        modalState.currentVideo.currentTime = 0;
+        modalState.currentVideo.play();
+        syncVideoButtons();
+    });
+    document.getElementById('video-volume').addEventListener('input', function () {
+        if (!modalState.currentVideo) {
+            return;
+        }
+        modalState.currentVideo.volume = Number(this.value);
+        if (modalState.currentVideo.volume > 0 && modalState.currentVideo.muted) {
+            modalState.currentVideo.muted = false;
+        }
+        syncVideoButtons();
+    });
+
+    modalActionLink.addEventListener('click', function () {
+        if (!modalState.currentCard) {
+            return;
+        }
+        const projectUrl = modalState.currentCard.dataset.projectUrl || '';
+        const gameHtml = modalState.currentCard.dataset.gameHtml || '';
+        if (projectUrl) {
+            window.open(projectUrl, '_blank', 'noopener');
+            return;
+        }
+        if (gameHtml.trim()) {
+            openGameInModal(modalState.currentCard);
+        }
+    });
+
+    document.querySelectorAll('.js-portfolio-card').forEach((card) => {
+        card.addEventListener('click', function (e) {
+            if (e.target.closest('.portfolio-action-link, .portfolio-title-link')) {
                 return;
             }
-            const detailUrl = card.dataset.detailUrl;
-            if (detailUrl) {
-                window.location.href = detailUrl;
-            }
+            openMediaModal(card);
         });
 
-        card.addEventListener('keydown', function(e) {
+        card.addEventListener('keydown', function (e) {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                const detailUrl = card.dataset.detailUrl;
-                if (detailUrl) {
-                    window.location.href = detailUrl;
-                }
+                openMediaModal(card);
             }
         });
     });
 
-    fallbackButtons.forEach(btn => {
-        btn.addEventListener('click', function(e) {
+    document.querySelectorAll('.js-open-game-fallback').forEach((button) => {
+        button.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
-            const card = btn.closest('.portfolio-card-glow');
+            const card = this.closest('.js-portfolio-card');
             if (!card) {
                 return;
             }
-            const cardImage = card.querySelector('img');
-            openPortfolioModal(
-                card.dataset.title || '',
-                card.dataset.description || '',
-                cardImage ? cardImage.src : '',
-                card.dataset.projectUrl || '',
-                card.dataset.technologies || '',
-                card.dataset.gameHtml || ''
-            );
+            openGameInModal(card);
         });
     });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closePortfolioModal();
+        } else if (e.key === 'ArrowLeft' && !modal.classList.contains('hidden')) {
+            modalPrev.click();
+        } else if (e.key === 'ArrowRight' && !modal.classList.contains('hidden')) {
+            modalNext.click();
+        }
+    });
+
+    applyFilter('all');
+    window.closePortfolioModal = closePortfolioModal;
 });
 
-// Add fadeInUp animation
 const style = document.createElement('style');
 style.textContent = `
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
     }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 `;
 document.head.appendChild(style);
 </script>
-
-

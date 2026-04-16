@@ -636,6 +636,7 @@ class RabotaForm(forms.ModelForm):
         fields = [
             'name', 'category', 'status', 'image', 'adres', 'body', 
             'technologies', 'game_html', 'tariff_short_description', 'tariff_price_value',
+            'is_for_sale', 'sale_price_value', 'sale_description',
             'resources_text', 'parameters_text', 'instructions_text',
             'featured', 'is_visible', 'order'
         ]
@@ -649,6 +650,9 @@ class RabotaForm(forms.ModelForm):
             'game_html': forms.Textarea(attrs={'class': 'form-control font-mono text-sm', 'rows': 10, 'placeholder': '<!doctype html>...'}),
             'tariff_short_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Что входит в стоимость проекта'}),
             'tariff_price_value': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01', 'placeholder': '150000'}),
+            'is_for_sale': forms.CheckboxInput(attrs={'class': 'form-checkbox h-4 w-4 text-emerald-600 border-gray-300 rounded'}),
+            'sale_price_value': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01', 'placeholder': '450000'}),
+            'sale_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Доступы, исходники, документация, поддержка и т.д.'}),
             'featured': forms.CheckboxInput(attrs={'class': 'form-checkbox h-4 w-4 text-primary-600 border-gray-300 rounded'}),
             'order': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
         }

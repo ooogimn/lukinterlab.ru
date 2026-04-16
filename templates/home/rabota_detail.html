@@ -17,7 +17,26 @@
 
 
 {% block straniza %}
+{% if rabota.adres or rabota.game_html %}
+<div class="fixed top-20 left-1/2 -translate-x-1/2 z-40 px-4 w-full max-w-6xl pointer-events-none">
+    <div class="flex justify-center pointer-events-auto">
+        {% if rabota.adres %}
+        <a href="{{ rabota.adres }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-primary-600 hover:bg-primary-500 text-white text-sm md:text-base font-extrabold shadow-[0_10px_25px_rgba(37,99,235,0.35)] transition-all hover:scale-[1.02]">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+            Перейти на сайт
+        </a>
+        {% else %}
+        <button type="button" id="open-detail-game-top" class="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-primary-600 hover:bg-primary-500 text-white text-sm md:text-base font-extrabold shadow-[0_10px_25px_rgba(37,99,235,0.35)] transition-all hover:scale-[1.02]">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.868v4.264a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Запустить демо
+        </button>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
 <!-- ═══ HERO: Главное изображение ═══ -->
+{% with hero_media=rabota.media_items.first %}
 {% if rabota.image %}
 <div class="relative w-full overflow-hidden bg-gray-900" style="max-height: 560px;">
     <img src="{{ rabota.image.url }}" alt="{{ rabota.name }}" class="w-full h-full object-cover" style="max-height: 560px;">
@@ -32,6 +51,23 @@
         </nav>
     </div>
 </div>
+{% elif hero_media and hero_media.is_video %}
+<div class="relative w-full overflow-hidden bg-gray-900" style="max-height: 560px;">
+    <video id="hero-video-player" src="{{ hero_media.file.url }}" autoplay loop muted playsinline class="w-full h-full object-cover" style="max-height: 560px;"></video>
+    <div class="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-transparent to-gray-900/20"></div>
+    <div class="absolute top-6 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
+        <nav class="text-sm text-white/70 font-medium tracking-wide">
+            <a href="/" class="hover:text-white transition-colors">Главная</a> <span class="mx-2">/</span>
+            <a href="/#portfolio" class="hover:text-white transition-colors">Портфолио</a> <span class="mx-2">/</span>
+            <span class="text-white">{{ rabota.name }}</span>
+        </nav>
+    </div>
+    <div class="absolute bottom-4 right-4 z-20 bg-black/55 backdrop-blur px-3 py-2 rounded-xl flex items-center gap-2 text-white">
+        <button type="button" data-video-toggle-play="hero-video-player" class="px-2 py-1 rounded bg-white/20 hover:bg-white/35 text-xs font-semibold">Пауза</button>
+        <button type="button" data-video-toggle-mute="hero-video-player" class="px-2 py-1 rounded bg-white/20 hover:bg-white/35 text-xs font-semibold">Без звука</button>
+        <input type="range" data-video-volume="hero-video-player" min="0" max="1" step="0.05" value="0.7" class="w-20">
+    </div>
+</div>
 {% else %}
 <!-- Если нет изображения — только хлебные крошки -->
 <div class="mt-16 bg-gray-100 py-6">
@@ -44,6 +80,7 @@
     </div>
 </div>
 {% endif %}
+{% endwith %}
 
 
 <!-- ═══ КАРУСЕЛЬ ДОВОЛНИТЕЛЬНЫХ ИЗОБРАЖЕНИЙ ═══ -->
@@ -58,23 +95,81 @@
             </style>
             <div class="swiper-wrapper">
                 {% for media in rabota.media_items.all %}
-                <div class="swiper-slide flex items-center justify-center" style="height: 400px;">
+                <div class="swiper-slide flex items-center justify-center relative" style="height: 400px;">
                     {% if media.is_video %}
-                    <video src="{{ media.file.url }}" autoplay loop muted playsinline class="w-full h-full object-contain cursor-pointer transition-opacity" onclick="this.muted = !this.muted; this.classList.toggle('opacity-90')" title="Кликните чтобы включить/выключить звук"></video>
+                    <video id="detail-video-{{ forloop.counter }}" src="{{ media.file.url }}" autoplay loop muted playsinline class="w-full h-full object-contain transition-opacity opacity-95"></video>
+                    <div class="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 bg-black/60 backdrop-blur rounded-xl px-3 py-2 flex items-center gap-2 text-white">
+                        <button type="button" data-video-toggle-play="detail-video-{{ forloop.counter }}" class="px-2 py-1 rounded bg-white/20 hover:bg-white/35 text-xs font-semibold">Пауза</button>
+                        <button type="button" data-video-toggle-mute="detail-video-{{ forloop.counter }}" class="px-2 py-1 rounded bg-white/20 hover:bg-white/35 text-xs font-semibold">Без звука</button>
+                        <button type="button" data-video-restart="detail-video-{{ forloop.counter }}" class="px-2 py-1 rounded bg-white/20 hover:bg-white/35 text-xs font-semibold">С начала</button>
+                        <input type="range" data-video-volume="detail-video-{{ forloop.counter }}" min="0" max="1" step="0.05" value="0.7" class="w-20">
+                    </div>
                     {% else %}
                     <img src="{{ media.file.url }}" alt="{{ rabota.name }}" class="w-full h-full object-contain">
                     {% endif %}
                 </div>
                 {% endfor %}
             </div>
-            <div class="swiper-button-next text-white/70 hover:text-white drop-shadow-lg transition-colors"></div>
-            <div class="swiper-button-prev text-white/70 hover:text-white drop-shadow-lg transition-colors"></div>
+            <div class="swiper-button-next !w-11 !h-11 !rounded-full !bg-black/45 text-white hover:!bg-black/70 transition-colors"></div>
+            <div class="swiper-button-prev !w-11 !h-11 !rounded-full !bg-black/45 text-white hover:!bg-black/70 transition-colors"></div>
             <div class="swiper-pagination"></div>
         </div>
     </div>
 </div>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        function bindVideoControls(root) {
+            root.querySelectorAll('[data-video-toggle-play]').forEach((btn) => {
+                btn.addEventListener('click', function() {
+                    const video = document.getElementById(this.dataset.videoTogglePlay);
+                    if (!video) {
+                        return;
+                    }
+                    if (video.paused) {
+                        video.play();
+                        this.textContent = 'Пауза';
+                    } else {
+                        video.pause();
+                        this.textContent = 'Плей';
+                    }
+                });
+            });
+            root.querySelectorAll('[data-video-toggle-mute]').forEach((btn) => {
+                btn.addEventListener('click', function() {
+                    const video = document.getElementById(this.dataset.videoToggleMute);
+                    if (!video) {
+                        return;
+                    }
+                    video.muted = !video.muted;
+                    this.textContent = video.muted ? 'Со звуком' : 'Без звука';
+                });
+            });
+            root.querySelectorAll('[data-video-volume]').forEach((input) => {
+                input.addEventListener('input', function() {
+                    const video = document.getElementById(this.dataset.videoVolume);
+                    if (!video) {
+                        return;
+                    }
+                    video.volume = Number(this.value);
+                    if (video.volume > 0 && video.muted) {
+                        video.muted = false;
+                    }
+                });
+            });
+            root.querySelectorAll('[data-video-restart]').forEach((btn) => {
+                btn.addEventListener('click', function() {
+                    const video = document.getElementById(this.dataset.videoRestart);
+                    if (!video) {
+                        return;
+                    }
+                    video.currentTime = 0;
+                    video.play();
+                });
+            });
+        }
+
+        bindVideoControls(document);
+
         new Swiper('.mediaSwiper', {
             loop: true,
             navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
@@ -236,6 +331,25 @@
                 {% endif %}
             </div>
             {% endif %}
+
+            {% if rabota.is_for_sale or rabota.sale_price_value or rabota.sale_description %}
+            <div class="bg-gradient-to-br from-orange-500 via-amber-500 to-orange-600 rounded-2xl p-6 shadow-[0_0_22px_rgba(249,115,22,0.55)] border-2 border-orange-700/60 text-gray-950">
+                <h3 class="text-xl font-black mb-4 flex items-center text-gray-950">
+                    <svg class="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Проект продаётся
+                </h3>
+                <div class="space-y-3 text-gray-900">
+                    {% if rabota.sale_price_value %}
+                    <p class="text-2xl font-black text-gray-950">{{ rabota.get_sale_display_price }}</p>
+                    {% endif %}
+                    {% if rabota.sale_description %}
+                    <p class="text-sm leading-relaxed text-gray-950">{{ rabota.sale_description }}</p>
+                    {% else %}
+                    <p class="text-sm leading-relaxed text-gray-950">Готовый проект доступен для покупки с передачей исходников и материалов.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
             
         </div>
     </div>
@@ -260,6 +374,59 @@
         </div>
     </div>
 </section>
+
+{% if rabota.game_html %}
+<div id="detail-game-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/70" data-close-detail-game></div>
+    <div class="relative h-screen flex items-center justify-center p-3 md:p-6">
+        <div class="bg-white rounded-2xl max-w-6xl w-full h-[calc(100vh-1.5rem)] md:h-[calc(100vh-3rem)] overflow-hidden shadow-2xl">
+            <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 class="text-xl font-bold text-gray-900">Демо: {{ rabota.name }}</h3>
+                <button type="button" data-close-detail-game class="text-gray-400 hover:text-gray-700 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <iframe id="detail-game-frame" class="w-full h-[calc(100%-65px)]" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups"></iframe>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const openBtn = document.getElementById('open-detail-game-top');
+        const modal = document.getElementById('detail-game-modal');
+        const frame = document.getElementById('detail-game-frame');
+        if (!openBtn || !modal || !frame) {
+            return;
+        }
+
+        const htmlCode = `{{ rabota.game_html|escapejs }}`;
+
+        function openGameModal() {
+            frame.srcdoc = htmlCode;
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeGameModal() {
+            modal.classList.add('hidden');
+            frame.srcdoc = '';
+            document.body.style.overflow = '';
+        }
+
+        openBtn.addEventListener('click', openGameModal);
+        modal.querySelectorAll('[data-close-detail-game]').forEach((btn) => {
+            btn.addEventListener('click', closeGameModal);
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeGameModal();
+            }
+        });
+    });
+</script>
+{% endif %}
 
 <!-- Структурированные данные -->
 <script type="application/ld+json">
