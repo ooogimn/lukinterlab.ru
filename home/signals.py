@@ -2,6 +2,7 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.core.cache import cache
 from .models import (
+    Customer,
     Otziv,
     Rabota,
     RabotaMedia,
@@ -11,6 +12,7 @@ from .models import (
     SiteMarketingSettings,
     SectionBackground,
 )
+from .avatar_cache import invalidate_header_avatar_cache
 from Blog.models import Post
 
 
@@ -103,3 +105,11 @@ def clear_section_backgrounds_cache(sender, instance, **kwargs):
     if kwargs.get('raw'):
         return
     cache.delete('section_backgrounds_all')
+
+
+@receiver([post_save, post_delete], sender=Customer)
+def invalidate_customer_avatar_cache(sender, instance, **kwargs):
+    if kwargs.get('raw'):
+        return
+    if instance.user_id:
+        invalidate_header_avatar_cache(instance.user_id)

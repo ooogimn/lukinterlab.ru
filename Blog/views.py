@@ -16,37 +16,13 @@ from django.utils.decorators import method_decorator
 import logging
 import json
 from home.seo_utils import SEOUtils
+from .category_cache import (
+    category_subtree_ids,
+    get_cached_blog_category_tree,
+    get_cached_published_post_count,
+)
 
 logger = logging.getLogger(__name__)
-
-
-def category_subtree_ids(category):
-    """ID категории и всех потомков (MPTT) для фильтрации статей по «ветке»."""
-    return [category.pk] + list(category.get_descendants().values_list('pk', flat=True))
-
-
-def _category_sidebar_child_nodes(parent):
-    """Рекурсивное дерево для сайдбара: узел виден, если в нём или ниже есть статьи."""
-    nodes = []
-    for c in parent.get_children().annotate(
-        post_count=Count('posts', filter=Q(posts__status='published'))
-    ).order_by('lft'):
-        sub = _category_sidebar_child_nodes(c)
-        if c.post_count > 0 or sub:
-            nodes.append({'category': c, 'children': sub})
-    return nodes
-
-
-def build_blog_category_tree():
-    """Корни MPTT с детьми для левого сайдбара блога."""
-    tree = []
-    for root in Category.objects.filter(parent__isnull=True).annotate(
-        post_count=Count('posts', filter=Q(posts__status='published'))
-    ).order_by('tree_id', 'lft'):
-        children = _category_sidebar_child_nodes(root)
-        if root.post_count > 0 or children:
-            tree.append({'category': root, 'children': children})
-    return tree
 
 
 def normalize_blog_sort(sort_param):
@@ -66,36 +42,36 @@ def apply_blog_post_sort(queryset, sort_key):
 
 def post_list(request, category_slug=None):
     category = None
-    
+    tag = None
+
     # Получаем все категории с подсчетом статей
     all_categories = Category.objects.annotate(
         post_count=Count('posts', filter=Q(posts__status='published'))
     ).filter(post_count__gt=0).order_by('tree_id', 'lft')
-    
+
     # Разделяем на родительские и дочерние категории
     parent_categories = []
     child_categories = []
-    
+
     for cat in all_categories:
         if cat.is_leaf_node():
-            # Если это дочерняя категория, добавляем её в список дочерних
             child_categories.append(cat)
         else:
-            # Если это родительская категория
             parent_categories.append(cat)
-    
-    posts = Post.objects.filter(status='published').annotate(
-        comments_count=Count('comments', filter=Q(comments__active=True))
+
+    posts = (
+        Post.objects.filter(status='published')
+        .select_related('author', 'category')
+        .prefetch_related('tags')
+        .annotate(comments_count=Count('comments', filter=Q(comments__active=True)))
     )
-    count_post = Post.objects.filter(status='published').count()
+    count_post = get_cached_published_post_count()
     blog_sort = normalize_blog_sort(request.GET.get('sort'))
 
-    # Фильтрация по параметрам запроса
     selected_category = request.GET.get('category')
     selected_tags = request.GET.getlist('tags')
     selected_author = request.GET.get('author')
-    category = None
-    
+
     if category_slug:
         category = get_object_or_404(Category, slug=category_slug)
         posts = posts.filter(category_id__in=category_subtree_ids(category))
@@ -105,14 +81,12 @@ def post_list(request, category_slug=None):
         posts = posts.filter(category_id__in=category_subtree_ids(category))
         zagolovok = f'Категория: {category.title}'
     elif selected_tags:
-        # Фильтрация по выбранным тегам (избегаем N+1 и ошибок при отсутствии тега)
         posts = posts.filter(tags__name__in=selected_tags).distinct()
         tag_objs = Tag.objects.filter(name__in=selected_tags)
         tag_names = [t.name for t in tag_objs]
         tag = tag_objs[0] if tag_objs else None
         zagolovok = f'Теги: {", ".join(tag_names)}'
     elif selected_author:
-        # Фильтрация по автору
         from django.contrib.auth import get_user_model
         User = get_user_model()
         try:
@@ -123,45 +97,42 @@ def post_list(request, category_slug=None):
             zagolovok = 'Все статьи'
     else:
         zagolovok = 'Все статьи'
-    
-    # Получаем теги в зависимости от выбранной категории (GET или страница по slug)
+
     if category:
-        category_posts = Post.objects.filter(
-            status='published', category_id__in=category_subtree_ids(category)
+        subtree = category_subtree_ids(category)
+        post_ids = list(
+            Post.objects.filter(status='published', category_id__in=subtree).values_list('id', flat=True)
         )
-        all_tags = Tag.objects.filter(
-            taggit_taggeditem_items__content_type__model='post',
-            taggit_taggeditem_items__object_id__in=category_posts.values_list('id', flat=True)
-        ).annotate(
-            post_count=Count('taggit_taggeditem_items', filter=Q(
-                taggit_taggeditem_items__content_type__model='post',
-                taggit_taggeditem_items__object_id__in=category_posts.values_list('id', flat=True)
-            ))
-        ).filter(post_count__gt=0).distinct().order_by('name')
-    elif selected_category:
-        selected_cat = Category.objects.get(id=selected_category)
-        category_posts = Post.objects.filter(
-            status='published', category_id__in=category_subtree_ids(selected_cat)
-        )
-        all_tags = Tag.objects.filter(
-            taggit_taggeditem_items__content_type__model='post',
-            taggit_taggeditem_items__object_id__in=category_posts.values_list('id', flat=True)
-        ).annotate(
-            post_count=Count('taggit_taggeditem_items', filter=Q(
-                taggit_taggeditem_items__content_type__model='post',
-                taggit_taggeditem_items__object_id__in=category_posts.values_list('id', flat=True)
-            ))
-        ).filter(post_count__gt=0).distinct().order_by('name')
+        if post_ids:
+            all_tags = (
+                Tag.objects.filter(
+                    taggit_taggeditem_items__content_type__model='post',
+                    taggit_taggeditem_items__object_id__in=post_ids,
+                )
+                .annotate(
+                    post_count=Count(
+                        'taggit_taggeditem_items',
+                        filter=Q(
+                            taggit_taggeditem_items__content_type__model='post',
+                            taggit_taggeditem_items__object_id__in=post_ids,
+                        ),
+                    )
+                )
+                .filter(post_count__gt=0)
+                .distinct()
+                .order_by('name')
+            )
+        else:
+            all_tags = Tag.objects.none()
     else:
-        # Общий список блога — все теги
         all_tags = Tag.objects.annotate(
-            post_count=Count('taggit_taggeditem_items', filter=Q(taggit_taggeditem_items__content_type__model='post'))
+            post_count=Count(
+                'taggit_taggeditem_items',
+                filter=Q(taggit_taggeditem_items__content_type__model='post'),
+            )
         ).filter(post_count__gt=0).order_by('name')
 
     posts = apply_blog_post_sort(posts, blog_sort)
-
-    # Обновляем счетчик после фильтрации
-    filtered_count = posts.count()
     
     # Генерируем structured data для категории или автора
     structured_data = None
@@ -180,7 +151,7 @@ def post_list(request, category_slug=None):
     # Автоматическое SEO описание
     if category and category.description:
         seo_description = SEOUtils.generate_meta_description(category.description, 160)
-    elif 'tag' in locals() and tag:
+    elif tag:
         seo_description = f"Читайте статьи по теме #{tag.name} в блоге LukInterLab. Инсайты, уроки и инновации в IT и ИИ."
     else:
         seo_description = "Блог LukInterLab: статьи об ИИ, программировании и современных технологиях. Посмотрите наши последние новости и советы."
@@ -202,11 +173,11 @@ def post_list(request, category_slug=None):
     return render(request,
                   'blog/page_blog-1.html',
                   {'category': category,
-                   'tag': tag if 'tag' in locals() else None,
+                   'tag': tag,
                    'parent_categories': parent_categories,
                    'child_categories': child_categories,
                    'all_categories': all_categories,
-                   'blog_category_tree': build_blog_category_tree(),
+                   'blog_category_tree': get_cached_blog_category_tree(),
                    'all_tags': all_tags,
                    'blog_sort': blog_sort,
                    'seo_title': seo_title,
@@ -217,7 +188,6 @@ def post_list(request, category_slug=None):
                    'posts': posts,
                    'zagolovok': zagolovok,
                    'count_post': count_post,
-                   'filtered_count': filtered_count,
                    'structured_data': structured_data})
 
 
@@ -529,10 +499,13 @@ def post_list_by_tag(request, tag_slug=None):
             # Если это родительская категория
             parent_categories.append(cat)
     
-    posts = Post.objects.filter(status='published').annotate(
-        comments_count=Count('comments', filter=Q(comments__active=True))
+    posts = (
+        Post.objects.filter(status='published')
+        .select_related('author', 'category')
+        .prefetch_related('tags')
+        .annotate(comments_count=Count('comments', filter=Q(comments__active=True)))
     )
-    count_post = posts.count()
+    count_post = get_cached_published_post_count()
     
     if tag_slug:
         # Расшифруйте тег slug, закодированный в URL-адресе
@@ -566,7 +539,7 @@ def post_list_by_tag(request, tag_slug=None):
                    'parent_categories': parent_categories,
                    'child_categories': child_categories,
                    'all_categories': all_categories,
-                   'blog_category_tree': build_blog_category_tree(),
+                   'blog_category_tree': get_cached_blog_category_tree(),
                    'blog_sort': blog_sort,
                    'seo_title': seo_title,
                    'seo_description': seo_description,
@@ -603,15 +576,41 @@ def post_search(request):
         form = SearchForm(request.GET)
         if form.is_valid():
             query = form.cleaned_data['query']
-            # 1. Поиск по блогу (title, content, description, tags)
-            results = Post.objects.filter(
-                Q(title__icontains=query) |
-                Q(content__icontains=query) |
-                Q(description__icontains=query) |
-                Q(tags__name__icontains=query)
-            ).filter(status='published').annotate(
-                comments_count=Count('comments', filter=Q(comments__active=True))
-            ).distinct()
+            qtext = (query or '').strip()
+            # 1. Поиск по блогу: при длине запроса ≥ 3 — триграммы по title/description + прежние условия
+            blog_base = (
+                Post.objects.filter(status='published')
+                .select_related('author', 'category')
+                .prefetch_related('tags')
+            )
+            if len(qtext) >= 3:
+                from django.contrib.postgres.search import TrigramSimilarity
+
+                sim = TrigramSimilarity('title', qtext) + TrigramSimilarity('description', qtext)
+                results = (
+                    blog_base.annotate(similarity=sim)
+                    .filter(
+                        Q(similarity__gt=0.12)
+                        | Q(title__icontains=qtext)
+                        | Q(description__icontains=qtext)
+                        | Q(content__icontains=qtext)
+                        | Q(tags__name__icontains=qtext)
+                    )
+                    .annotate(comments_count=Count('comments', filter=Q(comments__active=True)))
+                    .distinct()
+                    .order_by('-similarity', '-created')
+                )
+            else:
+                results = (
+                    blog_base.filter(
+                        Q(title__icontains=query)
+                        | Q(content__icontains=query)
+                        | Q(description__icontains=query)
+                        | Q(tags__name__icontains=query)
+                    )
+                    .annotate(comments_count=Count('comments', filter=Q(comments__active=True)))
+                    .distinct()
+                )
             
             # 2. Поиск по услугам
             from home.models import Service
@@ -650,8 +649,11 @@ def filter_posts_ajax(request):
         category_id = request.GET.get('category')
         tag_name = request.GET.get('tag')
 
-        posts = Post.objects.filter(status='published').select_related('category').prefetch_related('tags').annotate(
-            comments_count=Count('comments', filter=Q(comments__active=True))
+        posts = (
+            Post.objects.filter(status='published')
+            .select_related('author', 'category')
+            .prefetch_related('tags')
+            .annotate(comments_count=Count('comments', filter=Q(comments__active=True)))
         )
 
         title_parts = []

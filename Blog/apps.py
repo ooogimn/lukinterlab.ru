@@ -8,3 +8,4 @@ class BlogConfig(AppConfig):
     
     def ready(self):
         import Blog.signals  # Регистрация сигналов
+        import Blog.category_cache  # noqa: F401 — кэш дерева категорий + сигналы инвалидации

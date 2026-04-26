@@ -139,6 +139,7 @@ INSTALLED_APPS = [
     'ckeditor', 'ckeditor_uploader',
     'jazzmin', 
     'mptt',
+    'django.contrib.postgres',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

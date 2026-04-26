@@ -44,4 +44,4 @@ ENV DJANGO_SETTINGS_MODULE=ALUKINTERLAB.settings
 EXPOSE 8000
 
 # В compose задаётся entry: migrate + collectstatic + gunicorn
-CMD ["gunicorn", "ALUKINTERLAB.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2", "--threads", "4", "--timeout", "120"]
+CMD ["gunicorn", "ALUKINTERLAB.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--worker-class", "gthread", "--threads", "2", "--worker-connections", "1000", "--max-requests", "1000", "--max-requests-jitter", "50", "--timeout", "60", "--keep-alive", "5"]

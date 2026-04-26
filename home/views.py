@@ -45,6 +45,8 @@ from pathlib import Path
 from identity_auth.models import LinkedSocialAccount
 from identity_auth.services import linked_labels_for_user
 
+from .cart_session import SESSION_CART_ITEMS_COUNT_KEY, sync_cart_items_count_session
+
 # Конфигурация SDK YooKassa (актуальная сигнатура create/find_one).
 Configuration.account_id = settings.YOOKASSA_SHOP_ID
 Configuration.secret_key = settings.YOOKASSA_SECRET_KEY
@@ -794,6 +796,7 @@ def add_to_cart(request):
                 cart_item.quantity += quantity
                 cart_item.save()
 
+            sync_cart_items_count_session(request, cart)
             success_message = f'Услуга "{title}" добавлена в корзину'
             if is_ajax:
                 return JsonResponse({
@@ -840,7 +843,7 @@ def update_cart_item(request, item_id):
             
             # Обновляем корзину из БД для получения актуальных данных
             cart.refresh_from_db()
-                
+            sync_cart_items_count_session(request, cart)
             return JsonResponse({
                 'success': True,
                 'total_price': cart.get_total_price(),
@@ -862,7 +865,7 @@ def remove_from_cart(request, item_id):
             
             # Обновляем корзину из БД для получения актуальных данных
             cart.refresh_from_db()
-            
+            sync_cart_items_count_session(request, cart)
             return JsonResponse({
                 'success': True,
                 'total_price': cart.get_total_price(),
@@ -937,6 +940,7 @@ def checkout(request):
                 )
             
             cart.delete()
+            request.session[SESSION_CART_ITEMS_COUNT_KEY] = 0
             messages.success(request, 'Контактные данные сохранены. Заполните опросный лист для запуска проекта.')
             return redirect('home:order_questionnaire', order_id=order.id)
     else:

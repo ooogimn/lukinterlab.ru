@@ -22,8 +22,8 @@
                 id="btn-category-{{ node.category.id }}"
                 aria-label="{{ node.category.title }}">
             <span class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-l-xl text-sm font-bold text-violet-800">
-                {% if node.category.kartinka_cat %}
-                <img src="{{ node.category.kartinka_cat.url }}" alt="" class="h-full w-full object-cover" width="48" height="48" loading="lazy">
+                {% if node.category.kartinka_cat_url %}
+                <img src="{{ node.category.kartinka_cat_url }}" alt="" class="h-full w-full object-cover" width="48" height="48" loading="lazy">
                 {% else %}
                 <span class="select-none text-base uppercase">{{ node.category.title|slice:":1" }}</span>
                 {% endif %}

@@ -95,25 +95,33 @@ def section_backgrounds(request):
 
 
 def cart_info(request):
-    """Контекст-процессор для информации о корзине"""
+    """Контекст-процессор для информации о корзине (счётчик в сессии после первого запроса)."""
+    from django.db.models import Count
+
+    from .cart_session import SESSION_CART_ITEMS_COUNT_KEY
+    from .models import Cart
+
+    cached = request.session.get(SESSION_CART_ITEMS_COUNT_KEY)
+    if cached is not None:
+        try:
+            return {'cart_items_count': int(cached)}
+        except (TypeError, ValueError):
+            pass
+
     cart_items_count = 0
-    
     if request.session.session_key:
         try:
-            from .models import Cart
-            # Используем select_related для оптимизации
-            cart = Cart.objects.select_related().filter(
-                session_key=request.session.session_key
-            ).first()
-            if cart:
-                # Используем count() вместо get_items_count() для оптимизации
-                cart_items_count = cart.items.count()
-        except:
-            pass
-    
-    return {
-        'cart_items_count': cart_items_count
-    }
+            n = (
+                Cart.objects.filter(session_key=request.session.session_key).aggregate(
+                    n=Count('items')
+                )['n']
+            )
+            cart_items_count = int(n or 0)
+        except Exception:
+            cart_items_count = 0
+
+    request.session[SESSION_CART_ITEMS_COUNT_KEY] = cart_items_count
+    return {'cart_items_count': cart_items_count}
 
 
 def legal_info_context(request):
@@ -200,12 +208,19 @@ def header_customer_avatar(request):
 
     if not request.user.is_authenticated:
         return {'header_customer_avatar_url': None}
-    try:
-        from .models import Customer
 
-        c = Customer.objects.filter(user=request.user).only('avatar').first()
-        if c and c.avatar:
-            return {'header_customer_avatar_url': c.avatar.url}
-    except Exception:
-        pass
+    from .avatar_cache import HEADER_AVATAR_CACHE_TTL, header_avatar_cache_key
+    from .models import Customer
+
+    cache_key = header_avatar_cache_key(request.user.pk)
+    url = cache.get(cache_key)
+    if url is None:
+        try:
+            c = Customer.objects.filter(user=request.user).only('avatar').first()
+            url = c.avatar.url if c and c.avatar else ''
+        except Exception:
+            url = ''
+        cache.set(cache_key, url, HEADER_AVATAR_CACHE_TTL)
+    if url:
+        return {'header_customer_avatar_url': url}
     return {'header_customer_avatar_url': static('img/favicon.svg')}
