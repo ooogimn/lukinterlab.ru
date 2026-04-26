@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.postgres.indexes import GinIndex
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from taggit.managers import TaggableManager
@@ -168,6 +169,17 @@ class Post(models.Model):
             models.Index(fields=['slug', 'created']),
             models.Index(fields=['category', 'status']),
             models.Index(fields=['author', '-created']),
+            # Совпадает с Blog.0021_post_trigram_indexes (иначе migrate предупреждает о рассинхроне модели и миграций).
+            GinIndex(
+                fields=['title'],
+                name='Blog_post_title_trgm',
+                opclasses=['gin_trgm_ops'],
+            ),
+            GinIndex(
+                fields=['description'],
+                name='Blog_post_description_trgm',
+                opclasses=['gin_trgm_ops'],
+            ),
         ]
         verbose_name = 'Статья'
         verbose_name_plural = 'Статьи'
