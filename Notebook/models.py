@@ -17,7 +17,10 @@ class WikiPage(MP_Node):
     created_at = models.DateTimeField("Создано", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлено", auto_now=True)
 
-    node_order_by = ["title"]
+    # Без сортировки в MP_Node: при node_order_by treebeard вставляет через
+    # sorted-sibling / сложные пересчёты path и на густых уровнях ловит PathOverflow (500).
+    # Порядок «по названию» делаем в views при сборке дерева (сайдбар).
+    # node_order_by = ['title']  # не включать — риск 500 на N-й дочерней странице
 
     class Meta:
         verbose_name = "Wiki страница"

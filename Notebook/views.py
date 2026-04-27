@@ -24,7 +24,14 @@ def _build_tree_for_root(root_page):
         if parent_node:
             parent_node["children"].append(nodes_by_path[page.path])
 
-    return nodes_by_path[root_page.path]
+    def _sort_sidebar_children(n):
+        n["children"].sort(key=lambda x: (x["page"].title or "").casefold())
+        for c in n["children"]:
+            _sort_sidebar_children(c)
+
+    root_node = nodes_by_path[root_page.path]
+    _sort_sidebar_children(root_node)
+    return root_node
 
 
 def _mark_attachments_branch(node, attachment_page_ids):
