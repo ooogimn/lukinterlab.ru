@@ -75,6 +75,11 @@ class WikiPageForm(forms.Form):
         parent = self.cleaned_data.get("parent")
         if not self.instance and parent is None and self.initial_parent is not None:
             parent = self.initial_parent
+        # Редактирование: в шаблоне поле parent часто не выводят — в POST ключа нет, cleaned parent=None.
+        # None нельзя трактовать как «перенести у корня в новый блокнот» (ветка move(root, sorted-sibling)).
+        if self.instance and parent is None and self.instance.get_parent() is not None:
+            if not self.data or "parent" not in self.data:
+                parent = self.instance.get_parent()
         slug = self._build_unique_slug(title, parent=parent)
 
         if self.instance:
