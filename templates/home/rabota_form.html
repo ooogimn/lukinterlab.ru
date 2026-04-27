@@ -153,6 +153,13 @@
                         </div>
 
                         <div>
+                            <label for="{{ form.preview_image_url.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">{{ form.preview_image_url.label }}</label>
+                            {{ form.preview_image_url }}
+                            <p class="text-xs text-gray-500 mt-1">Внешнее изображение (URL). Поддерживаются прямые ссылки на JPG/PNG/WebP/GIF.</p>
+                            {% if form.preview_image_url.errors %}<p class="mt-1 text-xs text-red-500 font-medium">{{ form.preview_image_url.errors.0 }}</p>{% endif %}
+                        </div>
+
+                        <div>
                             <label for="{{ form.preview_video.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">{{ form.preview_video.label }}</label>
                             {% if object.preview_video %}
                             <div class="mb-3 rounded-xl overflow-hidden border-2 border-indigo-200 shadow-sm bg-black">
@@ -164,6 +171,13 @@
                             {% if form.preview_video.errors %}<p class="mt-1 text-xs text-red-500 font-medium">{{ form.preview_video.errors.0 }}</p>{% endif %}
                         </div>
 
+                        <div>
+                            <label for="{{ form.preview_video_url.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">{{ form.preview_video_url.label }}</label>
+                            {{ form.preview_video_url }}
+                            <p class="text-xs text-gray-500 mt-1">Поддерживаются YouTube, Rutube, VK Video. Это поле имеет высший приоритет показа.</p>
+                            {% if form.preview_video_url.errors %}<p class="mt-1 text-xs text-red-500 font-medium">{{ form.preview_video_url.errors.0 }}</p>{% endif %}
+                        </div>
+
                         <!-- Галерея -->
                         <div class="pt-4 border-t border-indigo-200">
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Галерея (Медиафайлы)</label>
@@ -171,14 +185,20 @@
                             <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
                                 {% for media in object.media_items.all %}
                                 <div class="relative group rounded-xl border-2 border-gray-200 shadow-sm overflow-hidden h-24 bg-gray-200 hover:border-red-300 transition-colors">
-                                    {% if media.is_video %}
-                                    <video src="{{ media.file.url }}" class="w-full h-full object-cover" muted></video>
+                                    {% with m=media.get_display_media %}
+                                    {% if m.type == 'video' %}
+                                    <video src="{{ m.url }}" class="w-full h-full object-cover" muted></video>
                                     <div class="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
                                         <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4l12 6-12 6z"/></svg>
                                     </div>
+                                    {% elif m.type == 'external_video' %}
+                                    <div class="w-full h-full bg-black/70 text-white flex items-center justify-center text-xs px-2 text-center">
+                                        Внешнее видео
+                                    </div>
                                     {% else %}
-                                    <img src="{{ media.file.url }}" class="w-full h-full object-cover">
+                                    <img src="{{ m.thumbnail_url|default:m.url }}" class="w-full h-full object-cover">
                                     {% endif %}
+                                    {% endwith %}
                                     <div class="absolute top-1 right-1 bg-white/95 rounded-lg flex items-center px-2 py-0.5 shadow-md border border-gray-200">
                                         <input type="checkbox" name="delete_media" value="{{ media.id }}" class="mr-1.5 text-red-600 focus:ring-red-500 rounded cursor-pointer h-3.5 w-3.5">
                                         <span class="text-xs text-red-600 font-bold">Удалить</span>
@@ -190,6 +210,14 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1.5">Добавить новые файлы (изображения / GIF / видео)</label>
                             <input type="file" name="new_media" multiple accept="image/*,.gif,video/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 cursor-pointer">
                             <p class="text-xs text-gray-500 mt-1">Можно выбрать несколько файлов. GIF и видео будут воспроизводиться автоматически.</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                                <input type="url" name="new_media_external_url" placeholder="https://youtube.com/... / rutube / vk / image url" class="sm:col-span-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                                <select name="new_media_external_type" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                                    <option value="video">Видео</option>
+                                    <option value="image">Изображение</option>
+                                </select>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Можно добавить одно внешнее медиа-ссылкой за сохранение формы.</p>
                         </div>
 
                         <!-- Переключатели -->

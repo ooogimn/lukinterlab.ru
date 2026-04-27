@@ -125,39 +125,53 @@
         </header>
 
         <!-- Featured Image or Video -->
-        {% if post.video_file %}
+        {% with dm=post.get_display_media %}
+        {% if dm.type == 'external_video' and dm.embed_url %}
         <div class="mb-12 relative">
-            <video src="{{ post.video_file.url }}" 
-                   class="w-full max-h-[80vh] object-contain rounded-2xl shadow-lg bg-black"
-                   controls 
-                   autoplay 
-                   preload="metadata">
-            </video>
-            <!-- Category Badge -->
+            <iframe src="{{ dm.autoplay_embed_url|default:dm.embed_url }}"
+                    title="{{ post.title }}"
+                    class="w-full aspect-video rounded-lg border-0 shadow-lg bg-black"
+                    allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen></iframe>
             <div class="absolute top-4 right-4 z-10">
                 <a href="{% url 'Blog:post_list' %}?category={{ post.category.id }}" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-200 inline-block">
                     {{ post.category.title }}
                 </a>
             </div>
         </div>
-        {% elif post.kartinka and post.has_image %}
+        {% elif dm.type == 'local_video' %}
         <div class="mb-12 relative">
-            <img src="{{ post.kartinka.url }}" 
-                 alt="{% if post.meta_description %}{{ post.meta_description|truncatewords:10 }} - AI и ИИ технологии LukInterLab{% else %}{{ post.title }} - искусственный интеллект, AI, ИИ, LLM{% endif %}" 
-                 class="w-full h-96 object-cover rounded-2xl shadow-lg cursor-pointer hover:opacity-90 transition-opacity"
-                 onclick="openImageModal('{{ post.kartinka.url }}', '{{ post.title|escapejs }}')"
-                 width="1200" height="800"
-                 loading="eager"
-                 title="{{ post.title }} - LukInterLab AI и ИИ решения">
-            
-            <!-- Category Badge -->
+            <video src="{{ dm.url }}"
+                   class="w-full max-h-[80vh] object-contain rounded-2xl shadow-lg bg-black"
+                   controls
+                   autoplay
+                   muted
+                   playsinline
+                   preload="metadata">
+            </video>
             <div class="absolute top-4 right-4 z-10">
                 <a href="{% url 'Blog:post_list' %}?category={{ post.category.id }}" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-200 inline-block">
                     {{ post.category.title }}
                 </a>
             </div>
-            
-            <!-- Tags on Image -->
+        </div>
+        {% elif dm.type == 'image' or dm.type == 'external_image' %}
+        <div class="mb-12 relative">
+            <img src="{{ dm.url }}"
+                 alt="{% if post.meta_description %}{{ post.meta_description|truncatewords:10 }} - AI и ИИ технологии LukInterLab{% else %}{{ post.title }} - искусственный интеллект, AI, ИИ, LLM{% endif %}"
+                 class="w-full h-96 object-cover rounded-2xl shadow-lg cursor-pointer hover:opacity-90 transition-opacity"
+                 {% if dm.type == 'image' %}onclick="openImageModal('{{ post.kartinka.url }}', '{{ post.title|escapejs }}')"{% elif dm.type == 'external_image' %}onclick="openImageModal('{{ dm.url|escapejs }}', '{{ post.title|escapejs }}')"{% endif %}
+                 width="1200" height="800"
+                 loading="eager"
+                 title="{{ post.title }} - LukInterLab AI и ИИ решения">
+
+            <div class="absolute top-4 right-4 z-10">
+                <a href="{% url 'Blog:post_list' %}?category={{ post.category.id }}" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-200 inline-block">
+                    {{ post.category.title }}
+                </a>
+            </div>
+
             {% if post.tags.all %}
             <div class="absolute bottom-4 left-4 z-10">
                 <div class="flex flex-wrap gap-2">
@@ -184,6 +198,7 @@
             </div>
         </div>
         {% endif %}
+        {% endwith %}
 
         <!-- Table of Contents -->
         {% if toc_html %}
@@ -243,15 +258,9 @@
             <h2 class="text-2xl font-bold text-gray-900 mb-6">Похожие статьи</h2>
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {% for related_post in related_posts %}
-                <article class="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
-                    <a href="{{ related_post.get_absolute_url }}" class="block">
-                        {% if related_post.kartinka and related_post.has_image %}
-                        <img src="{{ related_post.kartinka.url }}" 
-                             alt="{{ related_post.title }}" 
-                             class="w-full h-48 object-cover"
-                             loading="lazy"
-                             width="400" height="300">
-                        {% endif %}
+                <article class="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden group">
+                    <a href="{{ related_post.get_absolute_url }}" class="block relative overflow-hidden">
+                        {% include "blog/partials/post_card_media_list.html" with post=related_post height_class="h-48" %}
                         <div class="p-4">
                             <h3 class="text-lg font-semibold text-gray-900 mb-2 hover:text-primary-600 transition-colors">
                                 {{ related_post.title|truncatewords:10 }}
@@ -1159,12 +1168,19 @@ let images = [];
 // Инициализация: собираем все изображения из статьи
 document.addEventListener('DOMContentLoaded', function() {
     // Добавляем главное изображение
-    {% if post.kartinka and post.has_image %}
+    {% with dm=post.get_display_media %}
+    {% if dm.type == 'image' and post.kartinka and post.has_image %}
     images.push({
         src: '{{ post.kartinka.url }}',
         alt: '{{ post.title|escapejs }}'
     });
+    {% elif dm.type == 'external_image' and dm.url %}
+    images.push({
+        src: '{{ dm.url|escapejs }}',
+        alt: '{{ post.title|escapejs }}'
+    });
     {% endif %}
+    {% endwith %}
 
     // Собираем все изображения из контента статьи
     // Добавляем lazy loading для изображений в контенте статьи
@@ -1180,7 +1196,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Получаем URL главного изображения, если оно есть
-    const mainImageUrl = {% if post.kartinka and post.has_image %}'{{ post.kartinka.url }}'{% else %}''{% endif %};
+    const mainImageUrl = {% with dm=post.get_display_media %}{% if dm.type == 'image' and post.kartinka and post.has_image %}'{{ post.kartinka.url|escapejs }}'{% elif dm.type == 'external_image' and dm.url %}'{{ dm.url|escapejs }}'{% else %}''{% endif %}{% endwith %};
     
     contentImages.forEach(img => {
         // Получаем полный URL изображения

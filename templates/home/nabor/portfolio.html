@@ -57,24 +57,20 @@
                 data-game-html="{{ rabota.game_html|default_if_none:''|escape }}"
                 data-detail-url="{{ rabota.get_absolute_url }}"
             >
-                {% with first_media=rabota.media_items.first %}
-                {% if rabota.preview_video %}
-                    <video src="{{ rabota.preview_video.url }}?v={{ rabota.updated.timestamp|floatformat:0 }}" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none"></video>
-                {% elif first_media and first_media.is_video %}
-                    <video src="{{ first_media.file.url }}?v={{ rabota.updated.timestamp|floatformat:0 }}" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none"></video>
-                {% elif first_media %}
-                    <img src="{{ first_media.file.url }}?v={{ rabota.updated.timestamp|floatformat:0 }}" alt="{{ rabota.name }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none">
-                {% elif rabota.image %}
-                    {% if rabota.is_image_gif %}
-                        <img src="{{ rabota.get_image_url_with_version }}" alt="{{ rabota.name }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none">
-                    {% elif rabota.thumbnail_webp %}
-                        <picture>
-                            <source srcset="{{ rabota.get_thumbnail_webp_url_with_version }}" type="image/webp">
-                            <img src="{{ rabota.get_image_url_with_version }}" alt="{{ rabota.name }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none">
-                        </picture>
-                    {% else %}
-                        <img src="{{ rabota.get_image_url_with_version }}" alt="{{ rabota.name }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none">
-                    {% endif %}
+                {% with display_media=rabota.get_display_media %}
+                {% if display_media.type == 'external_video' %}
+                    <iframe
+                      src="{{ display_media.autoplay_embed_url|default:display_media.embed_url }}"
+                      title="{{ rabota.name }}"
+                      class="absolute inset-0 w-full h-full border-0 transition-transform duration-700 group-hover:scale-105 pointer-events-none"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      referrerpolicy="strict-origin-when-cross-origin"
+                      allowfullscreen
+                    ></iframe>
+                {% elif display_media.type == 'local_video' %}
+                    <video src="{{ display_media.url }}" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none"></video>
+                {% elif display_media.type == 'image' or display_media.type == 'external_image' %}
+                    <img src="{{ display_media.thumbnail_url|default:display_media.url }}" alt="{{ rabota.name }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none">
                 {% else %}
                     <div class="absolute inset-0 w-full h-full bg-gradient-to-br from-primary-50 to-blue-50 flex items-center justify-center">
                         <svg class="w-12 h-12 text-primary-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,14 +82,19 @@
 
                 <script type="application/json" class="js-portfolio-media">
                     [
-                        {% if rabota.preview_video %}
-                            {"type":"video","url":"{{ rabota.preview_video.url|escapejs }}"}{% if rabota.image or rabota.media_items.exists %},{% endif %}
+                        {% with display_media=rabota.get_display_media %}
+                        {% if display_media.type == 'external_video' %}
+                            {"type":"external_video","url":"{{ display_media.url|escapejs }}","embed_url":"{{ display_media.embed_url|default:''|escapejs }}","autoplay_embed_url":"{{ display_media.autoplay_embed_url|default:''|escapejs }}"}{% if rabota.media_items.exists %},{% endif %}
+                        {% elif display_media.type == 'local_video' %}
+                            {"type":"video","url":"{{ display_media.url|escapejs }}"}{% if rabota.media_items.exists %},{% endif %}
+                        {% elif display_media.type == 'image' or display_media.type == 'external_image' %}
+                            {"type":"image","url":"{{ display_media.url|escapejs }}"}{% if rabota.media_items.exists %},{% endif %}
                         {% endif %}
-                        {% if rabota.image %}
-                            {"type":"image","url":"{{ rabota.image.url|escapejs }}"}{% if rabota.media_items.exists %},{% endif %}
-                        {% endif %}
+                        {% endwith %}
                         {% for media in rabota.media_items.all %}
-                            {"type":"{% if media.is_video %}video{% else %}image{% endif %}","url":"{{ media.file.url|escapejs }}"}{% if not forloop.last %},{% endif %}
+                            {% with m=media.get_display_media %}
+                            {"type":"{% if m.type == 'video' %}video{% elif m.type == 'external_video' %}external_video{% else %}image{% endif %}","url":"{{ m.url|escapejs }}","embed_url":"{{ m.embed_url|default:''|escapejs }}","autoplay_embed_url":"{{ m.autoplay_embed_url|default:''|escapejs }}"}{% if not forloop.last %},{% endif %}
+                            {% endwith %}
                         {% endfor %}
                     ]
                 </script>
@@ -352,6 +353,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const media = modalState.media[modalState.currentIndex];
         if (!media) {
             modalMediaStage.innerHTML = '<div class="text-gray-200">Нет медиа для просмотра</div>';
+            return;
+        }
+
+        if (media.type === 'external_video' && media.embed_url) {
+            const iframe = document.createElement('iframe');
+            iframe.src = media.embed_url;
+            iframe.className = 'w-full h-full rounded-lg border-0 bg-black';
+            iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+            iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+            iframe.allowFullscreen = true;
+            modalMediaStage.appendChild(iframe);
             return;
         }
 

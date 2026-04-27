@@ -131,6 +131,18 @@ def generate_article_structured_data(post, request=None):
         image_url = f"{site_url}{post.og_image.url}"
     elif post.kartinka:
         image_url = f"{site_url}{post.kartinka.url}"
+    else:
+        dm = post.get_display_media()
+        tu = dm.get("thumbnail_url") or dm.get("url")
+        if tu and dm.get("type") in (
+            "external_video",
+            "external_image",
+            "image",
+        ):
+            if tu.startswith("http"):
+                image_url = tu
+            else:
+                image_url = f"{site_url}{tu}" if str(tu).startswith("/") else f"{site_url}/{tu}"
     
     # Описание для схемы — как на странице (непустое)
     article_desc = effective_post_meta_description(post, max_length=320)

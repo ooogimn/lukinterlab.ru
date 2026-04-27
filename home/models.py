@@ -9,6 +9,7 @@ import uuid
 from imagekit.models import ImageSpecField
 from imagekit.processors import ResizeToFill, ResizeToFit
 from ckeditor_uploader.fields import RichTextUploadingField
+from .media_utils import resolve_external_media
 
 class Otziv(models.Model):
     class OtzivManager(models.Manager):
@@ -136,6 +137,18 @@ class Rabota(models.Model):
         null=True,
         verbose_name='Главное видео проекта',
         help_text='Опционально: MP4/WebM видео для карточки портфолио (автовоспроизведение, зацикливание).'
+    )
+    preview_video_url = models.URLField(
+        max_length=500,
+        blank=True,
+        verbose_name='Ссылка на внешнее видео',
+        help_text='YouTube / Rutube / VK Video. Имеет высший приоритет показа.',
+    )
+    preview_image_url = models.URLField(
+        max_length=500,
+        blank=True,
+        verbose_name='Ссылка на внешнее изображение',
+        help_text='Прямая ссылка на изображение (jpg/png/webp/gif).',
     )
     
     # WebP версии
@@ -292,11 +305,85 @@ class Rabota(models.Model):
         formatted = "{:,}".format(int(self.sale_price_value)).replace(',', ' ')
         return f"{formatted} ₽"
 
+    def get_display_media(self):
+        """
+        Строгий приоритет рендера:
+        1) preview_video_url
+        2) preview_video
+        3) image / preview_image_url
+        4) fallback
+        """
+        if self.preview_video_url:
+            resolved = resolve_external_media(self.preview_video_url)
+            if resolved and resolved.kind == "video":
+                return {
+                    "type": "external_video",
+                    "url": self.preview_video_url,
+                    "embed_url": resolved.embed_url,
+                    "autoplay_embed_url": resolved.autoplay_embed_url,
+                    "thumbnail_url": resolved.thumbnail_url,
+                    "provider": resolved.provider,
+                }
+
+        if self.preview_video:
+            version = int(self.updated.timestamp()) if self.updated else ''
+            return {
+                "type": "local_video",
+                "url": f"{self.preview_video.url}?v={version}",
+                "embed_url": None,
+                "thumbnail_url": None,
+                "provider": "local",
+            }
+
+        if self.image:
+            return {
+                "type": "image",
+                "url": self.get_image_url_with_version(),
+                "embed_url": None,
+                "thumbnail_url": self.get_thumbnail_webp_url_with_version() or self.get_image_url_with_version(),
+                "provider": "local",
+            }
+
+        if self.preview_image_url:
+            resolved = resolve_external_media(self.preview_image_url)
+            if resolved and resolved.kind == "image":
+                return {
+                    "type": "external_image",
+                    "url": self.preview_image_url,
+                    "embed_url": None,
+                    "thumbnail_url": resolved.thumbnail_url or self.preview_image_url,
+                    "provider": resolved.provider,
+                }
+
+        return {
+            "type": "fallback",
+            "url": "/static/img/favicon.svg",
+            "embed_url": None,
+            "thumbnail_url": "/static/img/favicon.svg",
+            "provider": "fallback",
+        }
+
 
 class RabotaMedia(models.Model):
     """Модель для галереи изображений и видео портфолио"""
     rabota = models.ForeignKey(Rabota, on_delete=models.CASCADE, related_name='media_items', verbose_name='Проект')
-    file = models.FileField(upload_to='rabota_media/', verbose_name='Файл (Изображение или Видео)')
+    file = models.FileField(upload_to='rabota_media/', verbose_name='Файл (Изображение или Видео)', blank=True, null=True)
+    external_url = models.URLField(
+        max_length=500,
+        blank=True,
+        verbose_name='Внешняя ссылка на медиа',
+        help_text='YouTube / Rutube / VK Video или прямая ссылка на изображение.',
+    )
+    EXTERNAL_TYPE_CHOICES = [
+        ('image', 'Изображение'),
+        ('video', 'Видео'),
+    ]
+    external_type = models.CharField(
+        max_length=10,
+        choices=EXTERNAL_TYPE_CHOICES,
+        blank=True,
+        verbose_name='Тип внешнего медиа',
+    )
     is_video = models.BooleanField(default=False, verbose_name='Это видео')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок отображения')
     created = models.DateTimeField(auto_now_add=True)
@@ -308,15 +395,49 @@ class RabotaMedia(models.Model):
         
     def __str__(self):
         return f"Медиа для {self.rabota.name} ({self.id})"
+
+    def get_display_media(self):
+        if self.external_url:
+            resolved = resolve_external_media(self.external_url)
+            if resolved:
+                return {
+                    "type": "external_video" if resolved.kind == "video" else "external_image",
+                    "url": self.external_url,
+                    "embed_url": resolved.embed_url,
+                    "autoplay_embed_url": resolved.autoplay_embed_url,
+                    "thumbnail_url": resolved.thumbnail_url or self.external_url,
+                    "provider": resolved.provider,
+                    "is_external": True,
+                }
+        if self.file:
+            return {
+                "type": "video" if self.is_video else "image",
+                "url": self.file.url,
+                "embed_url": None,
+                "thumbnail_url": self.file.url,
+                "provider": "local",
+                "is_external": False,
+            }
+        return {
+            "type": "image",
+            "url": "/static/img/favicon.svg",
+            "embed_url": None,
+            "thumbnail_url": "/static/img/favicon.svg",
+            "provider": "fallback",
+            "is_external": False,
+        }
         
     def save(self, *args, **kwargs):
-        # Auto-detect if it's a video based on extension
-        if self.file and hasattr(self.file, 'name') and self.file.name:
+        if self.external_url:
+            resolved = resolve_external_media(self.external_url)
+            if resolved:
+                self.is_video = resolved.kind == "video"
+                if not self.external_type:
+                    self.external_type = "video" if self.is_video else "image"
+        elif self.file and hasattr(self.file, 'name') and self.file.name:
             ext = self.file.name.split('.')[-1].lower()
-            if ext in ['mp4', 'webm', 'ogg', 'mov', 'avi']:
-                self.is_video = True
-            else:
-                self.is_video = False
+            self.is_video = ext in ['mp4', 'webm', 'ogg', 'mov', 'avi']
+            self.external_type = ''
         super().save(*args, **kwargs)
 
 

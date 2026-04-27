@@ -701,6 +701,7 @@ def filter_posts_ajax(request):
         # Подготавливаем данные статей для JSON
         posts_data = []
         for post in posts:
+            dm = post.get_display_media()
             posts_data.append({
                 'id': post.id,
                 'title': post.title,
@@ -714,7 +715,15 @@ def filter_posts_ajax(request):
                 'fixed': post.fixed,
                 'image_url': post.kartinka.url if post.kartinka else None,
                 'video_file_url': post.video_file.url if post.video_file else None,
-                'has_video': bool(post.video) or bool(post.video_file),
+                'has_video': bool(post.video) or bool(post.video_file) or bool(post.preview_video_url),
+                'has_richtext_video': bool(str(post.video or '').strip()),
+                'display_media': {
+                    'type': dm['type'],
+                    'url': dm.get('url') or '',
+                    'thumbnail_url': dm.get('thumbnail_url') or '',
+                    'embed_url': dm.get('embed_url') or '',
+                    'autoplay_embed_url': dm.get('autoplay_embed_url') or '',
+                },
                 'tags': [tag.name for tag in post.tags.all()],
                 'tags_count': post.tags.count(),
                 'comments_count': post.comments_count

@@ -137,6 +137,7 @@ ARTICLE_PARSED_NEWS_TARGET_WORDS = env_int("ARTICLE_PARSED_NEWS_TARGET_WORDS", 4
 
 INSTALLED_APPS = [
     'ckeditor', 'ckeditor_uploader',
+    'treebeard',
     'jazzmin', 
     'mptt',
     'django.contrib.postgres',
@@ -148,7 +149,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sitemaps',  # Sitemap для SEO
     'identity_auth',  # привязки OAuth / VK ID к одному User (см. identity_auth/README_INTEGRATION.md)
-    'home', 'Blog.apps.BlogConfig', 'Users', 'taggit', 'Assistant',
+    'home', 'Blog.apps.BlogConfig', 'Users', 'taggit', 'Assistant', 'Notebook.apps.NotebookConfig',
     'django_q',  # Django-Q для фоновых задач
     'Moderation',  # Модерация статей, комментариев и SEO
 ]
@@ -274,7 +275,9 @@ MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CKEDITOR_UPLOAD_PATH = "uploads/"
+# Храним медиа-объекты редактора в выделенном wiki-префиксе
+# (глобальная настройка django-ckeditor, без привязки к конкретной модели).
+CKEDITOR_UPLOAD_PATH = "wiki/editor/"
 CKEDITOR_IMAGE_BACKEND = "pillow"
 CKEDITOR_JQUERY_URL = '//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js'
 CKEDITOR_CONFIGS = {

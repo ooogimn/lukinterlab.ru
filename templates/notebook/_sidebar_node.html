@@ -1,0 +1,52 @@
+<details
+  class="group rounded-lg border-2 border-emerald-500 bg-gradient-to-r from-white to-indigo-50 shadow-sm"
+  style="box-shadow: 0 0 16px rgba(16, 185, 129, 0.75);"
+  {% if node.page.id in expanded_ids %}open{% endif %}
+>
+  <summary
+    class="cursor-pointer hover:bg-indigo-100 px-2 py-1 rounded transition-colors duration-150 flex justify-between items-center gap-2"
+    {% if node.children %}
+      style="background-image: repeating-linear-gradient(-45deg, rgba(99, 102, 241, 0.16) 0, rgba(99, 102, 241, 0.16) 8px, rgba(255, 255, 255, 0.45) 8px, rgba(255, 255, 255, 0.45) 16px);"
+    {% endif %}
+  >
+    <span class="flex items-center gap-2 min-w-0">
+      <span class="text-xs text-gray-500 inline-flex items-center">
+        {% if node.children %}
+          <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-red-100 border-4 border-red-600 ring-2 ring-red-300 mr-2 sidebar-chevron-closed shadow">
+            <i class="fas fa-chevron-right text-sm text-red-800" aria-hidden="true"></i>
+            <span class="text-base font-extrabold text-red-800 leading-none">▸</span>
+          </span>
+          <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-red-200 border-4 border-red-700 ring-2 ring-red-300 mr-2 sidebar-chevron-open shadow-lg">
+            <i class="fas fa-chevron-down text-sm text-red-900" aria-hidden="true"></i>
+            <span class="text-base font-extrabold text-red-900 leading-none">▾</span>
+          </span>
+        {% else %}
+          <i class="fas fa-file-alt text-xs text-gray-400 mr-2"></i>
+        {% endif %}
+      </span>
+      <a href="{% url 'Notebook:notebook_page' notebook_root.id node.page.id %}" class="text-sm truncate font-medium flex items-center rounded px-2 py-1 {% if selected_page.id == node.page.id %}font-bold text-blue-700 bg-blue-100 border border-blue-200{% else %}text-gray-800 hover:bg-white border border-transparent{% endif %} {% if node.has_attachments_branch %}font-extrabold text-emerald-900{% endif %}">
+        {% if node.children %}
+          <i class="fas fa-folder text-blue-400 mr-1"></i>
+        {% else %}
+          <i class="fas fa-file-alt text-gray-400 mr-1"></i>
+        {% endif %}
+        {{ node.page.title }}
+        {% if node.page.id in attachment_page_ids %}
+          <span class="ml-2 text-[11px] font-bold text-emerald-800 bg-emerald-200 px-1.5 py-0.5 rounded">📎</span>
+        {% endif %}
+      </a>
+    </span>
+    <a href="{% url 'Notebook:page_create_child' node.page.id %}" title="Создать подпапку/страницу" class="inline-flex items-center justify-center transition-all duration-150 rounded-md px-2 py-1.5 bg-gradient-to-r from-emerald-200 to-cyan-200 hover:from-emerald-300 hover:to-cyan-300 shadow-sm hover:shadow text-emerald-900 min-w-[30px] min-h-[28px] border border-emerald-400">
+      <i class="fas fa-plus text-sm text-emerald-900" aria-hidden="true"></i>
+      <span class="text-sm font-bold leading-none text-emerald-900">+</span>
+    </a>
+  </summary>
+
+  {% if node.children %}
+    <div class="pl-3 pr-2 pb-2 pt-1 space-y-2 border-l-2 border-indigo-200 ml-3">
+      {% for child in node.children %}
+        {% include "notebook/_sidebar_node.html" with node=child notebook_root=notebook_root selected_page=selected_page expanded_ids=expanded_ids attachment_page_ids=attachment_page_ids %}
+      {% endfor %}
+    </div>
+  {% endif %}
+</details>

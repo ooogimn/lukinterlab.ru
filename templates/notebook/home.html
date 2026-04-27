@@ -1,0 +1,61 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Wiki Блокнот{% endblock %}
+
+{% block meny %}
+  {% include "meny/sidibar-1.html" %}
+{% endblock %}
+
+{% block straniza %}
+<section class="py-20 bg-slate-50">
+  <div class="section-content">
+    <div class="max-w-6xl mx-auto px-4">
+      {% include "identity_auth/partials/flash_messages.html" %}
+      {% include "home/customer/_cabinet_nav.html" %}
+
+      <div class="bg-white rounded-2xl shadow-md p-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900">Полка блокнотов</h1>
+            <p class="text-gray-600 mt-1">Корневые проекты и направления Wiki.</p>
+          </div>
+          <a href="{% url 'Notebook:page_create_root' %}" class="inline-flex items-center px-5 py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors shadow">
+            + Создать новый блокнот
+          </a>
+        </div>
+
+        {% if notebook_roots %}
+          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {% for notebook in notebook_roots %}
+              <article class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ notebook.title }}</h2>
+                <p class="text-sm text-gray-500 mb-4">{{ notebook.get_folder_path }}</p>
+                <div class="flex flex-wrap gap-2">
+                  <a href="{% url 'Notebook:notebook' notebook.id %}" title="Открыть блокнот" aria-label="Открыть блокнот" class="inline-flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow">
+                    <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm0 16H5V5h14v14zm-2-8h-3V8h-4v3H7l5 5 5-5z"/>
+                    </svg>
+                  </a>
+                  <a href="{% url 'Notebook:page_edit' notebook.id %}" title="Редактировать название" aria-label="Редактировать название" class="inline-flex items-center justify-center w-10 h-10 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow">
+                    <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25zm2.92 2.33H5v-.92l9.06-9.06.92.92-9.06 9.06zM20.71 7.04a1 1 0 000-1.41L18.37 3.3a1 1 0 00-1.41 0l-1.13 1.13 3.75 3.75 1.13-1.14z"/>
+                    </svg>
+                  </a>
+                  <a href="{% url 'Notebook:page_delete' notebook.id %}" title="Удалить блокнот" aria-label="Удалить блокнот" class="inline-flex items-center justify-center w-10 h-10 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow">
+                    <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M9 3h6l1 1h4v2H4V4h4l1-1zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/>
+                    </svg>
+                  </a>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-gray-500">Пока нет блокнотов. Создайте первый корневой блокнот.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

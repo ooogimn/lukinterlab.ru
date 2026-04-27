@@ -1,0 +1,360 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ notebook_root.title }}{% endblock %}
+
+{% block meny %}
+  {% include "meny/sidibar-1.html" %}
+{% endblock %}
+
+{% block straniza %}
+<section class="py-20 bg-slate-50">
+  <div class="max-w-7xl mx-auto px-4">
+    {% include "identity_auth/partials/flash_messages.html" %}
+    {% include "home/customer/_cabinet_nav.html" %}
+
+    <div class="flex flex-col lg:flex-row gap-6 w-full items-stretch">
+      <aside class="notebook-sidebar w-full bg-gradient-to-b from-slate-100 to-indigo-100 border border-indigo-200 rounded-xl p-4 shadow-sm shrink-0">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-indigo-900">Оглавление</h2>
+          <a href="{% url 'Notebook:page_create_child' notebook_root.id %}" class="text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-1 rounded hover:bg-emerald-200 transition-colors" title="Новая страница в корне">+ корень</a>
+        </div>
+
+        <div class="space-y-2">
+          {% include "notebook/_sidebar_node.html" with node=sidebar_tree notebook_root=notebook_root selected_page=selected_page expanded_ids=expanded_ids attachment_page_ids=attachment_page_ids %}
+        </div>
+      </aside>
+
+      <main class="notebook-main w-full lg:flex-1 bg-white border border-gray-200 rounded-xl p-8 shadow-lg min-h-[600px]">
+        <article>
+          <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
+            <div>
+              <h1 class="text-3xl font-bold text-gray-800 border-b border-gray-200 pb-4 mb-2">{{ selected_page.title }}</h1>
+              <p class="text-sm text-gray-500 mt-1">{{ selected_page.get_folder_path }}</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <a href="{% url 'Notebook:page_edit' selected_page.id %}" title="Редактировать страницу" aria-label="Редактировать страницу" class="inline-flex items-center justify-center w-10 h-10 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow">
+                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25zm2.92 2.33H5v-.92l9.06-9.06.92.92-9.06 9.06zM20.71 7.04a1 1 0 000-1.41L18.37 3.3a1 1 0 00-1.41 0l-1.13 1.13 3.75 3.75 1.13-1.14z"/>
+                </svg>
+              </a>
+              <button type="button" id="open-upload-panel" title="Загрузить файл" aria-label="Загрузить файл" class="inline-flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow">
+                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M19.35 10.04A7 7 0 005.6 9 5 5 0 006 19h13a4 4 0 00.35-7.96zM13 12v4h-2v-4H8l4-4 4 4h-3z"/>
+                </svg>
+              </button>
+              <a href="{% url 'Notebook:page_delete' selected_page.id %}" title="Удалить страницу" aria-label="Удалить страницу" class="inline-flex items-center justify-center w-10 h-10 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow">
+                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M9 3h6l1 1h4v2H4V4h4l1-1zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+
+          <div class="prose max-w-none mb-8">
+            {{ selected_page.content|safe }}
+          </div>
+
+          {% if attachment_items %}
+            <section class="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 p-4 rounded-lg mt-8">
+              <h3 class="text-lg font-semibold text-blue-900 mb-3">Файлы страницы</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                {% for attachment in attachment_items %}
+                  <div class="border border-blue-200 rounded-lg bg-white p-3">
+                    <button
+                      type="button"
+                      class="w-full text-left attachment-open"
+                      data-index="{{ forloop.counter0 }}"
+                      data-kind="{{ attachment.kind }}"
+                      data-url="{{ attachment.url }}"
+                      data-embed-url="{{ attachment.embed_url|default:'' }}"
+                      data-name="{{ attachment.name }}"
+                    >
+                      {% if attachment.kind == "image" %}
+                        <img src="{{ attachment.url }}" alt="{{ attachment.name }}" class="w-full h-36 object-cover rounded-md border border-gray-200">
+                      {% elif attachment.kind == "video" %}
+                        {% if attachment.embed_url %}
+                          <iframe src="{{ attachment.embed_url }}" class="w-full aspect-video rounded-md border border-gray-200" allowfullscreen></iframe>
+                        {% else %}
+                          <video class="w-full h-36 object-cover rounded-md border border-gray-200" muted preload="metadata">
+                            <source src="{{ attachment.url }}">
+                          </video>
+                        {% endif %}
+                      {% else %}
+                        <div class="w-full h-36 rounded-md border border-gray-200 bg-gray-50 flex items-center justify-center text-4xl text-gray-400">📎</div>
+                      {% endif %}
+                      <div class="mt-2 text-sm text-gray-700 truncate">{{ attachment.name }}</div>
+                    </button>
+                    <div class="mt-2 flex justify-end">
+                      <form method="post" action="{% url 'Notebook:attachment_delete' selected_page.id attachment.id %}">
+                      {% csrf_token %}
+                      <button type="submit" class="px-3 py-2 text-sm bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors">Удалить файл</button>
+                    </form>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </section>
+          {% endif %}
+
+          <section id="upload-file-panel" class="{% if selected_page.attachments.all %}mt-6{% else %}mt-8{% endif %} hidden bg-white border border-blue-200 rounded-lg p-4">
+            <h3 class="text-base font-semibold text-blue-900 mb-3">Загрузка файла</h3>
+            <form id="upload-file" method="post" enctype="multipart/form-data" action="{% url 'Notebook:attachment_upload' selected_page.id %}" class="space-y-4">
+              {% csrf_token %}
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">{{ attachment_form.file.label }}</label>
+                {{ attachment_form.file }}
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">{{ attachment_form.external_url.label }}</label>
+                {{ attachment_form.external_url }}
+                <p class="text-xs text-gray-500 mt-1">Поддержка: YouTube, Rutube, VK Video и прямые ссылки на изображения.</p>
+              </div>
+              <div class="flex gap-2">
+                <button type="submit" class="px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow">Загрузить файл</button>
+                <button type="button" id="close-upload-panel" class="px-5 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">Отмена</button>
+              </div>
+            </form>
+          </section>
+
+          <div class="flex justify-end mt-8 pt-4 border-t border-gray-200">
+            <div class="flex flex-wrap gap-2">
+              <a href="{% url 'Notebook:page_edit' selected_page.id %}" title="Редактировать страницу" aria-label="Редактировать страницу" class="inline-flex items-center justify-center w-10 h-10 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow">
+                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25zm2.92 2.33H5v-.92l9.06-9.06.92.92-9.06 9.06zM20.71 7.04a1 1 0 000-1.41L18.37 3.3a1 1 0 00-1.41 0l-1.13 1.13 3.75 3.75 1.13-1.14z"/>
+                </svg>
+              </a>
+              <button type="button" class="open-upload-panel-bottom inline-flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow" title="Загрузить файл" aria-label="Загрузить файл">
+                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M19.35 10.04A7 7 0 005.6 9 5 5 0 006 19h13a4 4 0 00.35-7.96zM13 12v4h-2v-4H8l4-4 4 4h-3z"/>
+                </svg>
+              </button>
+              <a href="{% url 'Notebook:page_delete' selected_page.id %}" title="Удалить страницу" aria-label="Удалить страницу" class="inline-flex items-center justify-center w-10 h-10 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow">
+                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M9 3h6l1 1h4v2H4V4h4l1-1zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </article>
+      </main>
+    </div>
+  </div>
+</section>
+<div id="attachment-modal" class="hidden fixed inset-0 z-50 bg-black/80 p-4">
+  <div class="max-w-6xl mx-auto h-full flex flex-col">
+    <div class="flex items-center justify-between text-white mb-3">
+      <div id="modal-filename" class="text-sm md:text-base font-medium truncate pr-4"></div>
+      <div class="flex items-center gap-2">
+        <button type="button" id="modal-prev" class="px-3 py-2 bg-white/20 rounded hover:bg-white/30">◀</button>
+        <button type="button" id="modal-next" class="px-3 py-2 bg-white/20 rounded hover:bg-white/30">▶</button>
+        <button type="button" id="modal-zoom-out" class="px-3 py-2 bg-white/20 rounded hover:bg-white/30">－</button>
+        <button type="button" id="modal-zoom-in" class="px-3 py-2 bg-white/20 rounded hover:bg-white/30">＋</button>
+        <button type="button" id="modal-reset" class="px-3 py-2 bg-white/20 rounded hover:bg-white/30">Сброс</button>
+        <button type="button" id="modal-close" class="px-3 py-2 bg-rose-600 rounded hover:bg-rose-700">✕</button>
+      </div>
+    </div>
+    <div id="modal-stage" class="flex-1 min-h-0 bg-black/60 rounded-lg overflow-hidden relative flex items-center justify-center">
+      <img id="modal-image" class="hidden max-w-none select-none cursor-grab" alt="">
+      <video id="modal-video" class="hidden max-w-full max-h-full" controls></video>
+      <iframe id="modal-iframe" class="hidden w-full aspect-video rounded-lg border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      <a id="modal-file-link" class="hidden text-white underline text-lg" target="_blank" rel="noopener">Открыть файл</a>
+    </div>
+  </div>
+</div>
+<style>
+  .notebook-sidebar {
+    width: 100%;
+  }
+
+  .notebook-main {
+    width: 100%;
+    flex: 1 1 0%;
+  }
+
+  @media (min-width: 1024px) {
+    .notebook-sidebar {
+      width: 300px;
+      min-width: 250px;
+    }
+  }
+
+  details[open] .sidebar-chevron-closed {
+    display: none;
+  }
+  details:not([open]) .sidebar-chevron-open {
+    display: none;
+  }
+</style>
+<script>
+  (() => {
+    const openBtn = document.getElementById("open-upload-panel");
+    const closeBtn = document.getElementById("close-upload-panel");
+    const panel = document.getElementById("upload-file-panel");
+    if (!openBtn || !panel) return;
+
+    const showPanel = () => {
+      panel.classList.remove("hidden");
+      panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    };
+    const hidePanel = () => panel.classList.add("hidden");
+
+    openBtn.addEventListener("click", showPanel);
+    document.querySelectorAll(".open-upload-panel-bottom").forEach((btn) => {
+      btn.addEventListener("click", showPanel);
+    });
+    if (closeBtn) closeBtn.addEventListener("click", hidePanel);
+  })();
+
+  (() => {
+    const items = Array.from(document.querySelectorAll(".attachment-open")).map((el) => ({
+      kind: el.dataset.kind,
+      url: el.dataset.url,
+      embedUrl: el.dataset.embedUrl,
+      name: el.dataset.name,
+    }));
+    if (!items.length) return;
+
+    const modal = document.getElementById("attachment-modal");
+    const stage = document.getElementById("modal-stage");
+    const modalFilename = document.getElementById("modal-filename");
+    const modalImage = document.getElementById("modal-image");
+    const modalVideo = document.getElementById("modal-video");
+    const modalIframe = document.getElementById("modal-iframe");
+    const modalFileLink = document.getElementById("modal-file-link");
+    const btnClose = document.getElementById("modal-close");
+    const btnPrev = document.getElementById("modal-prev");
+    const btnNext = document.getElementById("modal-next");
+    const btnZoomIn = document.getElementById("modal-zoom-in");
+    const btnZoomOut = document.getElementById("modal-zoom-out");
+    const btnReset = document.getElementById("modal-reset");
+
+    let index = 0;
+    let scale = 1;
+    let tx = 0;
+    let ty = 0;
+    let dragging = false;
+    let sx = 0;
+    let sy = 0;
+
+    const applyImageTransform = () => {
+      modalImage.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+    };
+
+    const resetTransform = () => {
+      scale = 1;
+      tx = 0;
+      ty = 0;
+      applyImageTransform();
+    };
+
+    const renderItem = () => {
+      const item = items[index];
+      modalFilename.textContent = item.name;
+      modalImage.classList.add("hidden");
+      modalVideo.classList.add("hidden");
+      modalIframe.classList.add("hidden");
+      modalFileLink.classList.add("hidden");
+      modalVideo.pause();
+      modalVideo.removeAttribute("src");
+      modalVideo.load();
+      modalIframe.removeAttribute("src");
+
+      if (item.kind === "image") {
+        modalImage.src = item.url;
+        modalImage.classList.remove("hidden");
+        resetTransform();
+      } else if (item.kind === "video") {
+        if (item.embedUrl) {
+          modalIframe.src = item.embedUrl;
+          modalIframe.classList.remove("hidden");
+        } else {
+          modalVideo.src = item.url;
+          modalVideo.classList.remove("hidden");
+        }
+      } else {
+        modalFileLink.href = item.url;
+        modalFileLink.textContent = `Открыть файл: ${item.name}`;
+        modalFileLink.classList.remove("hidden");
+      }
+    };
+
+    const openModal = (idx) => {
+      index = idx;
+      modal.classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+      renderItem();
+    };
+
+    const closeModal = () => {
+      modal.classList.add("hidden");
+      document.body.style.overflow = "";
+    };
+
+    document.querySelectorAll(".attachment-open").forEach((el, idx) => {
+      el.addEventListener("click", () => openModal(idx));
+    });
+
+    btnClose.addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+    btnPrev.addEventListener("click", () => {
+      index = (index - 1 + items.length) % items.length;
+      renderItem();
+    });
+    btnNext.addEventListener("click", () => {
+      index = (index + 1) % items.length;
+      renderItem();
+    });
+
+    btnZoomIn.addEventListener("click", () => {
+      if (modalImage.classList.contains("hidden")) return;
+      scale = Math.min(5, scale + 0.2);
+      applyImageTransform();
+    });
+    btnZoomOut.addEventListener("click", () => {
+      if (modalImage.classList.contains("hidden")) return;
+      scale = Math.max(0.2, scale - 0.2);
+      applyImageTransform();
+    });
+    btnReset.addEventListener("click", () => {
+      if (modalImage.classList.contains("hidden")) return;
+      resetTransform();
+    });
+
+    stage.addEventListener("wheel", (e) => {
+      if (modalImage.classList.contains("hidden")) return;
+      e.preventDefault();
+      scale = Math.max(0.2, Math.min(5, scale + (e.deltaY < 0 ? 0.1 : -0.1)));
+      applyImageTransform();
+    });
+
+    modalImage.addEventListener("mousedown", (e) => {
+      dragging = true;
+      sx = e.clientX - tx;
+      sy = e.clientY - ty;
+      modalImage.classList.remove("cursor-grab");
+      modalImage.classList.add("cursor-grabbing");
+    });
+    window.addEventListener("mousemove", (e) => {
+      if (!dragging) return;
+      tx = e.clientX - sx;
+      ty = e.clientY - sy;
+      applyImageTransform();
+    });
+    window.addEventListener("mouseup", () => {
+      dragging = false;
+      modalImage.classList.remove("cursor-grabbing");
+      modalImage.classList.add("cursor-grab");
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (modal.classList.contains("hidden")) return;
+      if (e.key === "Escape") closeModal();
+      if (e.key === "ArrowLeft") btnPrev.click();
+      if (e.key === "ArrowRight") btnNext.click();
+    });
+  })();
+</script>
+{% endblock %}

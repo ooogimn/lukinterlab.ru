@@ -138,27 +138,8 @@ window.BLOG_LIST_PATH = "{% url 'Blog:post_list' %}";
             {% for post in posts %}
             <article class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden group">
                 <!-- Post Image -->
-                <a href="{{ post.get_absolute_url }}" class="block relative overflow-hidden">
-                    {% if post.video_file %}
-                        <video src="{{ post.video_file.url }}" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110 cursor-pointer" autoplay muted loop playsinline></video>
-                    {% elif post.kartinka %}
-                        <img src="{{ post.kartinka.url }}" alt="{{ post.title }}" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110 cursor-pointer" loading="lazy" width="400" height="300">
-                    {% elif post.video %}
-                        <div class="w-full h-64 bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center cursor-pointer hover:from-primary-200 hover:to-secondary-200 transition-colors">
-                            <div class="text-center">
-                                <svg class="w-16 h-16 text-primary-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                <p class="text-primary-600 font-semibold">Видео контент</p>
-                            </div>
-                        </div>
-                    {% else %}
-                        <div class="w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center cursor-pointer hover:from-gray-200 hover:to-gray-300 transition-colors">
-                            <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                        </div>
-                    {% endif %}
+                <a href="{{ post.get_absolute_url }}" class="block relative overflow-hidden cursor-pointer">
+                    {% include "blog/partials/post_card_media_list.html" with post=post height_class="h-64" %}
                     
                     <!-- Category Badge -->
                     <div class="absolute top-4 right-4 z-10">
@@ -622,24 +603,45 @@ document.addEventListener('DOMContentLoaded', function() {
                     let postsHTML = '<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8" id="posts-grid">';
                     
                     data.posts.forEach(post => {
-                        const imageHTML = post.video_file_url
-                            ? `<video src="${post.video_file_url}" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110 cursor-pointer" autoplay muted loop playsinline></video>`
-                            : post.image_url 
-                            ? `<img src="${post.image_url}" alt="${post.title}" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110 cursor-pointer">`
-                            : post.has_video
-                            ? `<div class="w-full h-64 bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center cursor-pointer hover:from-primary-200 hover:to-secondary-200 transition-colors">
+                        const dm = post.display_media || {};
+                        const h = 'h-64';
+                        let imageHTML = '';
+                        if (dm.type === 'external_video') {
+                            const thumb = (dm.thumbnail_url || '').trim();
+                            const bg = thumb
+                                ? `<img src="${thumb}" alt="" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">`
+                                : `<div class="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900"></div>`;
+                            imageHTML = `<div class="relative w-full ${h} overflow-hidden bg-gray-900">${bg}<div class="absolute inset-0 flex items-center justify-center bg-black/35 pointer-events-none" aria-hidden="true"><i class="fa fa-play-circle text-5xl sm:text-6xl text-white drop-shadow-lg"></i></div></div>`;
+                        } else if (dm.type === 'local_video') {
+                            const src = (dm.url || post.video_file_url || '').trim();
+                            imageHTML = src
+                                ? `<video src="${src}" class="w-full ${h} object-cover transition-transform duration-500 group-hover:scale-110" autoplay muted loop playsinline></video>`
+                                : '';
+                        } else if (dm.type === 'image' || dm.type === 'external_image') {
+                            const src = (dm.thumbnail_url || dm.url || '').trim();
+                            if (src) {
+                                const safeTitle = (post.title || '').replace(/"/g, '&quot;');
+                                imageHTML = `<img src="${src}" alt="${safeTitle}" class="w-full ${h} object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" width="400" height="300">`;
+                            }
+                        }
+                        if (!imageHTML) {
+                            if (post.has_richtext_video) {
+                                imageHTML = `<div class="w-full ${h} bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center">
                                 <div class="text-center">
                                     <svg class="w-16 h-16 text-primary-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
                                     <p class="text-primary-600 font-semibold">Видео контент</p>
                                 </div>
-                            </div>`
-                            : `<div class="w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center cursor-pointer hover:from-gray-200 hover:to-gray-300 transition-colors">
+                            </div>`;
+                            } else {
+                                imageHTML = `<div class="w-full ${h} bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
                                 <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                 </svg>
                             </div>`;
+                            }
+                        }
                         
                         const categoryBadge = `<div class="absolute top-4 right-4 z-10">
                             <a href="{% url 'Blog:post_list' %}?category=${post.category_id}" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-200 inline-block">

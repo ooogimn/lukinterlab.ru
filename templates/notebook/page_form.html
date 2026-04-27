@@ -1,0 +1,118 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block meny %}
+  {% include "meny/sidibar-1.html" %}
+{% endblock %}
+
+{% block straniza %}
+<section class="py-20 bg-slate-50">
+  <div class="section-content">
+    <div class="max-w-4xl mx-auto px-4">
+      {% include "identity_auth/partials/flash_messages.html" %}
+      {% include "home/customer/_cabinet_nav.html" %}
+
+      <div class="bg-white rounded-2xl shadow-md p-8">
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+          {% csrf_token %}
+          <div class="flex flex-wrap gap-3 pb-2 border-b border-gray-200">
+            <button type="submit" class="px-5 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">{{ submit_label|default:"Сохранить" }}</button>
+            {% if page %}
+              <button type="button" id="open-upload-in-form" class="px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Загрузить файл</button>
+            {% else %}
+              <button type="button" id="open-create-upload-panel" class="px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Добавить файл</button>
+            {% endif %}
+            <a href="{{ cancel_href|default:'/notebook/' }}" class="px-5 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">Отмена</a>
+          </div>
+          {{ form.media }}
+          {% if form.non_field_errors %}
+            <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-red-700 text-sm">{{ form.non_field_errors }}</div>
+          {% endif %}
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.title.label }}</label>
+            {{ form.title }}
+            {% if form.title.errors %}<p class="mt-1 text-sm text-red-600">{{ form.title.errors|striptags }}</p>{% endif %}
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.content.label }}</label>
+            {{ form.content }}
+            {% if form.content.errors %}<p class="mt-1 text-sm text-red-600">{{ form.content.errors|striptags }}</p>{% endif %}
+          </div>
+          {% if not page %}
+            <section id="create-upload-panel" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 class="text-base font-semibold text-blue-900 mb-3">Вложение для новой страницы</h3>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="id_create_file">Файл</label>
+                <input id="id_create_file" name="create_file" type="file" class="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+              </div>
+              <div class="mt-3">
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="id_create_external_url">Внешняя ссылка</label>
+                <input id="id_create_external_url" name="create_external_url" type="url" placeholder="https://youtube.com/... / rutube / vk video / image url" class="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+              </div>
+              <p class="mt-2 text-xs text-gray-500">Файл прикрепится сразу после создания страницы.</p>
+            </section>
+          {% endif %}
+          <div class="flex flex-wrap gap-3 pt-2">
+            <button type="submit" class="px-5 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">{{ submit_label|default:"Сохранить" }}</button>
+            <a href="{{ cancel_href|default:'/notebook/' }}" class="px-5 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">Отмена</a>
+          </div>
+        </form>
+
+        {% if page %}
+          <section id="upload-form-panel" class="mt-6 hidden bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 class="text-lg font-semibold text-blue-900 mb-3">Загрузка файла к странице</h3>
+            <form method="post" enctype="multipart/form-data" action="{% url 'Notebook:attachment_upload' page.id %}" class="space-y-4">
+              {% csrf_token %}
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">{{ attachment_form.file.label }}</label>
+                {{ attachment_form.file }}
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">{{ attachment_form.external_url.label }}</label>
+                {{ attachment_form.external_url }}
+                <p class="text-xs text-gray-500 mt-1">Поддержка: YouTube, Rutube, VK Video и прямые ссылки на изображения.</p>
+              </div>
+              <div class="flex gap-2">
+                <button type="submit" class="px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Загрузить</button>
+                <button type="button" id="close-upload-in-form" class="px-5 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">Отмена</button>
+              </div>
+            </form>
+          </section>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% if page %}
+<script>
+  (() => {
+    const openBtn = document.getElementById("open-upload-in-form");
+    const closeBtn = document.getElementById("close-upload-in-form");
+    const panel = document.getElementById("upload-form-panel");
+    if (!openBtn || !panel) return;
+    openBtn.addEventListener("click", () => {
+      panel.classList.remove("hidden");
+      panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+    if (closeBtn) {
+      closeBtn.addEventListener("click", () => panel.classList.add("hidden"));
+    }
+  })();
+</script>
+{% endif %}
+{% if not page %}
+<script>
+  (() => {
+    const openBtn = document.getElementById("open-create-upload-panel");
+    const panel = document.getElementById("create-upload-panel");
+    if (!openBtn || !panel) return;
+    openBtn.addEventListener("click", () => {
+      panel.classList.remove("hidden");
+      panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  })();
+</script>
+{% endif %}
+{% endblock %}

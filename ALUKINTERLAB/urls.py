@@ -39,6 +39,7 @@ urlpatterns = [
     path('blog/', include('Blog.urls', namespace='Blog')),
     path('assistant/', include('Assistant.urls', namespace='assistant')),
     path('moderation/', include('Moderation.urls', namespace='moderation')),
+    path('notebook/', include('Notebook.urls', namespace='Notebook')),
     path(
         'robots.txt',
         TemplateView.as_view(

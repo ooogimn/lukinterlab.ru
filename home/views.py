@@ -1874,6 +1874,14 @@ class RabotaCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         files = self.request.FILES.getlist('new_media')
         for f in files:
             RabotaMedia.objects.create(rabota=self.object, file=f)
+        external_url = (self.request.POST.get('new_media_external_url') or '').strip()
+        external_type = (self.request.POST.get('new_media_external_type') or '').strip()
+        if external_url:
+            RabotaMedia.objects.create(
+                rabota=self.object,
+                external_url=external_url,
+                external_type=external_type if external_type in {'image', 'video'} else '',
+            )
             
         messages.success(self.request, "Проект успешно добавлен в портфолио!")
         return response
@@ -1900,6 +1908,14 @@ class RabotaUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         files = self.request.FILES.getlist('new_media')
         for f in files:
             RabotaMedia.objects.create(rabota=self.object, file=f)
+        external_url = (self.request.POST.get('new_media_external_url') or '').strip()
+        external_type = (self.request.POST.get('new_media_external_type') or '').strip()
+        if external_url:
+            RabotaMedia.objects.create(
+                rabota=self.object,
+                external_url=external_url,
+                external_type=external_type if external_type in {'image', 'video'} else '',
+            )
             
         messages.success(self.request, "Проект успешно обновлен!")
         return response

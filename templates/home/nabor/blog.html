@@ -27,32 +27,8 @@
             {% if post.slug %}
             <article class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden group">
                 <!-- Post Image -->
-                <a href="{{ post.get_absolute_url }}" class="block relative overflow-hidden">
-                    {% if post.kartinka %}
-                        {% if post.thumbnail_webp %}
-                            <picture>
-                                <source srcset="{{ post.thumbnail_webp.url }}" type="image/webp">
-                                <img src="{{ post.kartinka.url }}" alt="{{ post.title }}" loading="lazy" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110 cursor-pointer">
-                            </picture>
-                        {% else %}
-                            <img src="{{ post.kartinka.url }}" alt="{{ post.title }}" loading="lazy" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110 cursor-pointer">
-                        {% endif %}
-                    {% elif post.video %}
-                        <div class="w-full h-64 bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center cursor-pointer hover:from-primary-200 hover:to-secondary-200 transition-colors">
-                            <div class="text-center">
-                                <svg class="w-16 h-16 text-primary-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                <p class="text-primary-600 font-semibold">Видео контент</p>
-                            </div>
-                        </div>
-                    {% else %}
-                        <div class="w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center cursor-pointer hover:from-gray-200 hover:to-gray-300 transition-colors">
-                            <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                        </div>
-                    {% endif %}
+                <a href="{{ post.get_absolute_url }}" class="block relative overflow-hidden cursor-pointer group/media">
+                    {% include "blog/partials/post_card_media_list.html" with post=post height_class="h-64" %}
                     
                     <!-- Category Badge -->
                     <div class="absolute top-4 right-4 z-10">

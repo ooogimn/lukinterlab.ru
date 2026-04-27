@@ -14,6 +14,7 @@ from .models import (
     StandaloneExtraService,
     SiteMarketingSettings,
 )
+from .media_utils import resolve_external_media
 from .registration_guards import (
     validate_person_name,
     validate_registration_username,
@@ -634,7 +635,7 @@ class RabotaForm(forms.ModelForm):
     class Meta:
         model = Rabota
         fields = [
-            'name', 'category', 'status', 'image', 'preview_video', 'adres', 'body',
+            'name', 'category', 'status', 'image', 'preview_image_url', 'preview_video', 'preview_video_url', 'adres', 'body',
             'technologies', 'game_html', 'tariff_short_description', 'tariff_price_value',
             'is_for_sale', 'sale_price_value', 'sale_description',
             'resources_text', 'parameters_text', 'instructions_text',
@@ -645,7 +646,9 @@ class RabotaForm(forms.ModelForm):
             'category': forms.Select(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*,.gif'}),
+            'preview_image_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://... (внешнее изображение)'}),
             'preview_video': forms.FileInput(attrs={'class': 'form-control', 'accept': 'video/mp4,video/webm,video/ogg,.mp4,.webm,.ogg'}),
+            'preview_video_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://youtube.com/... / rutube / vk video'}),
             'adres': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://example.com'}),
             'body': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Краткое описание'}),
             'technologies': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Например: Python, Django, Tailwind CSS'}),
@@ -674,6 +677,24 @@ class RabotaForm(forms.ModelForm):
             raise forms.ValidationError('Главное видео: размер не должен превышать 50 МБ.')
 
         return video
+
+    def clean_preview_video_url(self):
+        url = (self.cleaned_data.get('preview_video_url') or '').strip()
+        if not url:
+            return url
+        resolved = resolve_external_media(url)
+        if not resolved or resolved.kind != 'video':
+            raise forms.ValidationError('Укажите корректную ссылку на видео (YouTube, Rutube, VK Video).')
+        return url
+
+    def clean_preview_image_url(self):
+        url = (self.cleaned_data.get('preview_image_url') or '').strip()
+        if not url:
+            return url
+        resolved = resolve_external_media(url)
+        if not resolved or resolved.kind != 'image':
+            raise forms.ValidationError('Укажите корректную прямую ссылку на изображение.')
+        return url
 
 
 class ServiceAdminForm(forms.ModelForm):

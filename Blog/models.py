@@ -17,6 +17,8 @@ from django.utils import timezone
 from imagekit.models import ImageSpecField
 from imagekit.processors import ResizeToFill, ResizeToFit
 
+from home.media_utils import resolve_external_media
+
 User = get_user_model()
 
 logger = logging.getLogger(__name__)
@@ -79,6 +81,20 @@ class Post(models.Model):
         blank=True, 
         null=True, 
         help_text='Загрузите MP4 видео для автовоспроизведения в ленте. Если видео загружено, оно будет показано вместо картинки (ВК, MAX, Блог).'
+    )
+    preview_video_url = models.URLField(
+        max_length=500,
+        blank=True,
+        null=True,
+        verbose_name='Ссылка на внешнее видео (превью)',
+        help_text='YouTube, Rutube, VK Video. Высший приоритет в ленте и на странице статьи.',
+    )
+    preview_image_url = models.URLField(
+        max_length=500,
+        blank=True,
+        null=True,
+        verbose_name='Ссылка на внешнее изображение (превью)',
+        help_text='Прямая ссылка на JPG/PNG/WebP/GIF.',
     )
     video = RichTextUploadingField(config_name='vstavka', verbose_name='Видео', blank=True, null=True, )
     status = models.CharField(choices=STATUS_OPTIONS, default='draft', verbose_name='Статус поста', max_length=10)
@@ -190,6 +206,100 @@ class Post(models.Model):
     def has_image(self):
         """Проверка наличия файла изображения"""
         return bool(self.kartinka and hasattr(self.kartinka, 'url'))
+
+    def get_kartinka_url_with_version(self):
+        if self.kartinka and hasattr(self.kartinka, 'url'):
+            v = int(self.updated.timestamp()) if self.updated else ''
+            return f"{self.kartinka.url}?v={v}"
+        return None
+
+    def get_thumbnail_webp_url_with_version(self):
+        if self.thumbnail_webp and hasattr(self.thumbnail_webp, 'url'):
+            v = int(self.updated.timestamp()) if self.updated else ''
+            return f"{self.thumbnail_webp.url}?v={v}"
+        return None
+
+    def get_display_media(self):
+        """
+        Приоритет:
+        1) preview_video_url (внешнее видео)
+        2) video_file (локальное видео)
+        3) kartinka или preview_image_url
+        4) заглушка
+        """
+        if self.preview_video_url:
+            resolved = resolve_external_media(self.preview_video_url)
+            if resolved and resolved.kind == "video":
+                return {
+                    "type": "external_video",
+                    "url": self.preview_video_url,
+                    "embed_url": resolved.embed_url,
+                    "autoplay_embed_url": resolved.autoplay_embed_url,
+                    "thumbnail_url": resolved.thumbnail_url,
+                    "provider": resolved.provider,
+                }
+
+        if self.video_file and hasattr(self.video_file, "url"):
+            v = int(self.updated.timestamp()) if self.updated else ""
+            return {
+                "type": "local_video",
+                "url": f"{self.video_file.url}?v={v}",
+                "embed_url": None,
+                "autoplay_embed_url": None,
+                "thumbnail_url": None,
+                "provider": "local",
+            }
+
+        if self.kartinka and self.has_image():
+            return {
+                "type": "image",
+                "url": self.get_kartinka_url_with_version(),
+                "embed_url": None,
+                "autoplay_embed_url": None,
+                "thumbnail_url": self.get_thumbnail_webp_url_with_version() or self.get_kartinka_url_with_version(),
+                "provider": "local",
+            }
+
+        if self.preview_image_url:
+            resolved = resolve_external_media(self.preview_image_url)
+            if resolved and resolved.kind == "image":
+                return {
+                    "type": "external_image",
+                    "url": self.preview_image_url,
+                    "embed_url": None,
+                    "autoplay_embed_url": None,
+                    "thumbnail_url": resolved.thumbnail_url or self.preview_image_url,
+                    "provider": resolved.provider,
+                }
+
+        return {
+            "type": "fallback",
+            "url": "/static/img/favicon.svg",
+            "embed_url": None,
+            "autoplay_embed_url": None,
+            "thumbnail_url": "/static/img/favicon.svg",
+            "provider": "fallback",
+        }
+
+    def get_og_image_absolute_url(self):
+        """Полный URL картинки для Open Graph (внешние URL — как есть, локальные — с SITE_URL)."""
+        from django.conf import settings
+
+        site = getattr(settings, "SITE_URL", "https://lukinterlab.ru").rstrip("/")
+        if self.og_image and hasattr(self.og_image, "url"):
+            return f"{site}{self.og_image.url}"
+        dm = self.get_display_media()
+        if dm["type"] == "external_video" and dm.get("thumbnail_url"):
+            return dm["thumbnail_url"]
+        if dm["type"] in ("image", "external_image"):
+            u = dm.get("thumbnail_url") or dm.get("url")
+            if u:
+                if u.startswith("http"):
+                    return u
+                return f"{site}{u}" if u.startswith("/") else f"{site}/{u}"
+        if self.kartinka and self.has_image():
+            return f"{site}{self.kartinka.url}"
+        return None
 
     def get_vk_wall_url(self):
         """Прямая ссылка на пост на стене сообщества (если известен vk_wall_post_id)."""

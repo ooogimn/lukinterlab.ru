@@ -12,6 +12,8 @@ from taggit.models import Tag
 from taggit.admin import TagAdmin as TaggitTagAdmin
 import logging
 
+from home.media_utils import resolve_external_media
+
 logger = logging.getLogger(__name__)
 
 # Отмените регистрацию администратора тега по умолчанию
@@ -99,6 +101,26 @@ class PostAdminForm(forms.ModelForm):
             normalized = normalized[:160]
         return normalized
 
+    def clean_preview_video_url(self):
+        raw = self.cleaned_data.get('preview_video_url')
+        url = (raw or '').strip()
+        if not url:
+            return None
+        resolved = resolve_external_media(url)
+        if not resolved or resolved.kind != 'video':
+            raise forms.ValidationError('Укажите корректную ссылку на видео (YouTube, Rutube, VK Video).')
+        return url
+
+    def clean_preview_image_url(self):
+        raw = self.cleaned_data.get('preview_image_url')
+        url = (raw or '').strip()
+        if not url:
+            return None
+        resolved = resolve_external_media(url)
+        if not resolved or resolved.kind != 'image':
+            raise forms.ValidationError('Укажите корректную прямую ссылку на изображение.')
+        return url
+
 
 class PostFAQInline(admin.TabularInline):
     """Inline для FAQ в админке Post"""
@@ -139,7 +161,14 @@ class PostAdmin(admin.ModelAdmin):
             'classes': ('wide',)
         }),
         ('Медиа', {
-            'fields': ('kartinka', 'video_file', 'post_photo', 'og_image'),
+            'fields': (
+                'kartinka',
+                'preview_image_url',
+                'video_file',
+                'preview_video_url',
+                'post_photo',
+                'og_image',
+            ),
             'classes': ('wide',)
         }),
         ('SEO настройки (заполняются автоматически если пусто)', {

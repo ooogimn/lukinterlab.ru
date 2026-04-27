@@ -190,6 +190,28 @@
                     {% endif %}
                 </div>
 
+                <div>
+                    <label for="{{ form.preview_video_url.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Ссылка на внешнее видео (превью)
+                    </label>
+                    {{ form.preview_video_url }}
+                    <p class="text-xs text-gray-500 mt-1">YouTube, Rutube, VK Video. Имеет приоритет над локальным видео-файлом в ленте и в шапке статьи.</p>
+                    {% if form.preview_video_url.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.preview_video_url.errors }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.preview_image_url.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Ссылка на внешнее изображение (превью)
+                    </label>
+                    {{ form.preview_image_url }}
+                    <p class="text-xs text-gray-500 mt-1">Прямая ссылка на JPG/PNG/WebP/GIF, если нет загруженного превью.</p>
+                    {% if form.preview_image_url.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.preview_image_url.errors }}</p>
+                    {% endif %}
+                </div>
+
                 <!-- Description for Telegram -->
                 <div>
                     <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">

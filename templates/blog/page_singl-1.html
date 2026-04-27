@@ -61,12 +61,9 @@
 {% endblock %}
 
 {% block og_image %}
-{% if post.og_image %}
-<meta property="og:image" content="https://lukinterlab.ru{{ post.og_image.url }}">
-<meta name="twitter:image" content="https://lukinterlab.ru{{ post.og_image.url }}">
-{% elif post.kartinka %}
-<meta property="og:image" content="https://lukinterlab.ru{{ post.kartinka.url }}">
-<meta name="twitter:image" content="https://lukinterlab.ru{{ post.kartinka.url }}">
+{% if post.get_og_image_absolute_url %}
+<meta property="og:image" content="{{ post.get_og_image_absolute_url }}">
+<meta name="twitter:image" content="{{ post.get_og_image_absolute_url }}">
 {% else %}
 {{ block.super }}
 {% endif %}

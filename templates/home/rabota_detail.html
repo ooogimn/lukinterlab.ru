@@ -18,10 +18,21 @@
 
 {% block straniza %}
 <!-- ═══ HERO: Главное изображение ═══ -->
-{% with hero_media=rabota.media_items.first %}
-{% if rabota.preview_video %}
+{% with display_media=rabota.get_display_media %}
+{% if display_media.type == 'external_video' and display_media.embed_url %}
 <div class="relative w-full overflow-hidden bg-gray-900 flex items-center justify-center" style="height: 560px; max-height: 560px;">
-    <video id="hero-video-player" src="{{ rabota.preview_video.url }}" autoplay loop muted playsinline controls class="w-full h-full object-contain transition-opacity opacity-95"></video>
+    <iframe src="{{ display_media.autoplay_embed_url|default:display_media.embed_url }}" title="{{ rabota.name }}" class="w-full h-full rounded-lg border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    <div class="absolute top-6 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10 pointer-events-none">
+        <nav class="text-sm text-white/70 font-medium tracking-wide">
+            <a href="/" class="hover:text-white transition-colors pointer-events-auto">Главная</a> <span class="mx-2">/</span>
+            <a href="/#portfolio" class="hover:text-white transition-colors pointer-events-auto">Портфолио</a> <span class="mx-2">/</span>
+            <span class="text-white">{{ rabota.name }}</span>
+        </nav>
+    </div>
+</div>
+{% elif display_media.type == 'local_video' %}
+<div class="relative w-full overflow-hidden bg-gray-900 flex items-center justify-center" style="height: 560px; max-height: 560px;">
+    <video id="hero-video-player" src="{{ display_media.url }}" autoplay loop muted playsinline controls class="w-full h-full object-contain transition-opacity opacity-95"></video>
     <div class="absolute inset-0 pointer-events-none bg-gradient-to-t from-gray-900/80 via-transparent to-gray-900/20"></div>
     <div class="absolute top-6 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
         <nav class="text-sm text-white/70 font-medium tracking-wide">
@@ -31,24 +42,12 @@
         </nav>
     </div>
 </div>
-{% elif rabota.image %}
+{% elif display_media.type == 'image' or display_media.type == 'external_image' %}
 <div class="relative w-full overflow-hidden bg-gray-900 flex items-center justify-center" style="height: 560px; max-height: 560px;">
-    <img src="{{ rabota.image.url }}" alt="{{ rabota.name }}" class="w-full h-full object-contain">
+    <img src="{{ display_media.url }}" alt="{{ rabota.name }}" class="w-full h-full object-contain">
     <!-- Gradient overlay -->
     <div class="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-transparent to-gray-900/20"></div>
     <!-- Breadcrumb on image -->
-    <div class="absolute top-6 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
-        <nav class="text-sm text-white/70 font-medium tracking-wide">
-            <a href="/" class="hover:text-white transition-colors">Главная</a> <span class="mx-2">/</span>
-            <a href="/#portfolio" class="hover:text-white transition-colors">Портфолио</a> <span class="mx-2">/</span>
-            <span class="text-white">{{ rabota.name }}</span>
-        </nav>
-    </div>
-</div>
-{% elif hero_media and hero_media.is_video %}
-<div class="relative w-full overflow-hidden bg-gray-900 flex items-center justify-center" style="height: 560px; max-height: 560px;">
-    <video id="hero-video-player" src="{{ hero_media.file.url }}" autoplay loop muted playsinline controls class="w-full h-full object-contain transition-opacity opacity-95"></video>
-    <div class="absolute inset-0 pointer-events-none bg-gradient-to-t from-gray-900/80 via-transparent to-gray-900/20"></div>
     <div class="absolute top-6 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
         <nav class="text-sm text-white/70 font-medium tracking-wide">
             <a href="/" class="hover:text-white transition-colors">Главная</a> <span class="mx-2">/</span>
@@ -85,11 +84,15 @@
             <div class="swiper-wrapper">
                 {% for media in rabota.media_items.all %}
                 <div class="swiper-slide flex items-center justify-center relative" style="height: 400px;">
-                    {% if media.is_video %}
-                    <video id="detail-video-{{ forloop.counter }}" src="{{ media.file.url }}" autoplay loop muted playsinline controls class="w-full h-full object-contain transition-opacity opacity-95"></video>
+                    {% with m=media.get_display_media %}
+                    {% if m.type == 'video' %}
+                    <video id="detail-video-{{ forloop.counter }}" src="{{ m.url }}" autoplay loop muted playsinline controls class="w-full h-full object-contain transition-opacity opacity-95"></video>
+                    {% elif m.type == 'external_video' and m.embed_url %}
+                    <iframe src="{{ m.autoplay_embed_url|default:m.embed_url }}" title="{{ rabota.name }}" class="w-full h-full rounded-lg border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                     {% else %}
-                    <img src="{{ media.file.url }}" alt="{{ rabota.name }}" class="w-full h-full object-contain">
+                    <img src="{{ m.url }}" alt="{{ rabota.name }}" class="w-full h-full object-contain">
                     {% endif %}
+                    {% endwith %}
                 </div>
                 {% endfor %}
             </div>
@@ -368,12 +371,13 @@
 
 <!-- Структурированные данные -->
 <script type="application/ld+json">
+{% with ld_media=rabota.get_display_media %}
 {
     "@context": "https://schema.org",
     "@type": "CreativeWork",
     "name": "{{ rabota.name }}",
     "description": "{{ rabota.body|truncatewords:25 }}",
-    "image": "{{ rabota.image.url|default:'' }}",
+    "image": "{{ ld_media.thumbnail_url|default:ld_media.url|default:'' }}",
     "url": "https://lukinterlab.ru{{ rabota.get_absolute_url }}",
     "datePublished": "{{ rabota.created|date:'Y-m-d' }}",
     "author": {
@@ -382,5 +386,6 @@
     },
     "keywords": "{{ rabota.technologies }}"
 }
+{% endwith %}
 </script>
 {% endblock straniza %}

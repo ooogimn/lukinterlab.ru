@@ -66,15 +66,7 @@
                     {% for post in results %}
                     <article class="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group">
                         <div class="relative overflow-hidden">
-                            {% if post.kartinka %}
-                                <img src="{{ post.kartinka.url }}" alt="{{ post.title }}" class="w-full h-52 object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" width="400" height="300">
-                            {% else %}
-                                <div class="w-full h-52 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
-                                    <svg class="w-12 h-12 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                    </svg>
-                                </div>
-                            {% endif %}
+                            {% include "blog/partials/post_card_media_list.html" with post=post height_class="h-52" %}
                             {% if post.category %}
                             <div class="absolute top-3 left-3">
                                 <span class="px-3 py-1 text-xs font-semibold rounded-full bg-white/90 text-blue-700 backdrop-blur-sm shadow-sm">
