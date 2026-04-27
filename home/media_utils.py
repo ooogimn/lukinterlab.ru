@@ -70,11 +70,17 @@ def _resolve_rutube(parsed) -> ResolvedMedia | None:
     if not video_id:
         return None
     embed_url = f"https://rutube.ru/play/embed/{video_id}/"
+    # Статичное превью (pic.rutubelist) — для карточек и т.п. без сетевого запроса к API; помогает
+    # в браузерах, где встраивание iframe Rutube/реферер грузят пусто (например Comet).
+    p = (video_id + "0000")[:4]
+    part1, part2 = p[0:2], p[2:4]
+    thumbnail_url = f"https://pic.rutubelist.ru/video/{part1}/{part2}/{video_id}.jpg?width=640"
     return ResolvedMedia(
         kind="video",
         source_url=parsed.geturl(),
         embed_url=embed_url,
         autoplay_embed_url=f"{embed_url}?autoplay=1&muted=1&mute=1&controls=0",
+        thumbnail_url=thumbnail_url,
         provider="rutube",
     )
 

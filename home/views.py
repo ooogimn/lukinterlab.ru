@@ -63,7 +63,7 @@ def home(request):
     ttl = 900
     cache_key_posts = 'home_post_ids_v3'
     cache_key_otzivs = 'home_otziv_ids_v3'
-    cache_key_rabotas = 'home_rabota_ids_v3'
+    cache_key_rabotas = 'home_rabota_ids_v4'
     cache_key_services = 'home_service_ids_v3'
     cache_key_extra_services = 'home_standalone_extra_ids_v3'
 
@@ -124,11 +124,12 @@ def home(request):
             Rabota.objects.filter(is_visible=True, status='completed')
             .prefetch_related('media_items')
             .only(
-                'id', 'name', 'category', 'image', 'adres', 'body',
+                'id', 'name', 'category', 'image', 'thumbnail_webp', 'adres', 'body',
                 'technologies', 'status', 'featured', 'order', 'created', 'updated',
                 'is_for_sale', 'sale_price_value', 'sale_description',
+                'preview_video_url', 'preview_video', 'preview_image_url', 'game_html',
             )
-            .order_by('-featured', '-order', '-created')[:24]
+            .order_by('-featured', '-order', '-created')[:200]
         )
         cache.set(cache_key_rabotas, [r.pk for r in rabotas], ttl)
     else:
@@ -136,9 +137,10 @@ def home(request):
             Rabota.objects.filter(pk__in=rabota_ids, is_visible=True, status='completed')
             .prefetch_related('media_items')
             .only(
-                'id', 'name', 'category', 'image', 'adres', 'body',
+                'id', 'name', 'category', 'image', 'thumbnail_webp', 'adres', 'body',
                 'technologies', 'status', 'featured', 'order', 'created', 'updated',
                 'is_for_sale', 'sale_price_value', 'sale_description',
+                'preview_video_url', 'preview_video', 'preview_image_url', 'game_html',
             ),
             rabota_ids,
         )

@@ -21,7 +21,7 @@
 {% with display_media=rabota.get_display_media %}
 {% if display_media.type == 'external_video' and display_media.embed_url %}
 <div class="relative w-full overflow-hidden bg-gray-900 flex items-center justify-center" style="height: 560px; max-height: 560px;">
-    <iframe src="{{ display_media.autoplay_embed_url|default:display_media.embed_url }}" title="{{ rabota.name }}" class="w-full h-full rounded-lg border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    <iframe src="{{ display_media.autoplay_embed_url|default:display_media.embed_url }}" title="{{ rabota.name }}" class="w-full h-full rounded-lg border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="no-referrer" allowfullscreen></iframe>
     <div class="absolute top-6 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10 pointer-events-none">
         <nav class="text-sm text-white/70 font-medium tracking-wide">
             <a href="/" class="hover:text-white transition-colors pointer-events-auto">Главная</a> <span class="mx-2">/</span>
@@ -88,7 +88,7 @@
                     {% if m.type == 'video' %}
                     <video id="detail-video-{{ forloop.counter }}" src="{{ m.url }}" autoplay loop muted playsinline controls class="w-full h-full object-contain transition-opacity opacity-95"></video>
                     {% elif m.type == 'external_video' and m.embed_url %}
-                    <iframe src="{{ m.autoplay_embed_url|default:m.embed_url }}" title="{{ rabota.name }}" class="w-full h-full rounded-lg border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                    <iframe src="{{ m.autoplay_embed_url|default:m.embed_url }}" title="{{ rabota.name }}" class="w-full h-full rounded-lg border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="no-referrer" allowfullscreen></iframe>
                     {% else %}
                     <img src="{{ m.url }}" alt="{{ rabota.name }}" class="w-full h-full object-contain">
                     {% endif %}
