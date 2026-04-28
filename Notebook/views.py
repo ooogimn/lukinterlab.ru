@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
+from django.http import FileResponse
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -109,9 +110,25 @@ def _redirect_to_notebook(page):
 @staff_member_required
 def notebook_home(request):
     notebook_roots = WikiPage.get_root_nodes()
+    search_query = (request.GET.get("q") or "").strip()
+    sort_key = (request.GET.get("sort") or "updated_desc").strip()
+    if search_query:
+        notebook_roots = notebook_roots.filter(title__icontains=search_query)
+
+    sort_map = {
+        "title_asc": "title",
+        "title_desc": "-title",
+        "created_asc": "created_at",
+        "created_desc": "-created_at",
+        "updated_asc": "updated_at",
+        "updated_desc": "-updated_at",
+    }
+    notebook_roots = notebook_roots.order_by(sort_map.get(sort_key, "-updated_at"))
     context = {
         "title": "Полка блокнотов",
         "notebook_roots": notebook_roots,
+        "search_query": search_query,
+        "sort_key": sort_key,
     }
     return render(request, "notebook/home.html", context)
 
@@ -153,7 +170,7 @@ def notebook_view_by_slug(request, notebook_slug, page_id=None):
 @staff_member_required
 def notebook_page_create_root(request):
     if request.method == "POST":
-        form = WikiPageForm(request.POST)
+        form = WikiPageForm(request.POST, request.FILES)
         if form.is_valid():
             page = form.save()
             uploaded_file = request.FILES.get("create_file")
@@ -180,7 +197,7 @@ def notebook_page_create_root(request):
 def notebook_page_create_child(request, parent_id):
     parent = get_object_or_404(WikiPage, pk=parent_id)
     if request.method == "POST":
-        form = WikiPageForm(request.POST, initial_parent=parent)
+        form = WikiPageForm(request.POST, request.FILES, initial_parent=parent)
         if form.is_valid():
             page = form.save()
             uploaded_file = request.FILES.get("create_file")
@@ -211,7 +228,7 @@ def notebook_page_create_child(request, parent_id):
 def notebook_page_edit(request, page_id):
     page = get_object_or_404(WikiPage, pk=page_id)
     if request.method == "POST":
-        form = WikiPageForm(request.POST, instance=page)
+        form = WikiPageForm(request.POST, request.FILES, instance=page)
         if form.is_valid():
             updated_page = form.save()
             messages.success(request, "Страница обновлена.")
@@ -238,6 +255,9 @@ def notebook_page_edit(request, page_id):
 @staff_member_required
 def notebook_page_delete(request, page_id):
     page = get_object_or_404(WikiPage, pk=page_id)
+    if page.depth == 1:
+        messages.error(request, "Удаление корневого блокнота доступно только через Django-админку.")
+        return redirect("Notebook:home")
     root_page = page.get_root()
     if request.method == "POST":
         page.delete()
@@ -275,4 +295,17 @@ def notebook_attachment_delete(request, page_id, attachment_id):
     if request.method == "POST":
         attachment.delete()
         messages.success(request, "Файл удален.")
+    return _redirect_to_notebook(page)
+
+
+@staff_member_required
+def notebook_attachment_download(request, page_id, attachment_id):
+    page = get_object_or_404(WikiPage, pk=page_id)
+    attachment = get_object_or_404(WikiAttachment, pk=attachment_id, page=page)
+    if attachment.file:
+        file_name = attachment.file.name.rsplit("/", 1)[-1]
+        return FileResponse(attachment.file.open("rb"), as_attachment=True, filename=file_name)
+    if attachment.external_url:
+        return redirect(attachment.external_url)
+    messages.error(request, "У этого вложения нет файла для скачивания.")
     return _redirect_to_notebook(page)

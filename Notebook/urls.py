@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import (
     notebook_attachment_delete,
+    notebook_attachment_download,
     notebook_attachment_upload,
     notebook_home,
     notebook_view,
@@ -29,5 +30,10 @@ urlpatterns = [
         "<int:page_id>/attachments/<int:attachment_id>/delete/",
         notebook_attachment_delete,
         name="attachment_delete",
+    ),
+    path(
+        "<int:page_id>/attachments/<int:attachment_id>/download/",
+        notebook_attachment_download,
+        name="attachment_download",
     ),
 ]

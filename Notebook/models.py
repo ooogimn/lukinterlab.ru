@@ -14,6 +14,7 @@ class WikiPage(MP_Node):
     title = models.CharField("Заголовок", max_length=255)
     slug = models.SlugField("Slug", max_length=255)
     content = RichTextUploadingField("Содержимое", blank=True)
+    avatar = models.ImageField("Аватар блокнота", upload_to="wiki/notebook_avatars/", blank=True, null=True)
     created_at = models.DateTimeField("Создано", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлено", auto_now=True)
 
@@ -74,4 +75,6 @@ class WikiAttachment(models.Model):
             return "image"
         if lower_name.endswith((".mp4", ".webm", ".ogg", ".mov", ".m4v")):
             return "video"
+        if lower_name.endswith(".pdf"):
+            return "pdf"
         return "file"

@@ -34,6 +34,16 @@ class WikiPageForm(forms.Form):
         required=False,
         widget=CKEditorUploadingWidget(config_name="default"),
     )
+    avatar = forms.ImageField(
+        label="Аватар блокнота",
+        required=False,
+        widget=forms.ClearableFileInput(
+            attrs={
+                "class": "w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 "
+                "focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            }
+        ),
+    )
 
     def __init__(self, *args, instance=None, initial_parent=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -45,6 +55,7 @@ class WikiPageForm(forms.Form):
             self.initial.setdefault("title", self.instance.title)
             self.initial.setdefault("content", self.instance.content)
             self.initial.setdefault("parent", self.instance.get_parent())
+            self.initial.setdefault("avatar", self.instance.avatar)
         elif self.initial_parent:
             self.initial.setdefault("parent", self.initial_parent)
 
@@ -73,6 +84,7 @@ class WikiPageForm(forms.Form):
         title = self.cleaned_data["title"].strip()
         content = self.cleaned_data.get("content", "")
         parent = self.cleaned_data.get("parent")
+        avatar = self.cleaned_data.get("avatar")
         if not self.instance and parent is None and self.initial_parent is not None:
             parent = self.initial_parent
         # Редактирование: в шаблоне поле parent часто не выводят — в POST ключа нет, cleaned parent=None.
@@ -87,6 +99,11 @@ class WikiPageForm(forms.Form):
             page.title = title
             page.content = content
             page.slug = slug
+            if page.depth == 1:
+                if avatar:
+                    page.avatar = avatar
+                elif self.cleaned_data.get("avatar") is False:
+                    page.avatar = None
             page.save()
 
             current_parent = page.get_parent()
@@ -101,7 +118,7 @@ class WikiPageForm(forms.Form):
 
         if parent:
             return parent.add_child(title=title, slug=slug, content=content)
-        return WikiPage.add_root(title=title, slug=slug, content=content)
+        return WikiPage.add_root(title=title, slug=slug, content=content, avatar=avatar)
 
 
 class WikiAttachmentForm(forms.ModelForm):
