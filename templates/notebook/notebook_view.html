@@ -91,7 +91,7 @@
                       <a href="{% url 'Notebook:attachment_download' selected_page.id attachment.id %}" class="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Скачать</a>
                       <form method="post" action="{% url 'Notebook:attachment_delete' selected_page.id attachment.id %}">
                       {% csrf_token %}
-                      <button type="submit" class="px-3 py-2 text-sm bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors">Удалить файл</button>
+                      <button type="submit" class="px-3 py-2 text-sm bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors ring-2 ring-violet-400 ring-offset-1 ring-offset-white">Удалить файл</button>
                     </form>
                     </div>
                   </div>
