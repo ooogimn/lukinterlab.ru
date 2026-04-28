@@ -13,7 +13,7 @@ class WikiAttachmentInline(admin.TabularInline):
 @admin.register(WikiPage)
 class WikiPageAdmin(TreeAdmin):
     form = movenodeform_factory(WikiPage)
-    list_display = ("title", "slug", "updated_at")
+    list_display = ("title", "slug", "avatar", "updated_at")
     search_fields = ("title", "slug", "content")
     inlines = [WikiAttachmentInline]
 

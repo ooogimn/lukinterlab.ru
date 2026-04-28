@@ -80,12 +80,15 @@
                             <source src="{{ attachment.url }}">
                           </video>
                         {% endif %}
+                      {% elif attachment.kind == "pdf" %}
+                        <div class="w-full h-36 rounded-md border border-gray-200 bg-red-50 flex items-center justify-center text-sm font-semibold text-red-700">PDF</div>
                       {% else %}
                         <div class="w-full h-36 rounded-md border border-gray-200 bg-gray-50 flex items-center justify-center text-4xl text-gray-400">📎</div>
                       {% endif %}
                       <div class="mt-2 text-sm text-gray-700 truncate">{{ attachment.name }}</div>
                     </button>
-                    <div class="mt-2 flex justify-end">
+                    <div class="mt-2 flex justify-end gap-2">
+                      <a href="{% url 'Notebook:attachment_download' selected_page.id attachment.id %}" class="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Скачать</a>
                       <form method="post" action="{% url 'Notebook:attachment_delete' selected_page.id attachment.id %}">
                       {% csrf_token %}
                       <button type="submit" class="px-3 py-2 text-sm bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors">Удалить файл</button>
@@ -157,7 +160,7 @@
     <div id="modal-stage" class="flex-1 min-h-0 bg-black/60 rounded-lg overflow-hidden relative flex items-center justify-center">
       <img id="modal-image" class="hidden max-w-none select-none cursor-grab" alt="">
       <video id="modal-video" class="hidden max-w-full max-h-full" controls></video>
-      <iframe id="modal-iframe" class="hidden w-full aspect-video rounded-lg border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      <iframe id="modal-iframe" class="hidden w-full h-full rounded-lg border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
       <a id="modal-file-link" class="hidden text-white underline text-lg" target="_blank" rel="noopener">Открыть файл</a>
     </div>
   </div>
@@ -272,6 +275,9 @@
           modalVideo.src = item.url;
           modalVideo.classList.remove("hidden");
         }
+      } else if (item.kind === "pdf") {
+        modalIframe.src = item.url;
+        modalIframe.classList.remove("hidden");
       } else {
         modalFileLink.href = item.url;
         modalFileLink.textContent = `Открыть файл: ${item.name}`;
