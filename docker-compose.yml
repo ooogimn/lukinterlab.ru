@@ -12,9 +12,18 @@
 # После git pull на сервере обязательно build web (и qcluster) — код в образе, не bind-mount с хоста.
 # Порт web слушает только на 127.0.0.1 (снаружи — nginx на хосте на :80/:443).
 #
+# Логи json-file без лимита за недели забили диск (web/qcluster писали WARNING на каждый
+# промах Redis). Ротация применяется при создании контейнера.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   postgres:
     image: postgres:16-alpine
+    logging: *default-logging
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-lukinterlab}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lukinterlab_dev}
@@ -32,6 +41,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    logging: *default-logging
     ports:
       - "${REDIS_PORT_PUBLISH:-6379}:6379"
     healthcheck:
@@ -43,6 +53,7 @@ services:
 
   web:
     build: .
+    logging: *default-logging
     # Один файл для секретов в контейнерах: .env.docker (рядом с compose). Корневой .env Django не подхватывает compose — дублируйте нужные ключи сюда.
     env_file:
       - .env.docker
@@ -73,6 +84,7 @@ services:
 
   qcluster:
     build: .
+    logging: *default-logging
     env_file:
       - .env.docker
     environment:
