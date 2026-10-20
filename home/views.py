@@ -32,7 +32,9 @@ from .seo_utils import SEOUtils
 from django.core.paginator import Paginator
 from django.utils import timezone
 from django.conf import settings
+import ipaddress
 import json
+import logging
 import os
 from decimal import Decimal
 from collections import Counter
@@ -50,6 +52,8 @@ from .cart_session import SESSION_CART_ITEMS_COUNT_KEY, sync_cart_items_count_se
 # Конфигурация SDK YooKassa (актуальная сигнатура create/find_one).
 Configuration.account_id = settings.YOOKASSA_SHOP_ID
 Configuration.secret_key = settings.YOOKASSA_SECRET_KEY
+
+logger = logging.getLogger(__name__)
 
 
 def _ordered_by_ids(queryset, id_list):
@@ -973,9 +977,25 @@ def checkout(request):
     return render(request, 'home/checkout/checkout.html', context)
 
 
+CUSTOMER_LOGIN_URL = '/customer/login/'
+
+
+def _get_order_for_user(request, order_id):
+    """
+    Заказ, который может открыть текущий пользователь: свой (заказчик = он) или любой — для сотрудника.
+    Чужой или несуществующий заказ — 404. Номера заказов идут подряд, поэтому без этой
+    проверки любой мог бы посмотреть чужие имя, почту, телефон и состав заказа.
+    """
+    orders = Order.objects.all()
+    if not (request.user.is_active and request.user.is_staff):
+        orders = orders.filter(customer__user=request.user)
+    return get_object_or_404(orders, id=order_id)
+
+
+@login_required(login_url=CUSTOMER_LOGIN_URL)
 def order_questionnaire(request, order_id):
     """Заполнение опросного листа заказа"""
-    order = get_object_or_404(Order, id=order_id)
+    order = _get_order_for_user(request, order_id)
     order_items = list(order.orderitem_set.all())
 
     def item_total_decimal(item):
@@ -1009,11 +1029,7 @@ def order_questionnaire(request, order_id):
         for payload in items_payload
     )
     final_payment_amount = total_amount - prepayment_amount
-    
-    # Если пользователь не авторизован, но у заказа есть заказчик, авторизуем его
-    if not request.user.is_authenticated and order.customer and order.customer.user:
-        login(request, order.customer.user)
-    
+
     if request.method == 'POST':
         questionnaire_form = OrderQuestionnaireForm(request.POST)
         file_form = OrderFileForm(request.POST, request.FILES)
@@ -1100,31 +1116,34 @@ def order_questionnaire(request, order_id):
     return render(request, 'home/checkout/questionnaire.html', context)
 
 
+@login_required(login_url=CUSTOMER_LOGIN_URL)
 def order_success(request, order_id):
     """Страница успешного оформления заказа"""
-    order = get_object_or_404(Order, id=order_id)
-    
+    order = _get_order_for_user(request, order_id)
+
     context = {
         'order': order,
     }
-    
+
     return render(request, 'home/checkout/success.html', context)
 
 
+@login_required(login_url=CUSTOMER_LOGIN_URL)
 def order_detail(request, order_id):
     """Детальная страница заказа"""
-    order = get_object_or_404(Order, id=order_id)
-    
+    order = _get_order_for_user(request, order_id)
+
     context = {
         'order': order,
     }
-    
+
     return render(request, 'home/orders/order_detail.html', context)
 
 
+@login_required(login_url=CUSTOMER_LOGIN_URL)
 def pay_order(request, order_id):
     """Страница оплаты заказа через YooKassa"""
-    order = get_object_or_404(Order, id=order_id)
+    order = _get_order_for_user(request, order_id)
     
     # Если заказ уже оплачен, перенаправляем на страницу успеха
     if order.payment_status == 'paid':
@@ -1194,9 +1213,10 @@ def pay_order(request, order_id):
     return render(request, 'home/checkout/pay.html', context)
 
 
+@login_required(login_url=CUSTOMER_LOGIN_URL)
 def pay_order_mock(request, order_id):
     """Демо-режим оплаты для локальной разработки (без обращения к YooKassa API)."""
-    order = get_object_or_404(Order, id=order_id)
+    order = _get_order_for_user(request, order_id)
     if not settings.DEBUG:
         return redirect('home:order_pay', order_id=order.id)
 
@@ -1229,94 +1249,113 @@ def pay_order_mock(request, order_id):
     return render(request, 'home/checkout/pay_mock.html', context)
 
 
+# Адреса, с которых ЮKassa шлёт уведомления (https://yookassa.ru/developers/using-api/webhooks).
+YOOKASSA_WEBHOOK_NETWORKS = [
+    ipaddress.ip_network(net) for net in (
+        '185.71.76.0/27',
+        '185.71.77.0/27',
+        '77.75.153.0/25',
+        '77.75.156.11/32',
+        '77.75.156.35/32',
+        '77.75.154.128/25',
+        '2a02:5180::/32',
+    )
+]
+
+# Наши прокси между интернетом и Django: фронтенд Jino (HTTPS) → nginx на VPS → gunicorn.
+# Каждый дописывает в X-Forwarded-For адрес того, от кого получил запрос, поэтому
+# настоящий отправитель — самый правый адрес, который не принадлежит этим прокси.
+TRUSTED_PROXY_NETWORKS = [
+    ipaddress.ip_network(net) for net in (
+        '81.177.136.0/24',  # фронтенд Jino
+        '127.0.0.0/8', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '::1/128',
+    )
+]
+
+
+def _real_client_ip(request):
+    """IP отправителя за прокси Jino и nginx (левые адреса X-Forwarded-For может подставить кто угодно)."""
+    chain = [part.strip() for part in request.META.get('HTTP_X_FORWARDED_FOR', '').split(',') if part.strip()]
+    chain.append(request.META.get('REMOTE_ADDR', ''))
+    for raw in reversed(chain):
+        try:
+            ip = ipaddress.ip_address(raw)
+        except ValueError:
+            return None
+        if not any(ip in net for net in TRUSTED_PROXY_NETWORKS):
+            return ip
+    return None
+
+
 @csrf_exempt
 def yookassa_webhook(request):
-    """Webhook для обработки уведомлений от YooKassa с проверкой IP"""
+    """
+    Уведомления ЮKassa об изменении статуса платежа.
+
+    Тексту уведомления не доверяем: по номеру платежа запрашиваем настоящий статус
+    у ЮKassa через API (так рекомендует сама ЮKassa) — подделка ничего не даст.
+    Дополнительно проверяем, что запрос пришёл с адресов ЮKassa.
+    """
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
-    
-    # 1. Проверка IP-адреса отправителя (Security Hardening)
-    # YooKassa IPs: 185.71.76.0/27, 185.71.77.0/27, 77.75.153.0/25, 77.75.154.128/25
-    def is_yookassa_ip(ip):
-        import ipaddress
-        yookassa_ranges = [
-            '185.71.76.0/27',
-            '185.71.77.0/27',
-            '77.75.153.0/25',
-            '77.75.154.128/25',
-        ]
-        if not ip: return False
-        try:
-            ip_obj = ipaddress.ip_address(ip)
-            for net in yookassa_ranges:
-                if ip_obj in ipaddress.ip_network(net):
-                    return True
-        except ValueError:
-            pass
-        return False
 
-    # Получаем IP (учитывая возможный прокси)
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
-    else:
-        ip = request.META.get('REMOTE_ADDR')
-
-    # В режиме отладки или если это YooKassa IP — продолжаем
-    if not settings.DEBUG and not is_yookassa_ip(ip):
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.warning(f"Unauthorized YooKassa webhook attempt from IP: {ip}")
-        # Возвращаем 403, но для безопасности можно и 200, чтобы не "палить" защиту.
-        # Но 403 правильнее для мониторинга.
+    client_ip = _real_client_ip(request)
+    is_yookassa = client_ip is not None and any(client_ip in net for net in YOOKASSA_WEBHOOK_NETWORKS)
+    if not settings.DEBUG and not is_yookassa:
+        logger.warning("YooKassa webhook: запрос не с адресов ЮKassa (IP %s)", client_ip)
         return JsonResponse({'error': 'Forbidden'}, status=403)
 
     try:
-        # Получаем данные от YooKassa
         data = json.loads(request.body)
-        
-        # Проверяем, что это уведомление о платеже
-        if 'object' in data and data['object']['type'] == 'payment':
-            payment_data = data['object']
-            payment_id = payment_data['id']
-            
-            # Находим заказ по ID платежа
-            try:
-                order = Order.objects.get(payment_id=payment_id)
-                
-                # Обновляем статус заказа в зависимости от статуса платежа
-                if payment_data['status'] == 'succeeded':
-                    order.payment_status = 'paid'
-                    order.status = 'confirmed'
-                    order.save()
-                    
-                    # Отправляем уведомление администратору
-                    try:
-                        from .services import NotificationService
-                        NotificationService.send_payment_notification(order)
-                    except Exception as e:
-                        print(f"Ошибка отправки уведомления об оплате: {e}")
-                    
-                elif payment_data['status'] == 'canceled':
-                    order.payment_status = 'failed'
-                    order.save()
-                
-                return JsonResponse({'status': 'success'})
-                
-            except Order.DoesNotExist:
-                return JsonResponse({'error': 'Order not found'}, status=404)
-        
-        return JsonResponse({'error': 'Invalid webhook data'}, status=400)
-        
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, UnicodeDecodeError):
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+
+    # Формат: {"type": "notification", "event": "payment.succeeded", "object": {"id": ..., ...}}
+    payment_obj = data.get('object') if isinstance(data, dict) else None
+    payment_id = payment_obj.get('id') if isinstance(payment_obj, dict) else None
+    if not payment_id or not str(data.get('event', '')).startswith('payment.'):
+        return JsonResponse({'error': 'Invalid webhook data'}, status=400)
+
+    order = Order.objects.filter(payment_id=payment_id).first()
+    if order is None:
+        return JsonResponse({'error': 'Order not found'}, status=404)
+
+    try:
+        payment = Payment.find_one(payment_id)
+    except Exception:
+        # Ответ не 200 — ЮKassa повторит уведомление позже.
+        logger.exception("YooKassa webhook: не удалось проверить платёж %s", payment_id)
+        return JsonResponse({'error': 'Payment check failed'}, status=502)
+
+    metadata_order_id = str((payment.metadata or {}).get('order_id', ''))
+    if metadata_order_id != str(order.id):
+        logger.warning(
+            "YooKassa webhook: платёж %s относится к заказу %r, а не %s", payment_id, metadata_order_id, order.id
+        )
+        return JsonResponse({'error': 'Order mismatch'}, status=400)
+
+    if payment.status == 'succeeded':
+        if order.payment_status != 'paid':
+            order.payment_status = 'paid'
+            order.status = 'confirmed'
+            order.save()
+            # Уведомление администратору — один раз, при первой отметке об оплате.
+            try:
+                from .services import NotificationService
+                NotificationService.send_payment_notification(order)
+            except Exception:
+                logger.exception("Ошибка отправки уведомления об оплате заказа %s", order.id)
+    elif payment.status == 'canceled' and order.payment_status != 'paid':
+        order.payment_status = 'failed'
+        order.save()
+
+    return JsonResponse({'status': 'success'})
 
 
+@login_required(login_url=CUSTOMER_LOGIN_URL)
 def payment_success(request, order_id):
     """Страница успешной оплаты"""
-    order = get_object_or_404(Order, id=order_id)
+    order = _get_order_for_user(request, order_id)
     
     # Проверяем статус платежа через API YooKassa
     if order.payment_id and order.payment_status == 'pending':

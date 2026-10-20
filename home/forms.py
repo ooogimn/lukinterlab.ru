@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
+from django.core.validators import FileExtensionValidator
 from .models import (
     Otziv,
     OtzivComment,
@@ -25,16 +26,37 @@ from .registration_guards import (
 from .comment_spam import validate_comment_plaintext, validate_comment_display_name
 
 
+OTZIV_PHOTO_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp']
+OTZIV_PHOTO_MAX_BYTES = 5 * 1024 * 1024
+
+
 class OtzivForm(forms.ModelForm):
+    # Фото — только настоящие картинки (Pillow проверяет содержимое): файлы отзывов лежат
+    # публично в /media/otzivs/, и подложенный HTML/SVG открывался бы с нашего домена.
+    foto = forms.ImageField(
+        label='Ваше фото',
+        required=False,
+        validators=[FileExtensionValidator(OTZIV_PHOTO_EXTENSIONS)],
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            'accept': 'image/jpeg,image/png,image/gif,image/webp',
+        }),
+    )
+
     class Meta:
         model = Otziv
         fields = ['name', 'firma', 'foto', 'body']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ваше имя'}),
             'firma': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Название компании (необязательно)'}),
-            'foto': forms.FileInput(attrs={'class': 'form-control'}),
             'body': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Ваш отзыв'}),
         }
+
+    def clean_foto(self):
+        foto = self.cleaned_data.get('foto')
+        if foto and getattr(foto, 'size', 0) > OTZIV_PHOTO_MAX_BYTES:
+            raise forms.ValidationError('Фото слишком большое: не больше 5 МБ.')
+        return foto
 
     def clean_body(self):
         raw = self.cleaned_data.get('body')

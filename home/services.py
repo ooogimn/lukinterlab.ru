@@ -146,6 +146,37 @@ IP: {contact_message.ip_address or 'Неизвестно'}
             print(f"Ошибка отправки в Telegram: {e}")
             return False
 
+    @staticmethod
+    def send_payment_notification(order):
+        """
+        Письмо администратору об оплате заказа (вызывается из уведомления ЮKassa один раз).
+
+        Только на ADMIN_EMAIL: раньше здесь же была отправка данных клиента в TELEGRAM_CHANNEL_ID —
+        это канал автопостинга блога, туда имя, почту и телефон клиента слать нельзя.
+        """
+        try:
+            paid_at = timezone.localtime(order.updated).strftime('%d.%m.%Y %H:%M')
+            text_content = (
+                f"Заказ №{order.order_number} оплачен (предоплата).\n\n"
+                f"Клиент: {order.customer_name}\n"
+                f"Email: {order.customer_email}\n"
+                f"Телефон: {order.customer_phone}\n"
+                f"Сумма заказа: {order.total_price} ₽\n"
+                f"Дата: {paid_at}\n\n"
+                f"Заказ: {settings.SITE_URL}/manage/order/{order.id}/\n\n"
+                f"---\nАвтоматическое уведомление с сайта {settings.SITE_URL}\n"
+            )
+            send_mail(
+                subject=f'Заказ №{order.order_number} оплачен',
+                message=text_content,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[settings.ADMIN_EMAIL],
+            )
+            return True
+        except Exception:
+            logger.exception("Ошибка отправки письма об оплате заказа %s", order.id)
+            return False
+
 
 class SpamProtectionService:
     """Сервис для защиты от спама"""
@@ -214,69 +245,6 @@ class SpamProtectionService:
         
         # Если счетчик спама больше 70, считаем сообщение спамом
         return spam_score > 70, spam_score
-
-    @staticmethod
-    def send_payment_notification(order):
-        """Отправка уведомления об оплате заказа"""
-        try:
-            subject = f'Заказ №{order.order_number} оплачен!'
-            
-            # HTML шаблон для email
-            html_content = render_to_string('home/email/payment_notification.html', {
-                'order': order,
-                'site_url': settings.SITE_URL
-            })
-            
-            # Текстовый шаблон для email
-            text_content = f"""
-Заказ №{order.order_number} оплачен!
-
-Клиент: {order.customer_name}
-Email: {order.customer_email}
-Телефон: {order.customer_phone}
-Сумма: {order.total_price} ₽
-
-Дата оплаты: {order.updated.strftime('%d.%m.%Y %H:%M')}
-
----
-Это автоматическое уведомление с сайта {settings.SITE_URL}
-            """
-            
-            # Отправляем email
-            email = EmailMessage(
-                subject=subject,
-                body=html_content,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[settings.ADMIN_EMAIL]
-            )
-            email.content_subtype = "html"
-            email.send()
-            
-            # Отправляем уведомление в Telegram
-            message_text = f"""
-💰 *Заказ оплачен!*
-
-📋 Заказ №{order.order_number}
-👤 Клиент: {order.customer_name}
-📧 Email: {order.customer_email}
-📱 Телефон: {order.customer_phone}
-💳 Сумма: {order.total_price} ₽
-⏰ Дата: {order.updated.strftime('%d.%m.%Y %H:%M')}
-
-🎉 Можно приступать к работе!
-            """
-            
-            bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
-            bot.send_message(
-                chat_id=settings.TELEGRAM_CHANNEL_ID,
-                text=message_text,
-                parse_mode='Markdown'
-            )
-            
-            return True
-        except Exception as e:
-            print(f"Ошибка отправки уведомления об оплате: {e}")
-            return False
 
 
 class OrderService:
