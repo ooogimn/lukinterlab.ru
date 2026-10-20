@@ -56,7 +56,10 @@ class Command(BaseCommand):
         for index, (name, mute) in enumerate(items, 1):
             self.stdout.write(f'[{index}/{len(items)}] {name} …')
             self.stdout.flush()
-            result = vp.process_video(name, mute)
+            try:
+                result = vp.process_video(name, mute)
+            except Exception as exc:  # noqa: BLE001 — один сбойный файл не останавливает остальные
+                result = f'error: {exc}'
             job = VideoTranscodeJob.objects.filter(source_name=name).first()
             if job and job.status == VideoTranscodeJob.STATUS_DONE and job.source_size and job.result_size:
                 self.stdout.write(

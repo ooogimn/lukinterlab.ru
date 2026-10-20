@@ -66,6 +66,31 @@ def _base_name(name):
     return name.rsplit('.', 1)[0]
 
 
+def _field_name_limit():
+    """Минимальный max_length среди видео-полей (у FileField по умолчанию 100 символов)."""
+    limits = []
+    for app_label, model_name, field, _mute in VIDEO_FIELDS:
+        limits.append(apps.get_model(app_label, model_name)._meta.get_field(field).max_length or 100)
+    return min(limits)
+
+
+def output_base(source_name):
+    """База имён результатов (<база>_web.mp4 и т.д.), гарантированно влезающая в поле БД.
+
+    Длинное имя укорачивается и получает 8 символов хэша исходника (уникальность).
+    """
+    base = _base_name(source_name)
+    limit = _field_name_limit()
+    if len(base) + len(WEB_SUFFIX) <= limit:
+        return base
+    import hashlib
+
+    folder, stem = os.path.split(base)
+    digest = hashlib.sha1(source_name.encode('utf-8')).hexdigest()[:8]
+    keep = limit - len(WEB_SUFFIX) - len(folder) - 1 - len(digest) - 1
+    return f'{folder}/{stem[:max(1, keep)]}_{digest}'
+
+
 def derived_urls(file_field):
     """(poster_url, preview_url) для уже пережатого видео, иначе (None, None)."""
     name = getattr(file_field, 'name', '') or ''
@@ -223,8 +248,14 @@ def enqueue_video(source_name, mute=False):
     job, created = VideoTranscodeJob.objects.get_or_create(source_name=source_name)
     if not created and job.status in (VideoTranscodeJob.STATUS_QUEUED, VideoTranscodeJob.STATUS_PROCESSING):
         return False
-    if not created and job.status == VideoTranscodeJob.STATUS_DONE and job.result_name:
-        update_references(source_name, job.result_name)
+    expected = output_base(source_name) + WEB_SUFFIX
+    if (
+        not created
+        and job.status == VideoTranscodeJob.STATUS_DONE
+        and job.result_name == expected
+        and default_storage.exists(expected)
+    ):
+        update_references(source_name, expected)
         return False
     job.status = VideoTranscodeJob.STATUS_QUEUED
     job.error = ''
@@ -247,8 +278,13 @@ def process_video(source_name, mute=False):
 
     with _transcode_lock():
         job, _ = VideoTranscodeJob.objects.get_or_create(source_name=source_name)
-        if job.status == VideoTranscodeJob.STATUS_DONE and job.result_name and default_storage.exists(job.result_name):
-            update_references(source_name, job.result_name)
+        result_name = output_base(source_name) + WEB_SUFFIX
+        if (
+            job.status == VideoTranscodeJob.STATUS_DONE
+            and job.result_name == result_name
+            and default_storage.exists(result_name)
+        ):
+            update_references(source_name, result_name)
             return 'already-done'
         if not _references_exist(source_name):
             job.status = VideoTranscodeJob.STATUS_SKIPPED
@@ -270,8 +306,10 @@ def process_video(source_name, mute=False):
         try:
             info = probe(src)
             job.duration_sec = info['duration']
-            base_abs = str(Path(settings.MEDIA_ROOT) / _base_name(source_name))
+            base_abs = str(Path(settings.MEDIA_ROOT) / output_base(source_name))
             web = _transcode_files(src, base_abs, info, mute)
+            # Сначала переключаем записи, и только потом помечаем «Готово».
+            refs = update_references(source_name, result_name)
         except Exception as exc:  # noqa: BLE001
             logger.exception('VIDEO: не удалось пережать %s', source_name)
             job.status = VideoTranscodeJob.STATUS_FAILED
@@ -279,12 +317,10 @@ def process_video(source_name, mute=False):
             job.save(update_fields=['status', 'duration_sec', 'error', 'updated'])
             return 'failed'
 
-        result_name = _base_name(source_name) + WEB_SUFFIX
         job.result_name = result_name
         job.result_size = web.stat().st_size
         job.status = VideoTranscodeJob.STATUS_DONE
         job.save(update_fields=['result_name', 'result_size', 'status', 'duration_sec', 'updated'])
-        refs = update_references(source_name, result_name)
         logger.info(
             'VIDEO: %s → %s (%.1f → %.1f МБ), ссылок обновлено: %s',
             source_name, result_name, job.source_size / 1048576, job.result_size / 1048576, refs,

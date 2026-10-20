@@ -118,6 +118,8 @@ def invalidate_customer_avatar_cache(sender, instance, **kwargs):
 # --- Пережатие загруженных видео (home/video_processing.py) ---
 # После сохранения записи с новым видео ставим задачу в django-q (после коммита транзакции).
 # Поле переключается на <имя>_web.mp4 через .update(), поэтому сигнал повторно не срабатывает.
+import logging  # noqa: E402
+
 from django.db import transaction  # noqa: E402
 
 from . import video_processing  # noqa: E402
@@ -140,7 +142,14 @@ def enqueue_uploaded_video(sender, instance, **kwargs):
         return
     if not video_processing.ffmpeg_available():
         return  # локально на Windows без ffmpeg — ничего не делаем
-    transaction.on_commit(lambda: video_processing.enqueue_video(name, mute))
+
+    def _enqueue():
+        try:
+            video_processing.enqueue_video(name, mute)
+        except Exception:  # noqa: BLE001 — сбой очереди не должен ломать сохранение формы
+            logging.getLogger(__name__).exception('VIDEO: не удалось поставить в очередь %s', name)
+
+    transaction.on_commit(_enqueue)
 
 
 for _video_model in _VIDEO_SENDERS:
