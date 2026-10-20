@@ -270,6 +270,13 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 )
 
+# Статика с хэшем в имени (см. ALUKINTERLAB/storages.py): на проде nginx отдаёт /static/ сам
+# и кэширует хэшированные файлы на год. При DEBUG=True Django отдаёт обычные имена.
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "ALUKINTERLAB.storages.LenientManifestStaticFilesStorage"},
+}
+
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
