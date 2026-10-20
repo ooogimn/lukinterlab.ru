@@ -36,7 +36,8 @@ VOLATILE_RE='^(django_q_|django_session$)'
 dump=${1:-$(find "$BACKUP_ROOT/db/daily" -maxdepth 1 -name '*.dump' | sort | tail -n 1)}
 [[ -n $dump && -f $dump ]] || { echo "Дамп не найден: ${dump:-<пусто>}"; exit 1; }
 
-cleanup() { docker rm -f "$NAME" >/dev/null 2>&1 || true; }
+# -v: вместе с контейнером удалить и его анонимный volume с данными (иначе копия базы остаётся на диске)
+cleanup() { docker rm -f -v "$NAME" >/dev/null 2>&1 || true; }
 trap cleanup EXIT
 cleanup   # на случай, если контейнер остался от прошлого запуска
 
