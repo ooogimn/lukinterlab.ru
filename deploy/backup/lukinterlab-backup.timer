@@ -1,0 +1,13 @@
+# Расписание бэкапа lukinterlab.ru: каждую ночь в 03:30 по времени сервера (МСК).
+# Persistent=true — если сервер был выключен в это время, бэкап сделается сразу после включения.
+# Проверить: systemctl list-timers lukinterlab-backup.timer
+[Unit]
+Description=LukInterLab: бэкап каждую ночь в 03:30 МСК
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+Persistent=true
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target

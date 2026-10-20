@@ -29,3 +29,5 @@ tmp
 !env.docker.example
 sync_data.sh
 INFO_START.txt
+# Скрипты бэкапа работают на хосте сервера и на ПК — в образ сайта не нужны
+deploy/backup
