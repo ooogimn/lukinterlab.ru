@@ -14,6 +14,11 @@
 #
 # Логи json-file без лимита за недели забили диск (web/qcluster писали WARNING на каждый
 # промах Redis). Ротация применяется при создании контейнера.
+#
+# Postgres и Redis публикуются только на 127.0.0.1: web/qcluster ходят к ним по сети compose,
+# а с хоста (локальная разработка) — через 127.0.0.1. Открытый наружу Redis без пароля
+# в 2026-10 атаковали эксплойтами: каждый падающий redis-server писал core-дамп ~48 МБ
+# в /data и за 2 часа забил диск. Поэтому у Redis ещё и core-дампы отключены (ulimits).
 x-logging: &default-logging
   driver: json-file
   options:
@@ -29,7 +34,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lukinterlab_dev}
       POSTGRES_DB: ${POSTGRES_DB:-lukinterlab}
     ports:
-      - "${POSTGRES_PORT_PUBLISH:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT_PUBLISH:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -42,8 +47,10 @@ services:
   redis:
     image: redis:7-alpine
     logging: *default-logging
+    ulimits:
+      core: 0
     ports:
-      - "${REDIS_PORT_PUBLISH:-6379}:6379"
+      - "127.0.0.1:${REDIS_PORT_PUBLISH:-6379}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
