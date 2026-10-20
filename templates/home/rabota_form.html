@@ -281,6 +281,36 @@
                 </button>
             </div>
         </form>
+        <script>
+        // Хостинг (фронтенд Jino) не принимает запрос больше 1 ГиБ и отвечает ошибкой 413 только
+        // после долгой загрузки. Проверяем размер заранее: и одно видео, и все файлы формы вместе.
+        (function () {
+            const form = document.currentScript.previousElementSibling;
+            if (!form || form.tagName !== 'FORM') return;
+            const LIMIT = 1000 * 1024 * 1024;
+            const mb = (bytes) => Math.round(bytes / 1048576);
+            form.querySelectorAll('input[type="file"][data-max-bytes]').forEach((input) => {
+                input.addEventListener('change', () => {
+                    const max = Number(input.dataset.maxBytes) || LIMIT;
+                    const tooBig = Array.from(input.files || []).find((f) => f.size > max);
+                    if (tooBig) {
+                        alert(`Файл «${tooBig.name}» весит ${mb(tooBig.size)} МБ — максимум ${mb(max)} МБ. Сожмите видео или загрузите на YouTube/Rutube и вставьте ссылку.`);
+                        input.value = '';
+                    }
+                });
+            });
+            form.addEventListener('submit', (event) => {
+                let total = 0;
+                form.querySelectorAll('input[type="file"]').forEach((input) => {
+                    Array.from(input.files || []).forEach((f) => { total += f.size; });
+                });
+                if (total > LIMIT) {
+                    event.preventDefault();
+                    alert(`Все файлы вместе весят ${mb(total)} МБ — за один раз можно отправить не больше ${mb(LIMIT)} МБ. Загрузите часть файлов, сохраните и добавьте остальные следующим сохранением.`);
+                }
+            });
+        })();
+        </script>
     </div>
 </div>
 {% endblock %}

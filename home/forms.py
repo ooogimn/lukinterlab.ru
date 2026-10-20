@@ -630,13 +630,16 @@ class LegalInfoForm(forms.ModelForm):
             'certificate_file': forms.FileInput(attrs={'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent'}),
         }
 
+MAX_VIDEO_UPLOAD_BYTES = 1000 * 1024 * 1024  # лимит фронтенда Jino — 1 ГиБ на весь запрос
+
+
 class RabotaForm(forms.ModelForm):
     """Форма для создания и редактирования работ в портфолио (Дашборд)"""
     class Meta:
         model = Rabota
         help_texts = {
             'preview_video': (
-                'MP4/MOV/WebM до 2 ГБ. После загрузки видео автоматически сжимается для сайта '
+                'MP4/MOV/WebM до 1000 МБ. После загрузки видео автоматически сжимается для сайта '
                 '(1–5 минут в фоне): карточка получит лёгкое превью и обложку, оригинал сохраняется.'
             ),
         }
@@ -653,7 +656,13 @@ class RabotaForm(forms.ModelForm):
             'status': forms.Select(attrs={'class': 'form-control'}),
             'image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*,.gif'}),
             'preview_image_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://... (внешнее изображение)'}),
-            'preview_video': forms.FileInput(attrs={'class': 'form-control', 'accept': 'video/mp4,video/webm,video/ogg,video/quicktime,.mp4,.webm,.ogg,.mov,.m4v'}),
+            'preview_video': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'video/mp4,video/webm,video/ogg,video/quicktime,.mp4,.webm,.ogg,.mov,.m4v',
+                # Проверка размера в браузере до отправки (см. rabota_form.html) — иначе хостинг
+                # отвечает 413 только после долгой загрузки.
+                'data-max-bytes': str(MAX_VIDEO_UPLOAD_BYTES),
+            }),
             'preview_video_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://youtube.com/... / rutube / vk video'}),
             'adres': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://example.com'}),
             'body': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Краткое описание'}),
@@ -680,9 +689,10 @@ class RabotaForm(forms.ModelForm):
         if ext not in allowed_ext:
             raise forms.ValidationError('Главное видео: разрешены MP4, MOV, M4V, WebM или OGG.')
 
-        # Лимит согласован с nginx (client_max_body_size, deploy/nginx-upload-limit.conf).
-        if video.size > 2 * 1024 * 1024 * 1024:
-            raise forms.ValidationError('Главное видео: размер не должен превышать 2 ГБ.')
+        # Фронтенд Jino режет тело запроса больше 1 ГиБ (проверено 2026-10-20: 1073741825 байт → 413),
+        # наш nginx — deploy/nginx-upload-limit.conf. Оставляем запас на остальные поля формы.
+        if video.size > MAX_VIDEO_UPLOAD_BYTES:
+            raise forms.ValidationError('Главное видео: размер не должен превышать 1000 МБ (ограничение хостинга).')
 
         return video
 
