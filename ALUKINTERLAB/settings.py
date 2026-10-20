@@ -57,6 +57,9 @@ TELEGRAM_BOT_TOKEN = env_str("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHANNEL_ID = env_str("TELEGRAM_CHANNEL_ID", "-1002200401634")
 # Публичный канал: анонсы статей (можно выключить в .env при блокировках; дашборд может дополнительно выключить)
 TELEGRAM_CHANNEL_AUTOPOST = env_bool("TELEGRAM_CHANNEL_AUTOPOST", True)
+# С VPS api.telegram.org недоступен (блокировка сети, проверено 2026-10-20) — запросы к Bot API идут
+# через мост Cloudflare Worker (deploy/telegram-bridge/worker.js): https://<имя>.<аккаунт>.workers.dev
+TELEGRAM_API_BASE = (env_str("TELEGRAM_API_BASE") or "https://api.telegram.org").rstrip("/")
 
 # VK API — автопостинг статей на стену сообщества (Blog.models.publish_to_social → send_to_vk).
 # VK_ACCESS_TOKEN — ключ СООБЩЕСТВА (Работа с API → создать ключ): для wall.post достаточно прав «Стена».

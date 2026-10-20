@@ -15,7 +15,9 @@ from home import notify
 
 
 def _tg(method, **params):
-    response = requests.get(f"{notify.TELEGRAM_API}/bot{settings.TELEGRAM_BOT_TOKEN}/{method}", params=params, timeout=15)
+    response = requests.get(
+        f"{settings.TELEGRAM_API_BASE}/bot{settings.TELEGRAM_BOT_TOKEN}/{method}", params=params, timeout=15
+    )
     return response.json()
 
 
@@ -54,6 +56,7 @@ class Command(BaseCommand):
         out(f"  готово: {'да' if notify.email_configured() else 'нет'}")
 
         out("== Telegram")
+        out(f"  адрес API: {settings.TELEGRAM_API_BASE}")
         if not settings.TELEGRAM_BOT_TOKEN:
             out("  токен бота: НЕТ (TELEGRAM_BOT_TOKEN)")
         else:

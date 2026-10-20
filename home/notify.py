@@ -6,7 +6,8 @@
 
 Настройки — в .env.docker (см. env.docker.example, ввод секретов — scripts/set_notify_secrets.sh):
 - почта: EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD, DEFAULT_FROM_EMAIL → ADMIN_EMAIL;
-- Telegram: TELEGRAM_BOT_TOKEN + TELEGRAM_NOTIFY_CHAT_ID — личный чат с ботом (не канал блога TELEGRAM_CHANNEL_ID);
+- Telegram: TELEGRAM_BOT_TOKEN + TELEGRAM_NOTIFY_CHAT_ID — личный чат с ботом (не канал блога TELEGRAM_CHANNEL_ID),
+  запросы идут через TELEGRAM_API_BASE (мост Cloudflare Worker, deploy/telegram-bridge/worker.js);
 - MAX: MAX_BOT_TOKEN + MAX_NOTIFY_CHAT_ID — личный диалог с ботом (не канал MAX_CHAT_ID).
 Проверка и поиск чатов: python manage.py notify_setup [--find-chats] [--test].
 """
@@ -20,7 +21,6 @@ from django.core.validators import validate_email
 
 logger = logging.getLogger(__name__)
 
-TELEGRAM_API = "https://api.telegram.org"
 MAX_PLATFORM_API = "https://platform-api.max.ru"
 TELEGRAM_TEXT_LIMIT = 4000  # у Telegram предел 4096 символов
 MAX_TEXT_LIMIT = 3900  # у MAX предел 4000 символов
@@ -80,7 +80,8 @@ def send_telegram(text):
         return None
     try:
         response = requests.post(
-            f"{TELEGRAM_API}/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage",
+            # TELEGRAM_API_BASE — мост Cloudflare: с VPS api.telegram.org недоступен.
+            f"{settings.TELEGRAM_API_BASE}/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage",
             json={
                 "chat_id": settings.TELEGRAM_NOTIFY_CHAT_ID,
                 "text": _truncate(text, TELEGRAM_TEXT_LIMIT),

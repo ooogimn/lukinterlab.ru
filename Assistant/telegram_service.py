@@ -1,6 +1,7 @@
 import requests
 import logging
 from typing import Optional, Dict, Any
+from django.conf import settings as django_settings
 from .models import AssistantSettings, ChatSession
 
 logger = logging.getLogger(__name__)
@@ -13,7 +14,8 @@ class TelegramService:
         self.settings = settings
         self.bot_token = settings.get_telegram_bot_token()
         self.admin_chat_id = settings.telegram_admin_chat_id
-        self.base_url = f"https://api.telegram.org/bot{self.bot_token}"
+        # TELEGRAM_API_BASE — мост Cloudflare: с VPS api.telegram.org недоступен.
+        self.base_url = f"{django_settings.TELEGRAM_API_BASE}/bot{self.bot_token}"
     
     def is_configured(self) -> bool:
         """Проверить, настроен ли бот"""

@@ -58,7 +58,7 @@ def send_to_telegram(post):
                 raise FileNotFoundError(f"Изображение не найдено: {image_path}")
             
             # Подготовьте URL API для отправки фотографии
-            api_url = f"https://api.telegram.org/bot{bot_token}/sendPhoto"
+            api_url = f"{settings.TELEGRAM_API_BASE}/bot{bot_token}/sendPhoto"
             
             # Открываем файл с правильным закрытием
             image_file = open(image_path, 'rb')
@@ -101,7 +101,8 @@ def send_to_telegram(post):
             logger.error(f"Файл изображения не найден: {str(e)}")
             # Продолжаем отправку без изображения
         except Exception as e:
-            logger.error(f"Ошибка отправки фото в Telegram: {str(e)}", exc_info=True)
+            # Текст ошибки requests содержит адрес с токеном — маскируем.
+            logger.error("Ошибка отправки фото в Telegram: %s", str(e).replace(bot_token, '<TOKEN>'))
             # Если отправить фотографию не удастся, вернитесь к отправке только текстового сообщения
         finally:
             # Закрываем файл если он был открыт
@@ -113,7 +114,7 @@ def send_to_telegram(post):
         
         # Пытаемся отправить только текстовое сообщение
         try:
-            api_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+            api_url = f"{settings.TELEGRAM_API_BASE}/bot{bot_token}/sendMessage"
             
             data = {
                 "chat_id": channel_id,
@@ -144,13 +145,13 @@ def send_to_telegram(post):
             logger.info(f"Successfully sent post '{post.title}' (text only) to Telegram")
             return True
         except Exception as e:
-            logger.error(f"Ошибка отправки сообщения в Telegram: {str(e)}", exc_info=True)
+            logger.error("Ошибка отправки сообщения в Telegram: %s", str(e).replace(bot_token, '<TOKEN>'))
             logger.error(f"Ошибка Telegram не опубликована: {post.title}")
             return False
     else:
         # Если изображения нет, просто отправьте сообщение
         try:
-            api_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+            api_url = f"{settings.TELEGRAM_API_BASE}/bot{bot_token}/sendMessage"
             
             data = {
                 "chat_id": channel_id,
@@ -181,7 +182,7 @@ def send_to_telegram(post):
             logger.info(f"Successfully sent post '{post.title}' (text only) to Telegram")
             return True
         except Exception as e:
-            logger.error(f"Ошибка отправки сообщения в Telegram: {str(e)}", exc_info=True)
+            logger.error("Ошибка отправки сообщения в Telegram: %s", str(e).replace(bot_token, '<TOKEN>'))
             logger.error(f"Ошибка Telegram не опубликована: {post.title}")
             return False
 
