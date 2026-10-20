@@ -54,7 +54,7 @@
                 data-description="{{ rabota.body|default_if_none:''|escape }}"
                 data-technologies="{{ rabota.technologies|default_if_none:''|escape }}"
                 data-project-url="{{ rabota.adres|default_if_none:''|escape }}"
-                data-game-html="{{ rabota.game_html|default_if_none:''|escape }}"
+                {% if rabota.game_html %}data-game-url="{% url 'home:rabota_game_html' rabota.pk %}"{% endif %}
                 data-detail-url="{{ rabota.get_absolute_url }}"
             >
                 {% with display_media=rabota.get_display_media %}
@@ -75,7 +75,8 @@
                       allowfullscreen
                     ></iframe>
                 {% elif display_media.type == 'local_video' %}
-                    <video src="{{ display_media.url }}" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none"></video>
+                    {# Видео качается и играет только когда карточка на экране (см. js-lazy-video ниже) #}
+                    <video data-src="{{ display_media.url }}"{% if display_media.poster_url %} poster="{{ display_media.poster_url }}"{% endif %} muted loop playsinline preload="none" class="js-lazy-video absolute inset-0 w-full h-full object-cover bg-gray-900 transition-transform duration-700 group-hover:scale-110 pointer-events-none"></video>
                 {% elif display_media.type == 'image' or display_media.type == 'external_image' %}
                     <img src="{{ display_media.thumbnail_url|default:display_media.url }}" alt="{{ rabota.name }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none">
                 {% else %}
@@ -248,6 +249,36 @@ document.addEventListener('DOMContentLoaded', function() {
         currentCard: null,
         zoom: 1,
     };
+    let gameLoadToken = 0;
+
+    // Видео в карточках: раньше 15 штук с autoplay качались целиком сразу и занимали все
+    // соединения браузера. Теперь src ставится и play() вызывается только для видимых карточек.
+    const lazyVideos = Array.from(document.querySelectorAll('video.js-lazy-video'));
+    const saveData = Boolean(navigator.connection && navigator.connection.saveData);
+    if (lazyVideos.length && !saveData && 'IntersectionObserver' in window) {
+        const videoObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                const video = entry.target;
+                if (entry.isIntersecting) {
+                    if (!video.getAttribute('src') && video.dataset.src) {
+                        video.src = video.dataset.src;
+                    }
+                    const playing = video.play();
+                    if (playing && playing.catch) {
+                        playing.catch(() => {});
+                    }
+                } else if (!video.paused) {
+                    video.pause();
+                }
+            });
+        }, { rootMargin: '200px 0px', threshold: 0.25 });
+        lazyVideos.forEach((video) => videoObserver.observe(video));
+    } else if (!saveData) {
+        lazyVideos.forEach((video) => {
+            video.src = video.dataset.src;
+            video.autoplay = true;
+        });
+    }
 
     function getHeaderOffset() {
         const candidates = document.querySelectorAll('nav, header, #mobile-menu, #mobile-menu-content, .header, .header-main');
@@ -435,8 +466,8 @@ document.addEventListener('DOMContentLoaded', function() {
         modalDetailLink.href = card.dataset.detailUrl || '#';
 
         const projectUrl = card.dataset.projectUrl || '';
-        const gameHtml = card.dataset.gameHtml || '';
-        if (projectUrl || gameHtml.trim()) {
+        const gameUrl = card.dataset.gameUrl || '';
+        if (projectUrl || gameUrl) {
             modalActionLink.classList.remove('hidden');
             modalActionLink.textContent = projectUrl ? 'Перейти на сайт' : 'Запустить код';
         } else {
@@ -458,7 +489,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
         modalMediaArea.classList.add('hidden');
         modalGameWrapper.classList.remove('hidden');
-        modalGameFrame.srcdoc = card.dataset.gameHtml || '';
+        // Код игры не вшит в страницу — подгружаем по клику (home:rabota_game_html).
+        const token = ++gameLoadToken;
+        const stillOpen = () => token === gameLoadToken && !modalGameWrapper.classList.contains('hidden');
+        modalGameFrame.srcdoc = '<p style="font:16px sans-serif;color:#bbb;padding:24px">Загрузка…</p>';
+        fetch(card.dataset.gameUrl || '', { credentials: 'same-origin' })
+            .then((response) => (response.ok ? response.text() : Promise.reject(response.status)))
+            .then((html) => {
+                if (stillOpen()) {
+                    modalGameFrame.srcdoc = html;
+                }
+            })
+            .catch(() => {
+                if (stillOpen()) {
+                    modalGameFrame.srcdoc = '<p style="font:16px sans-serif;color:#f88;padding:24px">Не удалось загрузить код. Обновите страницу.</p>';
+                }
+            });
         updateModalWindowSize();
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
@@ -543,12 +589,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         const projectUrl = modalState.currentCard.dataset.projectUrl || '';
-        const gameHtml = modalState.currentCard.dataset.gameHtml || '';
+        const gameUrl = modalState.currentCard.dataset.gameUrl || '';
         if (projectUrl) {
             window.open(projectUrl, '_blank', 'noopener');
             return;
         }
-        if (gameHtml.trim()) {
+        if (gameUrl) {
             openGameInModal(modalState.currentCard);
         }
     });

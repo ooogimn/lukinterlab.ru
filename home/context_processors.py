@@ -109,6 +109,10 @@ def cart_info(request):
             pass
 
     cart_items_count = 0
+    if not request.session.session_key:
+        # Нет сессии — нет и корзины. Не пишем 0 в сессию: иначе каждому анонимному
+        # посетителю и боту создавалась строка в django_session и ставилась кука sessionid.
+        return {'cart_items_count': 0}
     if request.session.session_key:
         try:
             n = (

@@ -332,6 +332,8 @@ class Rabota(models.Model):
                 "url": f"{self.preview_video.url}?v={version}",
                 "embed_url": None,
                 "thumbnail_url": None,
+                # Обложка карточки, пока видео не начало играть (preload="none").
+                "poster_url": self.get_thumbnail_webp_url_with_version() if self.image else None,
                 "provider": "local",
             }
 

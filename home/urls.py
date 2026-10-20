@@ -14,6 +14,8 @@ urlpatterns = [
     path('contact/', contact_form, name='contact-form'),
     # Detail view для Rabota
     path('rabota/<int:pk>/', DetailView.as_view(model=Rabota, template_name='home/rabota_detail.html', context_object_name='rabota'), name='rabota'),
+    # Код мини-игры для модалки портфолио (по клику, не вшивается в HTML главной)
+    path('rabota/<int:pk>/game/', rabota_game_html, name='rabota_game_html'),
     # Страницы услуг
     path('services/', ServiceListView.as_view(), name='service-list'),
     path('services/<int:pk>/', ServiceDetailView.as_view(), name='service-detail'),

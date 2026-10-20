@@ -240,8 +240,23 @@ def home(request):
                    'legal_info': legal_info_obj,
                    'phone_for_link': phone_for_link,
                    })
-                   
-                   
+
+
+def rabota_game_html(request, pk):
+    """Код мини-игры работы портфолио — подгружается в модалку только по клику «Запустить код».
+
+    Раньше game_html целиком вшивался в data-атрибут каждой карточки главной (~244 КБ HTML).
+    Отдаём text/plain + nosniff: при прямом открытии ссылки браузер не исполнит код,
+    а модалка кладёт его в iframe.srcdoc, как и прежде.
+    """
+    rabota = get_object_or_404(Rabota.objects.only('id', 'game_html', 'is_visible'), pk=pk, is_visible=True)
+    if not (rabota.game_html or '').strip():
+        return HttpResponse(status=404)
+    response = HttpResponse(rabota.game_html, content_type='text/plain; charset=utf-8')
+    response['X-Content-Type-Options'] = 'nosniff'
+    response['Cache-Control'] = 'public, max-age=300'
+    return response
+
 
 class OtzivListView(ListView):
     model = Otziv
