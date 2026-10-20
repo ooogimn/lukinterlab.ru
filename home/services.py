@@ -20,7 +20,7 @@ class NotificationService:
     
     @staticmethod
     def send_all_notifications(contact_message):
-        """Отправка всех уведомлений через django-Q"""
+        """Уведомление администратору о заявке (почта, Telegram, MAX) — фоновой задачей django-q, см. home/notify.py."""
         try:
             from django_q.tasks import async_task
             async_task('home.tasks.send_contact_notifications', contact_message.id)
@@ -29,56 +29,12 @@ class NotificationService:
             logger.error(f"Ошибка планирования уведомлений: {e}")
     
     @staticmethod
-    def send_email_notification(contact_message):
-        """Отправка email уведомления администратору"""
-        try:
-            subject = f'Новое сообщение с сайта от {contact_message.name}'
-            
-            # HTML шаблон для email
-            html_content = render_to_string('home/email/contact_notification.html', {
-                'message': contact_message,
-                'site_url': settings.SITE_URL
-            })
-            
-            # Текстовый шаблон для email
-            text_content = f"""
-Новое сообщение с сайта LukInterLab
-
-От: {contact_message.name} ({contact_message.email})
-Дата: {contact_message.created.strftime('%d.%m.%Y %H:%M')}
-IP: {contact_message.ip_address or 'Неизвестно'}
-
-Сообщение:
-{contact_message.message}
-
----
-Это автоматическое уведомление с сайта {settings.SITE_URL}
-            """
-            
-            # Отправляем email
-            email = EmailMessage(
-                subject=subject,
-                body=html_content,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[settings.ADMIN_EMAIL],
-                reply_to=[contact_message.email]
-            )
-            email.content_subtype = "html"
-            
-            # Добавляем вложение, если есть
-            if contact_message.attachment:
-                email.attach_file(contact_message.attachment.path)
-            
-            email.send()
-            return True
-            
-        except Exception as e:
-            print(f"Ошибка отправки email: {e}")
-            return False
-    
-    @staticmethod
     def send_auto_reply(contact_message):
-        """Отправка автоматического ответа пользователю"""
+        """
+        Автоответ посетителю. Сейчас НЕ вызывается (решение владельца 2026-10-20): через форму
+        с чужим адресом его можно превратить в рассылку с нашего ящика — включать только без
+        повтора текста сообщения.
+        """
         try:
             subject = 'Спасибо за ваше сообщение - LukInterLab'
             
@@ -111,70 +67,6 @@ IP: {contact_message.ip_address or 'Неизвестно'}
             
         except Exception as e:
             print(f"Ошибка отправки автоответа: {e}")
-            return False
-    
-    @staticmethod
-    def send_telegram_notification(contact_message):
-        """Отправка уведомления в Telegram"""
-        try:
-            bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
-            
-            message_text = f"""
-🔔 *Новое сообщение с сайта*
-
-👤 *От:* {contact_message.name}
-📧 *Email:* {contact_message.email}
-📅 *Дата:* {contact_message.created.strftime('%d.%m.%Y %H:%M')}
-🌐 *IP:* {contact_message.ip_address or 'Неизвестно'}
-
-💬 *Сообщение:*
-{contact_message.message[:500]}{'...' if len(contact_message.message) > 500 else ''}
-
-🔗 [Открыть в админке]({settings.SITE_URL}/admin/home/contactmessage/{contact_message.id}/change/)
-            """
-            
-            # Отправляем в Telegram канал
-            bot.send_message(
-                chat_id=settings.TELEGRAM_CHANNEL_ID,
-                text=message_text,
-                parse_mode='Markdown',
-                disable_web_page_preview=True
-            )
-            return True
-            
-        except Exception as e:
-            print(f"Ошибка отправки в Telegram: {e}")
-            return False
-
-    @staticmethod
-    def send_payment_notification(order):
-        """
-        Письмо администратору об оплате заказа (вызывается из уведомления ЮKassa один раз).
-
-        Только на ADMIN_EMAIL: раньше здесь же была отправка данных клиента в TELEGRAM_CHANNEL_ID —
-        это канал автопостинга блога, туда имя, почту и телефон клиента слать нельзя.
-        """
-        try:
-            paid_at = timezone.localtime(order.updated).strftime('%d.%m.%Y %H:%M')
-            text_content = (
-                f"Заказ №{order.order_number} оплачен (предоплата).\n\n"
-                f"Клиент: {order.customer_name}\n"
-                f"Email: {order.customer_email}\n"
-                f"Телефон: {order.customer_phone}\n"
-                f"Сумма заказа: {order.total_price} ₽\n"
-                f"Дата: {paid_at}\n\n"
-                f"Заказ: {settings.SITE_URL}/manage/order/{order.id}/\n\n"
-                f"---\nАвтоматическое уведомление с сайта {settings.SITE_URL}\n"
-            )
-            send_mail(
-                subject=f'Заказ №{order.order_number} оплачен',
-                message=text_content,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[settings.ADMIN_EMAIL],
-            )
-            return True
-        except Exception:
-            logger.exception("Ошибка отправки письма об оплате заказа %s", order.id)
             return False
 
 

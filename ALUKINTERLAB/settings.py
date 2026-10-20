@@ -482,9 +482,17 @@ EMAIL_HOST_USER = env_str("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = env_str("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = env_str("DEFAULT_FROM_EMAIL", f"LukInterLab <noreply@lukinterlab.ru>")
 
+# Не держать фоновую задачу, если почтовый сервер не отвечает.
+EMAIL_TIMEOUT = env_int("EMAIL_TIMEOUT", 20) or 20
+
 # Куда слать обращения с формы / админ-уведомления (можно оставить в .env)
 CONTACT_EMAIL = env_str("CONTACT_EMAIL", "Ya@LukyanovSY.ru")
 ADMIN_EMAIL = env_str("ADMIN_EMAIL", "Ya@LukyanovSY.ru")
+
+# Уведомления администратору о заявках, заказах и оплатах (home/notify.py) — личные чаты с ботами,
+# не каналы автопостинга. Узнать ID: python manage.py notify_setup --find-chats
+TELEGRAM_NOTIFY_CHAT_ID = env_str("TELEGRAM_NOTIFY_CHAT_ID")
+MAX_NOTIFY_CHAT_ID = env_str("MAX_NOTIFY_CHAT_ID")
 
 # YooKassa (пустые — оплата не настроена)
 YOOKASSA_SHOP_ID = env_str("YOOKASSA_SHOP_ID")

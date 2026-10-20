@@ -48,6 +48,7 @@ from identity_auth.models import LinkedSocialAccount
 from identity_auth.services import linked_labels_for_user
 
 from .cart_session import SESSION_CART_ITEMS_COUNT_KEY, sync_cart_items_count_session
+from .notify import queue_notification
 
 # Конфигурация SDK YooKassa (актуальная сигнатура create/find_one).
 Configuration.account_id = settings.YOOKASSA_SHOP_ID
@@ -962,6 +963,7 @@ def checkout(request):
             
             cart.delete()
             request.session[SESSION_CART_ITEMS_COUNT_KEY] = 0
+            queue_notification('home.tasks.send_order_notifications', order.id, 'created')
             messages.success(request, 'Контактные данные сохранены. Заполните опросный лист для запуска проекта.')
             return redirect('home:order_questionnaire', order_id=order.id)
     else:
@@ -1085,6 +1087,7 @@ def order_questionnaire(request, order_id):
                         description='Дополнительный файл'
                     )
             
+            queue_notification('home.tasks.send_order_notifications', order.id, 'questionnaire')
             messages.success(request, 'Опросный лист сохранен. Переходим к оплате предоплаты.')
             return redirect('home:order_pay', order_id=order.id)
     else:
@@ -1287,6 +1290,23 @@ def _real_client_ip(request):
     return None
 
 
+def _mark_order_paid(order):
+    """
+    Отметить заказ оплаченным и поставить уведомление администратору.
+    Обновление атомарное: если уведомление ЮKassa и страница оплаты сработают одновременно,
+    отметку (и уведомление) сделает только первый.
+    """
+    marked = (
+        Order.objects.filter(pk=order.pk)
+        .exclude(payment_status='paid')
+        .update(payment_status='paid', status='confirmed', updated=timezone.now())
+    )
+    order.payment_status, order.status = 'paid', 'confirmed'
+    if marked:
+        queue_notification('home.tasks.send_order_notifications', order.id, 'paid')
+    return bool(marked)
+
+
 @csrf_exempt
 def yookassa_webhook(request):
     """
@@ -1335,16 +1355,7 @@ def yookassa_webhook(request):
         return JsonResponse({'error': 'Order mismatch'}, status=400)
 
     if payment.status == 'succeeded':
-        if order.payment_status != 'paid':
-            order.payment_status = 'paid'
-            order.status = 'confirmed'
-            order.save()
-            # Уведомление администратору — один раз, при первой отметке об оплате.
-            try:
-                from .services import NotificationService
-                NotificationService.send_payment_notification(order)
-            except Exception:
-                logger.exception("Ошибка отправки уведомления об оплате заказа %s", order.id)
+        _mark_order_paid(order)
     elif payment.status == 'canceled' and order.payment_status != 'paid':
         order.payment_status = 'failed'
         order.save()
@@ -1362,9 +1373,7 @@ def payment_success(request, order_id):
         try:
             payment = Payment.find_one(order.payment_id)
             if payment.status == 'succeeded':
-                order.payment_status = 'paid'
-                order.status = 'confirmed'
-                order.save()
+                _mark_order_paid(order)
                 messages.success(request, 'Оплата прошла успешно!')
             elif payment.status == 'canceled':
                 order.payment_status = 'failed'
