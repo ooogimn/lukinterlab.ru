@@ -1,0 +1,2187 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>💪 Fitness Tracker Pro - Ваши тренировки</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --color-primary: #6c5ce7;
+            --color-primary-light: rgba(108, 92, 231, 0.15);
+            --color-secondary: #00cec9;
+            --color-accent: #fd79a8;
+            --color-warning: #f39c12;
+            --color-success: #00b894;
+            --color-danger: #e74c3c;
+            --color-bg: #f0f2f5;
+            --color-surface: #ffffff;
+            --color-surface-glass: rgba(255, 255, 255, 0.9);
+            --color-text: #2d3436;
+            --color-text-light: #636e72;
+            --color-border: #dfe6e9;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        /* Полноэкранный фото-фон для шапки */
+        .hero-banner {
+            background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1200&q=80');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 30px 16px 40px;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            margin-bottom: -20px;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .logo-text h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .logo-text p {
+            margin: 0;
+            font-size: 13px;
+            opacity: 0.9;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .header-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .header-btn:active {
+            transform: scale(0.95);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px;
+            padding-bottom: 100px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Tabs */
+        .tabs-container {
+            background: var(--color-surface-glass);
+            backdrop-filter: blur(10px);
+            border-radius: var(--radius-lg);
+            padding: 8px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-md);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            min-width: max-content;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text-light);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            color: var(--color-primary);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.4);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Cards */
+        .card,
+        .accordion-item {
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--color-border);
+            transition: all 0.3s ease;
+        }
+
+        .accordion-item {
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .card:hover,
+        .accordion-item:hover {
+            box-shadow: var(--shadow-md);
+            border-color: rgba(108, 92, 231, 0.3);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--color-text);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Accordion */
+        .accordion-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            width: 100%;
+            text-align: left;
+            transition: background 0.2s;
+        }
+
+        .accordion-title {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .accordion-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .accordion-icon.workout {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+        }
+
+        .accordion-icon.bmi {
+            background: linear-gradient(135deg, #00cec9, #81ecec);
+        }
+
+        .accordion-icon.water {
+            background: linear-gradient(135deg, #0984e3, #74b9ff);
+        }
+
+        .accordion-icon.meal {
+            background: linear-gradient(135deg, #fd79a8, #fab1c4);
+        }
+
+        .accordion-title h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .accordion-title span {
+            font-size: 13px;
+            color: var(--color-text-light);
+            margin-top: 2px;
+            display: block;
+        }
+
+        .accordion-arrow {
+            color: var(--color-text-light);
+            transition: transform 0.3s ease;
+        }
+
+        .accordion-header.active .accordion-arrow {
+            transform: rotate(180deg);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.3s ease;
+        }
+
+        .accordion-content.active {
+            max-height: 1500px;
+            padding: 0 20px 20px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--color-border);
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--color-primary-light);
+        }
+
+        .stat-card.primary {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            color: white;
+            border: none;
+            box-shadow: 0 8px 20px rgba(108, 92, 231, 0.3);
+        }
+
+        .stat-card.primary .stat-value,
+        .stat-card.primary .stat-label {
+            color: white;
+        }
+
+        .stat-icon {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 30px;
+            font-weight: 800;
+            color: var(--color-primary);
+            line-height: 1.2;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-text-light);
+            margin-top: 4px;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--color-text);
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            font-size: 15px;
+            color: var(--color-text);
+            background: var(--color-surface);
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 4px var(--color-primary-light);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn:hover {
+            box-shadow: 0 6px 20px rgba(108, 92, 231, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--color-secondary), #81ecec);
+            box-shadow: 0 4px 15px rgba(0, 206, 201, 0.4);
+        }
+
+        /* Workout List w/ Photos */
+        .workout-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .workout-item {
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            border: 1px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .workout-item:hover {
+            transform: translateX(5px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--color-primary-light);
+        }
+
+        .workout-photo {
+            width: 60px;
+            height: 60px;
+            border-radius: var(--radius-sm);
+            background-size: cover;
+            background-position: center;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .workout-info {
+            flex: 1;
+        }
+
+        .workout-info h4 {
+            margin: 0 0 4px 0;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .workout-info p {
+            margin: 0;
+            font-size: 13px;
+            color: var(--color-text-light);
+        }
+
+        .workout-badges {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge.duration {
+            background: var(--color-primary-light);
+            color: var(--color-primary);
+        }
+
+        .badge.calories {
+            background: rgba(243, 156, 18, 0.15);
+            color: var(--color-warning);
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .icon-btn.delete {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--color-danger);
+        }
+
+        .icon-btn.delete:hover {
+            background: var(--color-danger);
+            color: white;
+        }
+
+        /* Progress & Chart */
+        .chart-container {
+            position: relative;
+            height: 220px;
+            padding: 20px 0 10px;
+        }
+
+        .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 100%;
+            gap: 8px;
+            border-bottom: 2px solid var(--color-border);
+            padding-bottom: 10px;
+        }
+
+        .bar-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            height: 100%;
+        }
+
+        .bar {
+            width: 100%;
+            max-width: 36px;
+            background: linear-gradient(to top, var(--color-primary), var(--color-accent));
+            border-radius: 6px 6px 0 0;
+            min-height: 4px;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            box-shadow: 0 4px 10px rgba(108, 92, 231, 0.3);
+        }
+
+        .bar:hover {
+            opacity: 0.8;
+            transform: scaleY(1.05);
+            transform-origin: bottom;
+        }
+
+        .bar-label {
+            font-size: 12px;
+            color: var(--color-text-light);
+            margin-top: 12px;
+            font-weight: 600;
+        }
+
+        .progress-container {
+            margin: 16px 0;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: var(--color-border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+            border-radius: 10px;
+            transition: width 0.8s ease;
+        }
+
+        /* Water Tracker */
+        .water-tracker {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            padding: 16px 0;
+        }
+
+        .water-glass {
+            width: 55px;
+            height: 70px;
+            border: 3px solid var(--color-border);
+            border-radius: 4px 4px 16px 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .water-glass.filled {
+            border-color: var(--color-secondary);
+            background: linear-gradient(to top, rgba(0, 206, 201, 0.8) 0%, rgba(0, 206, 201, 0.4) 100%);
+            box-shadow: 0 4px 12px rgba(0, 206, 201, 0.3);
+        }
+
+        .water-glass::after {
+            content: '💧';
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            font-size: 14px;
+            opacity: 0.5;
+        }
+
+        /* Achievements */
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 12px;
+        }
+
+        .achievement-card {
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            padding: 16px 10px;
+            text-align: center;
+            border: 2px solid transparent;
+            opacity: 0.4;
+            filter: grayscale(1);
+            transition: all 0.4s ease;
+        }
+
+        .achievement-card.unlocked {
+            opacity: 1;
+            filter: grayscale(0);
+            border-color: var(--color-warning);
+            box-shadow: 0 6px 16px rgba(243, 156, 18, 0.25);
+            background: linear-gradient(to bottom, #fff, rgba(243, 156, 18, 0.05));
+        }
+
+        .achievement-icon {
+            font-size: 42px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
+
+        .achievement-name {
+            font-size: 13px;
+            font-weight: 700;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        /* Diary UI */
+        .program-selector {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .program-btn {
+            flex: 1;
+            min-width: 140px;
+            padding: 16px;
+            background: var(--color-surface);
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--color-text);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .program-btn.active {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 6px 20px rgba(108, 92, 231, 0.4);
+        }
+
+        .program-btn .prog-img {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            border: 2px solid #fff;
+        }
+
+        .week-planner {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 10px 0 20px;
+        }
+
+        .day-btn {
+            flex: 0 0 auto;
+            padding: 12px 18px;
+            background: var(--color-surface);
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            text-align: center;
+            min-width: 75px;
+            transition: all 0.2s;
+        }
+
+        .day-btn.active {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+        }
+
+        .day-btn .day-name {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 4px;
+            font-weight: 600;
+            opacity: 0.8;
+        }
+
+        .day-btn .day-date {
+            display: block;
+            font-size: 16px;
+            font-weight: 800;
+        }
+
+        .exercises-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .exercise-item {
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            border: 1px solid var(--color-border);
+            transition: all 0.3s ease;
+        }
+
+        .exercise-item.completed {
+            border-color: var(--color-success);
+            background: rgba(0, 184, 148, 0.05);
+            box-shadow: 0 4px 12px rgba(0, 184, 148, 0.15);
+        }
+
+        .exercise-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .exercise-name {
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .exercise-check {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid var(--color-border);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            color: transparent;
+            background: white;
+        }
+
+        .exercise-check.completed {
+            background: var(--color-success);
+            border-color: var(--color-success);
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 184, 148, 0.3);
+        }
+
+        .exercise-sets {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            background: var(--color-bg);
+            padding: 10px;
+            border-radius: var(--radius-sm);
+        }
+
+        .set-input {
+            width: 65px;
+            padding: 8px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            text-align: center;
+            font-size: 14px;
+            font-weight: 700;
+            background: white;
+        }
+
+        .set-input:focus {
+            border-color: var(--color-primary);
+            outline: none;
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal {
+            background: var(--color-surface);
+            width: 90%;
+            max-width: 400px;
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-lg);
+            animation: fadeIn 0.3s ease;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--color-text-light);
+        }
+
+        /* Стили для модального окна инструкции */
+        .manual-modal {
+            max-width: 800px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .manual-header {
+            position: sticky;
+            top: 0;
+            background: var(--color-surface);
+            padding: 20px 24px;
+            z-index: 10;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .manual-content-wrapper {
+            padding: 0 24px 24px;
+            color: var(--color-text);
+        }
+
+        .manual-content-wrapper h2 {
+            font-size: 18px;
+            color: var(--color-primary);
+            margin-top: 24px;
+            border-bottom: 2px solid var(--color-border);
+            padding-bottom: 8px;
+        }
+
+        .manual-content-wrapper ul {
+            padding-left: 20px;
+            margin-top: 10px;
+        }
+
+        .manual-content-wrapper li {
+            margin-bottom: 10px;
+            font-size: 14.5px;
+            line-height: 1.6;
+        }
+
+        .manual-content-wrapper p {
+            font-size: 14.5px;
+            line-height: 1.6;
+        }
+
+        /* AI Coach Styles */
+        .ai-response {
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.05) 0%, rgba(253, 121, 168, 0.05) 100%);
+            border-left: 4px solid var(--color-primary);
+            padding: 16px;
+            border-radius: var(--radius-sm);
+            margin-top: 16px;
+            font-size: 14px;
+            line-height: 1.6;
+            display: none;
+        }
+
+        .ai-response h3,
+        .ai-response h4 {
+            margin-top: 0;
+            color: var(--color-primary);
+        }
+
+        .ai-response ul {
+            padding-left: 20px;
+            margin-bottom: 0;
+        }
+
+        .ai-response li {
+            margin-bottom: 8px;
+        }
+
+        .loader-spinner {
+            display: none;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(108, 92, 231, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--color-primary);
+            animation: spin 1s ease-in-out infinite;
+            margin: 16px auto;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Mobile Nav */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--color-surface-glass);
+            backdrop-filter: blur(15px);
+            padding: 10px 16px;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+            z-index: 99;
+            border-top: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .mobile-nav-items {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .mobile-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 8px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            color: var(--color-text-light);
+            font-size: 11px;
+            font-weight: 600;
+            flex: 1;
+            text-align: center;
+        }
+
+        .mobile-nav-item.active {
+            color: var(--color-primary);
+        }
+
+        .mobile-nav-item i {
+            font-size: 22px;
+            transition: transform 0.2s;
+        }
+
+        .mobile-nav-item.active i {
+            transform: translateY(-3px);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-nav {
+                display: block;
+            }
+
+            .tabs-container {
+                display: none;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .hero-banner {
+                padding-top: 20px;
+            }
+
+            .manual-modal {
+                width: 95%;
+                max-height: 90vh;
+            }
+        }
+
+        /* Utils */
+        .text-gradient {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header Hero -->
+    <header class="hero-banner">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">💪</div>
+                <div class="logo-text">
+                    <h1>Fitness Tracker Pro</h1>
+                    <p>Твой личный тренер</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <!-- Кнопка инструкции -->
+                <button class="header-btn" onclick="openManual()" title="Инструкция">
+                    <i class="fas fa-book-open"></i>
+                </button>
+                <button class="header-btn" onclick="resetData()" title="Сбросить данные">
+                    <i class="fas fa-redo"></i>
+                </button>
+                <button class="header-btn" onclick="openSettings()" title="Настройки">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Desktop Tabs -->
+        <div class="tabs-container">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('dashboard')"><i class="fas fa-home"></i>
+                    Главная</button>
+                <button class="tab-btn" onclick="switchTab('workouts')"><i class="fas fa-dumbbell"></i>
+                    Тренировки</button>
+                <button class="tab-btn" onclick="switchTab('diary')"><i class="fas fa-book"></i> Дневник</button>
+                <button class="tab-btn" onclick="switchTab('calculator')"><i class="fas fa-calculator"></i>
+                    Расчёты</button>
+                <button class="tab-btn" onclick="switchTab('progress')"><i class="fas fa-chart-line"></i>
+                    Прогресс</button>
+                <button class="tab-btn" onclick="switchTab('achievements')"><i class="fas fa-trophy"></i>
+                    Достижения</button>
+                <button class="tab-btn" onclick="switchTab('ai')"><i class="fas fa-robot text-gradient"></i> AI-Тренер
+                    ✨</button>
+            </div>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card primary">
+                    <div class="stat-icon">🔥</div>
+                    <div class="stat-value" id="dashCalories">0</div>
+                    <div class="stat-label">ккал сожжено</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-value" id="dashTime">0</div>
+                    <div class="stat-label">минут активно</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💧</div>
+                    <div class="stat-value" id="dashWater">0</div>
+                    <div class="stat-label">стаканов воды</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔥</div>
+                    <div class="stat-value" id="dashStreak">0</div>
+                    <div class="stat-label">дней подряд</div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header active" onclick="toggleAccordion(this)">
+                    <div class="accordion-title">
+                        <div class="accordion-icon workout"><i class="fas fa-running"></i></div>
+                        <div>
+                            <h3>Последние активности</h3>
+                            <span>Ваши недавние тренировки</span>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-down accordion-arrow"></i>
+                </button>
+                <div class="accordion-content active">
+                    <div class="workout-list" id="dashboardWorkouts"></div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleAccordion(this)">
+                    <div class="accordion-title">
+                        <div class="accordion-icon water"><i class="fas fa-tint"></i></div>
+                        <div>
+                            <h3>Трекер воды</h3>
+                            <span>Цель: 8 стаканов в день</span>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-down accordion-arrow"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="water-tracker" id="waterTracker"></div>
+                    <div style="text-align:center; margin-top:10px;">
+                        <span style="font-size: 24px; font-weight: 800; color: var(--color-secondary);"
+                            id="waterTotal">0 / 8</span>
+                        <div style="font-size: 13px; color: var(--color-text-light);">стаканов сегодня</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workouts Tab -->
+        <div id="workouts" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-plus-circle text-gradient"></i> Добавить тренировку</h3>
+                </div>
+                <div class="form-group">
+                    <label>Тип тренировки</label>
+                    <select id="workoutType">
+                        <option value="cardio">🏃 Кардио (Бег, ходьба)</option>
+                        <option value="strength">💪 Силовая (Зал, веса)</option>
+                        <option value="yoga">🧘 Йога (Растяжка, пилатес)</option>
+                        <option value="swimming">🏊 Плавание</option>
+                        <option value="cycling">🚴 Велоспорт</option>
+                        <option value="hiit">🔥 HIIT (Интенсив)</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Время (мин)</label>
+                        <input type="number" id="workoutDuration" placeholder="30" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Калории</label>
+                        <input type="number" id="workoutCalories" placeholder="200" min="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Заметки (необязательно)</label>
+                    <input type="text" id="workoutNotes" placeholder="Как всё прошло?">
+                </div>
+                <button class="btn" onclick="addWorkout()">
+                    <i class="fas fa-save"></i> Сохранить тренировку
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-history text-gradient"></i> История</h3>
+                </div>
+                <div class="workout-list" id="workoutsList"></div>
+            </div>
+        </div>
+
+        <!-- Diary Tab -->
+        <div id="diary" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-clipboard-list text-gradient"></i> Программа</h3>
+                </div>
+                <div class="program-selector">
+                    <button class="program-btn active" onclick="selectProgram('strength')">
+                        <div class="prog-img"
+                            style="background-image: url('https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=100&q=80')">
+                        </div>
+                        <span>На силу</span>
+                    </button>
+                    <button class="program-btn" onclick="selectProgram('mass')">
+                        <div class="prog-img"
+                            style="background-image: url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=100&q=80')">
+                        </div>
+                        <span>На массу</span>
+                    </button>
+                    <button class="program-btn" onclick="selectProgram('relief')">
+                        <div class="prog-img"
+                            style="background-image: url('https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=100&q=80')">
+                        </div>
+                        <span>На рельеф</span>
+                    </button>
+                </div>
+                <div class="week-planner" id="weekPlanner"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-tasks text-gradient"></i> План на день</h3>
+                    <span id="selectedDayName"
+                        style="font-size: 14px; font-weight: 600; color: var(--color-primary);"></span>
+                </div>
+                <div class="exercises-list" id="exercisesList"></div>
+            </div>
+        </div>
+
+        <!-- Calculator Tab -->
+        <div id="calculator" class="tab-content">
+            <div class="accordion-item">
+                <button class="accordion-header active" onclick="toggleAccordion(this)">
+                    <div class="accordion-title">
+                        <div class="accordion-icon bmi"><i class="fas fa-weight"></i></div>
+                        <div>
+                            <h3>Индекс массы тела</h3>
+                            <span>Рассчет BMI</span>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-down accordion-arrow"></i>
+                </button>
+                <div class="accordion-content active">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Рост (см)</label>
+                            <input type="number" id="bmiHeight" placeholder="175">
+                        </div>
+                        <div class="form-group">
+                            <label>Вес (кг)</label>
+                            <input type="number" id="bmiWeight" placeholder="70">
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="calculateBMI()">Рассчитать BMI</button>
+                    <div id="bmiResult" style="margin-top: 16px; text-align: center;"></div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <button class="accordion-header" onclick="toggleAccordion(this)">
+                    <div class="accordion-title">
+                        <div class="accordion-icon meal"><i class="fas fa-utensils"></i></div>
+                        <div>
+                            <h3>Калории в день</h3>
+                            <span>Суточная норма</span>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-down accordion-arrow"></i>
+                </button>
+                <div class="accordion-content">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Пол</label>
+                            <select id="calcGender">
+                                <option value="male">Мужской</option>
+                                <option value="female">Женский</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Возраст</label>
+                            <input type="number" id="calcAge" placeholder="30">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Рост (см)</label>
+                            <input type="number" id="calcHeight" placeholder="175">
+                        </div>
+                        <div class="form-group">
+                            <label>Вес (кг)</label>
+                            <input type="number" id="calcWeight" placeholder="70">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Активность</label>
+                        <select id="calcActivity">
+                            <option value="1.2">Минимальная</option>
+                            <option value="1.375">Лёгкая (1-3 раза/нед)</option>
+                            <option value="1.55">Средняя (3-5 раз/нед)</option>
+                            <option value="1.725">Высокая (6-7 раз/нед)</option>
+                            <option value="1.9">Экстремальная</option>
+                        </select>
+                    </div>
+                    <button class="btn" onclick="calculateCalories()"><i class="fas fa-fire"></i> Рассчитать
+                        норму</button>
+                    <div id="caloriesResult"
+                        style="display: none; margin-top: 20px; text-align: center; background: var(--color-bg); padding: 15px; border-radius: 12px;">
+                        <div style="font-size: 36px; font-weight: 800; color: var(--color-primary);" id="dailyCalories">
+                            0</div>
+                        <div style="font-size: 14px; font-weight: 600;">ккал/день</div>
+                        <div id="caloriesBreakdown" style="margin-top: 10px; font-size: 14px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Tab -->
+        <div id="progress" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-chart-bar text-gradient"></i> Активность (7 дней)</h3>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-bars" id="weekChart"></div>
+                </div>
+                <p style="text-align: center; font-size: 13px; color: var(--color-text-light); margin-top: 5px;">Минут в
+                    день</p>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-bullseye text-gradient"></i> Ваши цели</h3>
+                </div>
+                <div id="goalsList"></div>
+            </div>
+        </div>
+
+        <!-- Achievements Tab -->
+        <div id="achievements" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-medal text-gradient"></i> Зал Славы</h3>
+                </div>
+                <div class="achievements-grid" id="achievementsGrid"></div>
+            </div>
+        </div>
+
+        <!-- AI Coach Tab -->
+        <div id="ai" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-magic text-gradient"></i> Генератор тренировок ✨</h3>
+                </div>
+                <p style="font-size: 13px; color: var(--color-text-light);">Опишите, какую тренировку вы хотите
+                    (например: "тренировка дома без инвентаря на 20 минут"), и наш AI-тренер составит для вас
+                    персональный план.</p>
+                <div class="form-group">
+                    <textarea id="aiPrompt" rows="3" placeholder="Что будем тренировать сегодня?..."
+                        style="width: 100%; padding: 12px; border: 2px solid var(--color-border); border-radius: var(--radius-sm); font-family: inherit; font-size: 14px; resize: vertical;"></textarea>
+                </div>
+                <button class="btn" onclick="generateWorkoutPlan()">
+                    <i class="fas fa-bolt"></i> Сгенерировать план ✨
+                </button>
+                <div id="aiWorkoutLoader" class="loader-spinner"></div>
+                <div id="aiWorkoutResult" class="ai-response"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-brain text-gradient"></i> Анализ прогресса ✨</h3>
+                </div>
+                <p style="font-size: 13px; color: var(--color-text-light);">Умный ассистент проанализирует вашу историю
+                    тренировок и даст персонализированный совет.</p>
+                <button class="btn btn-secondary" onclick="analyzeMyProgress()">
+                    <i class="fas fa-chart-pie"></i> Проанализировать мой прогресс ✨
+                </button>
+                <div id="aiProgressLoader" class="loader-spinner"></div>
+                <div id="aiProgressResult" class="ai-response"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Settings -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-cog text-gradient"></i> Настройки</h3>
+                <button class="close-btn" onclick="closeSettings()"><i class="fas fa-times"></i></button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <p style="font-size: 14px; color: var(--color-text-light); margin: 0;">Управляйте своими данными
+                    тренировок. Вы можете сохранить прогресс в файл или загрузить его на другом устройстве.</p>
+                <button class="btn btn-secondary" onclick="exportData()">
+                    <i class="fas fa-download"></i> Экспорт данных (JSON)
+                </button>
+                <label class="btn"
+                    style="background: var(--color-bg); color: var(--color-text); border: 2px solid var(--color-border); box-shadow: none; cursor:pointer;">
+                    <i class="fas fa-upload"></i> Импорт данных
+                    <input type="file" id="importFile" accept=".json" style="display: none;"
+                        onchange="importData(event)">
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Manual (Инструкция) -->
+    <div class="modal-overlay" id="manualModal">
+        <div class="modal manual-modal">
+            <div class="modal-header manual-header">
+                <h3><i class="fas fa-book-open text-gradient"></i> Руководство пользователя</h3>
+                <button class="close-btn" onclick="closeManual()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="manual-content-wrapper">
+                <p>Добро пожаловать в <strong>Fitness Tracker Pro</strong> — ваше персональное веб-приложение для
+                    отслеживания тренировок, питания и общего физического прогресса.</p>
+                <p>Это руководство поможет вам понять, как пользоваться каждой функцией приложения.</p>
+
+                <h2>📱 Навигация по приложению</h2>
+                <p>Приложение разделено на 6 основных разделов (вкладок). На компьютере они находятся под главным
+                    баннером, а на мобильных устройствах — в нижнем навигационном меню.</p>
+
+                <h2>1. 🏠 Главная (Dashboard)</h2>
+                <p>Это ваша панель управления, где собрана самая важная информация за день.</p>
+                <ul>
+                    <li><strong>Быстрая статистика:</strong> Вверху отображаются сожженные калории, активные минуты,
+                        выпитая вода и ваша серия дней без пропусков (streak).</li>
+                    <li><strong>Последние активности:</strong> Список ваших недавно добавленных тренировок.</li>
+                    <li><strong>Трекер воды:</strong> Нажмите на стаканчик 💧, чтобы отметить его как выпитый. Ваша
+                        дневная цель — 8 стаканов (около 2 литров). Данные сбрасываются каждый новый день.</li>
+                </ul>
+
+                <h2>2. 🏃 Тренировки</h2>
+                <p>Здесь вы можете записывать свои произвольные активности.</p>
+                <ul>
+                    <li><strong>Добавить тренировку:</strong>
+                        <ol style="margin-top: 5px; padding-left: 20px;">
+                            <li>Выберите тип активности (Кардио, Силовая, Йога и т.д.).</li>
+                            <li>Укажите время в минутах.</li>
+                            <li><em>Калории:</em> Вы можете ввести их вручную или оставить поле пустым — приложение
+                                автоматически рассчитает примерное значение (около 7 ккал за 1 минуту).</li>
+                            <li><em>Заметки:</em> Напишите, как прошла тренировка (необязательно).</li>
+                            <li>Нажмите «Сохранить».</li>
+                        </ol>
+                    </li>
+                    <li><strong>История:</strong> Ниже отображается лента всех ваших тренировок. Вы можете удалить
+                        ошибочную запись, нажав на иконку корзины 🗑️.</li>
+                </ul>
+
+                <h2>3. 📖 Дневник (Программы тренировок)</h2>
+                <p>Этот раздел содержит готовые планы тренировок с расписанием по дням.</p>
+                <ul>
+                    <li><strong>Выбор программы:</strong> Нажмите на одну из карточек вверху: «На силу», «На массу» или
+                        «На рельеф».</li>
+                    <li><strong>План на неделю:</strong> Выберите текущий день (от 1 до 7).</li>
+                    <li><strong>Выполнение упражнений:</strong> В списке упражнений указано рекомендуемое количество
+                        подходов (П) и повторений (Р).
+                        <ul style="margin-top: 5px;">
+                            <li><strong>Ввод веса:</strong> В поле «Вес» вы можете записать рабочий вес (в кг), который
+                                использовали сегодня. Приложение запомнит его для этого дня!</li>
+                            <li>Отмечайте выполненные упражнения нажатием на кружок с галочкой ✔️.</li>
+                            <li>Когда вы отметите все упражнения за день, приложение поздравит вас с успешным
+                                завершением тренировки.</li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <h2>4. 🧮 Расчёты (Калькуляторы)</h2>
+                <p>Встроенные инструменты для контроля за своим телом.</p>
+                <ul>
+                    <li><strong>Индекс массы тела (BMI):</strong> Введите свой рост и вес, чтобы узнать, находится ли
+                        ваш вес в пределах нормы.</li>
+                    <li><strong>Калории в день:</strong> Калькулятор суточной потребности в калориях по формуле
+                        Миффлина-Сан Жеора. Заполните все поля (пол, возраст, рост, вес, уровень активности), и система
+                        покажет вашу базу для поддержания веса, а также сколько нужно есть для похудения или набора
+                        массы.</li>
+                </ul>
+
+                <h2>5. 📈 Прогресс</h2>
+                <p>Следите за тем, как вы двигаетесь к своим целям.</p>
+                <ul>
+                    <li><strong>Активность (7 дней):</strong> Динамический график, который показывает, сколько минут вы
+                        тренировались каждый из последних семи дней. Он обновляется автоматически при добавлении новых
+                        тренировок.</li>
+                    <li><strong>Ваши цели:</strong> Полосы прогресса по глобальным целям (например, провести 10 часов за
+                        тренировками или сжечь 10 000 ккал).</li>
+                </ul>
+
+                <h2>6. 🏆 Достижения (Зал Славы)</h2>
+                <p>Геймификация вашего фитнес-пути! Выполняйте определенные условия (например, потренируйтесь 10 раз или
+                    выпейте норму воды), чтобы разблокировать цветные значки достижений.</p>
+                <ul>
+                    <li><em>Неразблокированные достижения отображаются серым цветом.</em></li>
+                </ul>
+
+                <h2>⚙️ Управление данными (Настройки)</h2>
+                <p>Приложение сохраняет все данные прямо в вашем браузере (в <code>localStorage</code>).</p>
+                <p>В правом верхнем углу (в шапке приложения) есть две важные кнопки:</p>
+                <ul>
+                    <li><strong>Сброс (круговая стрелка):</strong> Полностью удаляет <strong>все</strong> ваши данные и
+                        возвращает приложение к заводским настройкам (с добавлением пары демо-тренировок).
+                        <em>Используйте с осторожностью!</em>
+                    </li>
+                    <li><strong>Настройки (шестеренка):</strong> Открывает меню управления файлами.
+                        <ul style="margin-top: 5px;">
+                            <li><strong>Экспорт данных (JSON):</strong> Скачивает файл со всем вашим прогрессом на
+                                компьютер или телефон. Идеально для резервного копирования.</li>
+                            <li><strong>Импорт данных:</strong> Позволяет загрузить ранее скачанный <code>.json</code>
+                                файл. Удобно, если вы хотите перенести свои данные с телефона на компьютер или
+                                восстановить их после очистки браузера.</li>
+                        </ul>
+                    </li>
+                </ul>
+                <div
+                    style="text-align: center; margin-top: 30px; padding: 20px; background: rgba(108, 92, 231, 0.1); border-radius: 12px;">
+                    <strong>Желаем удачи на пути к идеальной форме! 💪</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation -->
+    <nav class="mobile-nav">
+        <div class="mobile-nav-items">
+            <div class="mobile-nav-item active" onclick="switchTab('dashboard')"><i
+                    class="fas fa-home"></i><span>Главная</span></div>
+            <div class="mobile-nav-item" onclick="switchTab('workouts')"><i
+                    class="fas fa-dumbbell"></i><span>Тренировки</span></div>
+            <div class="mobile-nav-item" onclick="switchTab('diary')"><i class="fas fa-book"></i><span>Дневник</span>
+            </div>
+            <div class="mobile-nav-item" onclick="switchTab('progress')"><i
+                    class="fas fa-chart-line"></i><span>Прогресс</span></div>
+            <div class="mobile-nav-item" onclick="switchTab('achievements')"><i
+                    class="fas fa-trophy"></i><span>Награды</span></div>
+            <div class="mobile-nav-item" onclick="switchTab('ai')"><i class="fas fa-robot text-gradient"></i><span
+                    style="color:var(--color-primary);">AI ✨</span></div>
+        </div>
+    </nav>
+
+    <script>
+        // Photo URLs for workout types
+        const typePhotos = {
+            cardio: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=150&q=80',
+            strength: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=150&q=80',
+            yoga: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=150&q=80',
+            swimming: 'https://images.unsplash.com/photo-1519315901367-f34f9274ceb3?auto=format&fit=crop&w=150&q=80',
+            cycling: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=150&q=80',
+            hiit: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=150&q=80'
+        };
+
+        const typesData = {
+            cardio: { name: 'Кардио' },
+            strength: { name: 'Силовая' },
+            yoga: { name: 'Йога' },
+            swimming: { name: 'Плавание' },
+            cycling: { name: 'Велоспорт' },
+            hiit: { name: 'HIIT' }
+        };
+
+        // Data Storage
+        let workouts = [];
+        let waterIntake = 0;
+        const waterGoal = 8;
+        let currentProgram = 'strength';
+        let selectedDay = 0;
+        let diaryData = {
+            completed: {}, // dayKey -> array of completed indexes
+            weights: {}    // dayKey -> object { index: weightValue }
+        };
+
+        let goals = [
+            { name: '10 часов тренировок', target: 600, current: 0, icon: '⏱️' }, // in minutes
+            { name: '10,000 ккал', target: 10000, current: 0, icon: '🔥' },
+            { name: '15 тренировок', target: 15, current: 0, icon: '💪' },
+            { name: '3 дня подряд', target: 3, current: 0, icon: '📅' }
+        ];
+
+        let achievements = [
+            { id: 1, name: 'Первый шаг', icon: '🎉', req: 1, type: 'workouts' },
+            { id: 2, name: 'Втянулся', icon: '🏆', req: 10, type: 'workouts' },
+            { id: 3, name: 'Машина', icon: '🤖', req: 50, type: 'workouts' },
+            { id: 4, name: 'Печка', icon: '🔥', req: 5000, type: 'calories' },
+            { id: 5, name: 'Марафонец', icon: '🏃', req: 600, type: 'minutes' }, // 10 hrs
+            { id: 6, name: 'Аквамен', icon: '💧', req: 8, type: 'water' }
+        ];
+
+        let unlockedAchievements = [];
+        let streak = 0;
+        let lastWorkoutDate = null;
+
+        // Exercise DB
+        const programs = {
+            strength: {
+                name: 'На силу',
+                days: [
+                    { name: 'Понедельник', exercises: [{ name: 'Жим лёжа', sets: 5, reps: 5, muscle: 'Грудь' }, { name: 'Приседания', sets: 5, reps: 5, muscle: 'Ноги' }, { name: 'Становая тяга', sets: 5, reps: 5, muscle: 'Спина' }] },
+                    { name: 'Среда', exercises: [{ name: 'Подтягивания', sets: 4, reps: 8, muscle: 'Спина' }, { name: 'Армейский жим', sets: 4, reps: 6, muscle: 'Плечи' }, { name: 'Тяга в наклоне', sets: 4, reps: 6, muscle: 'Спина' }] },
+                    { name: 'Пятница', exercises: [{ name: 'Жим ногами', sets: 4, reps: 8, muscle: 'Ноги' }, { name: 'Отжимания на брусьях', sets: 4, reps: 8, muscle: 'Грудь' }, { name: 'Планка', sets: 3, reps: '60с', muscle: 'Пресс' }] }
+                ]
+            },
+            mass: {
+                name: 'На массу',
+                days: [
+                    { name: 'День 1', exercises: [{ name: 'Жим гантелей', sets: 4, reps: 10, muscle: 'Грудь' }, { name: 'Разведение гантелей', sets: 3, reps: 12, muscle: 'Грудь' }, { name: 'Скручивания', sets: 3, reps: 20, muscle: 'Пресс' }] },
+                    { name: 'День 2', exercises: [{ name: 'Тяга блока', sets: 4, reps: 10, muscle: 'Спина' }, { name: 'Подъём на бицепс', sets: 4, reps: 12, muscle: 'Руки' }] }
+                ]
+            },
+            relief: {
+                name: 'На рельеф',
+                days: [
+                    { name: 'Круговая 1', exercises: [{ name: 'Бёрпи', sets: 4, reps: 15, muscle: 'Кардио' }, { name: 'Выпады с прыжком', sets: 4, reps: 20, muscle: 'Ноги' }, { name: 'Скакалка', sets: 4, reps: '1мин', muscle: 'Кардио' }] }
+                ]
+            }
+        };
+
+        // Core Functions
+        function init() {
+            loadData();
+            // Reset water if it's a new day
+            const todayStr = new Date().toDateString();
+            if (localStorage.getItem('lastWaterDate') !== todayStr) {
+                waterIntake = 0;
+                localStorage.setItem('lastWaterDate', todayStr);
+            }
+            updateUI();
+            renderWaterTracker();
+            renderAchievements();
+            renderWeekPlanner();
+            renderExercises();
+        }
+
+        function saveData() {
+            localStorage.setItem('fitProData', JSON.stringify({
+                workouts, waterIntake, unlockedAchievements, streak, lastWorkoutDate, diaryData
+            }));
+            localStorage.setItem('lastWaterDate', new Date().toDateString());
+        }
+
+        function loadData() {
+            const data = localStorage.getItem('fitProData');
+            if (data) {
+                const parsed = JSON.parse(data);
+                workouts = parsed.workouts || [];
+                waterIntake = parsed.waterIntake || 0;
+                unlockedAchievements = parsed.unlockedAchievements || [];
+                streak = parsed.streak || 0;
+                lastWorkoutDate = parsed.lastWorkoutDate || null;
+                if (parsed.diaryData && Array.isArray(parsed.diaryData)) {
+                    diaryData = { completed: {}, weights: {} };
+                } else {
+                    diaryData = parsed.diaryData || { completed: {}, weights: {} };
+                }
+            } else {
+                addDemoData();
+            }
+        }
+
+        function resetData() {
+            if (confirm('Сбросить все данные? Это действие необратимо.')) {
+                localStorage.removeItem('fitProData');
+                workouts = []; waterIntake = 0; unlockedAchievements = []; streak = 0; lastWorkoutDate = null;
+                diaryData = { completed: {}, weights: {} };
+                saveData(); updateUI(); renderWaterTracker(); renderAchievements(); renderExercises();
+            }
+        }
+
+        // Modals (Manual & Settings)
+        function openManual() { document.getElementById('manualModal').style.display = 'flex'; }
+        function closeManual() { document.getElementById('manualModal').style.display = 'none'; }
+
+        function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; }
+        function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
+
+        function exportData() {
+            const dataStr = JSON.stringify(localStorage.getItem('fitProData'));
+            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.parse(dataStr));
+            const exportFileDefaultName = 'FitnessTrackerPro_Backup.json';
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            closeSettings();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    try {
+                        const content = JSON.parse(e.target.result);
+                        if (content.workouts !== undefined) {
+                            localStorage.setItem('fitProData', JSON.stringify(content));
+                            alert('Данные успешно загружены!');
+                            location.reload();
+                        } else throw new Error('Invalid format');
+                    } catch (err) {
+                        alert('Ошибка загрузки файла. Неверный формат.');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        // Tabs & UI
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.mobile-nav-item').forEach(m => m.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+
+            const tabNames = ['dashboard', 'workouts', 'diary', 'calculator', 'progress', 'achievements', 'ai'];
+            const idx = tabNames.indexOf(tabName);
+            if (idx > -1) {
+                document.querySelectorAll('.tab-btn')[idx]?.classList.add('active');
+                document.querySelectorAll('.mobile-nav-item')[idx]?.classList.add('active');
+            }
+            if (tabName === 'diary') { renderWeekPlanner(); renderExercises(); }
+            if (navigator.vibrate) navigator.vibrate(10);
+        }
+
+        function toggleAccordion(btn) {
+            const content = btn.nextElementSibling;
+            const isActive = btn.classList.contains('active');
+            document.querySelectorAll('.accordion-header').forEach(h => { h.classList.remove('active'); h.nextElementSibling.classList.remove('active'); });
+            if (!isActive) { btn.classList.add('active'); content.classList.add('active'); }
+        }
+
+        // Workouts
+        function addWorkout() {
+            const type = document.getElementById('workoutType').value;
+            const duration = parseInt(document.getElementById('workoutDuration').value);
+            const calories = parseInt(document.getElementById('workoutCalories').value) || Math.round(duration * 7);
+            const notes = document.getElementById('workoutNotes').value;
+
+            if (!duration || duration <= 0) return alert('Введите корректное время');
+
+            const today = new Date().toDateString();
+            if (lastWorkoutDate !== today) {
+                if (lastWorkoutDate === new Date(Date.now() - 86400000).toDateString()) streak++;
+                else streak = 1;
+                lastWorkoutDate = today;
+            }
+
+            workouts.unshift({
+                type,
+                typeName: typesData[type].name,
+                photo: typePhotos[type],
+                duration, calories, notes,
+                date: new Date().toLocaleDateString('ru-RU'),
+                timestamp: Date.now()
+            });
+
+            document.getElementById('workoutDuration').value = '';
+            document.getElementById('workoutCalories').value = '';
+            document.getElementById('workoutNotes').value = '';
+
+            checkAchievements(); saveData(); updateUI();
+            if (navigator.vibrate) navigator.vibrate(30);
+            alert('Тренировка добавлена!');
+        }
+
+        function deleteWorkout(idx) {
+            if (confirm('Удалить эту тренировку?')) {
+                workouts.splice(idx, 1);
+                saveData(); updateUI();
+            }
+        }
+
+        function renderWorkouts() {
+            const list = document.getElementById('workoutsList');
+            const dashList = document.getElementById('dashboardWorkouts');
+            const html = workouts.length === 0
+                ? '<div style="text-align:center;padding:20px;color:#aaa;">Пока нет тренировок</div>'
+                : workouts.slice(0, 10).map((w, idx) => `
+                <div class="workout-item">
+                    <div class="workout-photo" style="background-image: url('${w.photo}')"></div>
+                    <div class="workout-info">
+                        <h4>${w.typeName}</h4>
+                        <p>${w.date} ${w.notes ? ' • ' + w.notes : ''}</p>
+                        <div class="workout-badges">
+                            <span class="badge duration"><i class="fas fa-clock"></i> ${w.duration} мин</span>
+                            <span class="badge calories"><i class="fas fa-fire"></i> ${w.calories} ккал</span>
+                        </div>
+                    </div>
+                    <button class="icon-btn delete" onclick="deleteWorkout(${idx})"><i class="fas fa-trash"></i></button>
+                </div>
+            `).join('');
+
+            if (list) list.innerHTML = html;
+
+            if (dashList && workouts.length > 0) {
+                dashList.innerHTML = workouts.slice(0, 3).map((w, idx) => `
+                <div class="workout-item">
+                    <div class="workout-photo" style="background-image: url('${w.photo}')"></div>
+                    <div class="workout-info">
+                        <h4>${w.typeName}</h4>
+                        <p>${w.date}</p>
+                        <div class="workout-badges">
+                            <span class="badge duration"><i class="fas fa-clock"></i> ${w.duration} мин</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            } else if (dashList) {
+                dashList.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa;">Пока нет тренировок</div>';
+            }
+        }
+
+        // Water
+        function renderWaterTracker() {
+            const c = document.getElementById('waterTracker');
+            if (c) c.innerHTML = Array(8).fill(0).map((_, i) => `<div class="water-glass ${i < waterIntake ? 'filled' : ''}" onclick="addWater(${i + 1})"></div>`).join('');
+            document.getElementById('waterTotal').textContent = `${waterIntake} / ${waterGoal}`;
+            document.getElementById('dashWater').textContent = waterIntake;
+        }
+
+        function addWater(count) {
+            waterIntake = count;
+            if (waterIntake === waterGoal && !unlockedAchievements.includes(6)) { checkAchievements(); }
+            if (navigator.vibrate) navigator.vibrate(15);
+            saveData(); renderWaterTracker();
+        }
+
+        // Diary
+        function selectProgram(prog) {
+            currentProgram = prog; selectedDay = 0;
+            document.querySelectorAll('.program-btn').forEach(b => b.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            renderWeekPlanner(); renderExercises();
+        }
+
+        function renderWeekPlanner() {
+            const c = document.getElementById('weekPlanner');
+            if (!c) return;
+            const prog = programs[currentProgram];
+            c.innerHTML = prog.days.map((d, i) => `
+                <div class="day-btn ${i === selectedDay ? 'active' : ''}" onclick="selectDay(${i})">
+                    <span class="day-name">ДЕНЬ</span>
+                    <span class="day-date">${i + 1}</span>
+                </div>
+            `).join('');
+        }
+
+        function selectDay(idx) {
+            selectedDay = idx;
+            document.querySelectorAll('.day-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+            renderExercises();
+        }
+
+        function renderExercises() {
+            const c = document.getElementById('exercisesList');
+            if (!c) return;
+            const day = programs[currentProgram].days[selectedDay];
+            document.getElementById('selectedDayName').textContent = day.name;
+            const dayKey = `${currentProgram}_${selectedDay}`;
+
+            if (!diaryData.completed[dayKey]) diaryData.completed[dayKey] = [];
+            if (!diaryData.weights[dayKey]) diaryData.weights[dayKey] = {};
+
+            const completedList = diaryData.completed[dayKey];
+
+            c.innerHTML = day.exercises.map((ex, idx) => {
+                const isDone = completedList.includes(idx);
+                const savedWeight = diaryData.weights[dayKey][idx] || '';
+                return `
+                <div class="exercise-item ${isDone ? 'completed' : ''}">
+                    <div class="exercise-header">
+                        <div class="exercise-name"><i class="fas fa-dumbbell" style="color:var(--color-text-light)"></i> ${ex.name}</div>
+                        <div class="exercise-check ${isDone ? 'completed' : ''}" onclick="toggleExercise(${idx})"><i class="fas fa-check"></i></div>
+                    </div>
+                    <div class="exercise-sets">
+                        <span style="font-size:12px;color:var(--color-text-light);">П:</span>
+                        <input type="text" class="set-input" value="${ex.sets}" readonly style="background:transparent; border:none; width:30px; padding:0;">
+                        <span style="font-size:12px;color:var(--color-text-light);">Р:</span>
+                        <input type="text" class="set-input" value="${ex.reps}" readonly style="background:transparent; border:none; width:40px; padding:0;">
+                        <span style="font-size:12px;color:var(--color-text-light); margin-left:auto;">Вес:</span>
+                        <input type="number" class="set-input" value="${savedWeight}" placeholder="кг" onchange="saveWeight(${idx}, this.value)">
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function toggleExercise(idx) {
+            const dayKey = `${currentProgram}_${selectedDay}`;
+            const list = diaryData.completed[dayKey];
+            const pos = list.indexOf(idx);
+            if (pos > -1) list.splice(pos, 1); else list.push(idx);
+
+            const day = programs[currentProgram].days[selectedDay];
+            if (list.length === day.exercises.length) {
+                if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+            } else {
+                if (navigator.vibrate) navigator.vibrate(20);
+            }
+            saveData(); renderExercises();
+        }
+
+        function saveWeight(idx, val) {
+            const dayKey = `${currentProgram}_${selectedDay}`;
+            diaryData.weights[dayKey][idx] = val;
+            saveData();
+        }
+
+        // Calculators
+        function calculateBMI() {
+            const h = parseFloat(document.getElementById('bmiHeight').value);
+            const w = parseFloat(document.getElementById('bmiWeight').value);
+            if (!h || !w) return alert('Введите данные');
+            const bmi = (w / ((h / 100) ** 2)).toFixed(1);
+            let status = bmi < 18.5 ? 'Недостаток' : bmi < 25 ? 'Норма' : bmi < 30 ? 'Избыток' : 'Ожирение';
+            let color = bmi < 18.5 ? '#74b9ff' : bmi < 25 ? '#00b894' : bmi < 30 ? '#f39c12' : '#e74c3c';
+            document.getElementById('bmiResult').innerHTML = `<div style="font-size:32px;font-weight:800;">${bmi}</div><div style="color:white;background:${color};display:inline-block;padding:4px 12px;border-radius:20px;font-size:14px;margin-top:5px;">${status}</div>`;
+        }
+
+        function calculateCalories() {
+            const g = document.getElementById('calcGender').value;
+            const a = parseFloat(document.getElementById('calcAge').value);
+            const h = parseFloat(document.getElementById('calcHeight').value);
+            const w = parseFloat(document.getElementById('calcWeight').value);
+            const act = parseFloat(document.getElementById('calcActivity').value);
+            if (!a || !h || !w) return alert('Введите данные');
+            let bmr = 10 * w + 6.25 * h - 5 * a + (g === 'male' ? 5 : -161);
+            const res = Math.round(bmr * act);
+            document.getElementById('dailyCalories').textContent = res;
+            document.getElementById('caloriesBreakdown').innerHTML = `Похудение: <b>${res - 500}</b> | Набор: <b>${res + 500}</b>`;
+            document.getElementById('caloriesResult').style.display = 'block';
+        }
+
+        // UI & Charts
+        function updateUI() {
+            const totalCals = workouts.reduce((s, w) => s + w.calories, 0);
+            const totalMins = workouts.reduce((s, w) => s + w.duration, 0);
+
+            document.getElementById('dashCalories').textContent = totalCals;
+            document.getElementById('dashTime').textContent = totalMins;
+            document.getElementById('dashStreak').textContent = streak;
+
+            goals[0].current = totalMins;
+            goals[1].current = totalCals;
+            goals[2].current = workouts.length;
+            goals[3].current = streak;
+
+            renderWorkouts();
+            renderGoals();
+            renderDynamicChart();
+        }
+
+        function renderGoals() {
+            const c = document.getElementById('goalsList');
+            if (!c) return;
+            c.innerHTML = goals.map(g => {
+                const pct = Math.min((g.current / g.target) * 100, 100);
+                return `
+                <div class="progress-container">
+                    <div class="progress-label"><span>${g.icon} ${g.name}</span><span>${g.current} / ${g.target}</span></div>
+                    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+                </div>
+            `}).join('');
+        }
+
+        function renderDynamicChart() {
+            const c = document.getElementById('weekChart');
+            if (!c) return;
+
+            const days = [];
+            const data = [];
+            const today = new Date();
+
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(d.getDate() - i);
+                days.push(d.toLocaleDateString('ru-RU', { weekday: 'short' }));
+                const dateStr = d.toLocaleDateString('ru-RU');
+
+                const sum = workouts.filter(w => w.date === dateStr).reduce((acc, curr) => acc + curr.duration, 0);
+                data.push(sum);
+            }
+
+            const maxVal = Math.max(...data, 30);
+
+            c.innerHTML = days.map((day, idx) => `
+                <div class="bar-wrapper" title="${data[idx]} мин">
+                    <div class="bar" style="height: ${(data[idx] / maxVal) * 160}px;"></div>
+                    <span class="bar-label">${day}</span>
+                </div>
+            `).join('');
+        }
+
+        function checkAchievements() {
+            const tCal = workouts.reduce((s, w) => s + w.calories, 0);
+            const tMin = workouts.reduce((s, w) => s + w.duration, 0);
+
+            achievements.forEach(ach => {
+                if (unlockedAchievements.includes(ach.id)) return;
+                let pass = false;
+                if (ach.type === 'workouts' && workouts.length >= ach.req) pass = true;
+                if (ach.type === 'calories' && tCal >= ach.req) pass = true;
+                if (ach.type === 'minutes' && tMin >= ach.req) pass = true;
+                if (ach.type === 'water' && waterIntake >= ach.req) pass = true;
+
+                if (pass) {
+                    unlockedAchievements.push(ach.id);
+                    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                    setTimeout(() => alert(`🏆 Новое достижение: ${ach.name}!`), 500);
+                }
+            });
+            renderAchievements();
+        }
+
+        function renderAchievements() {
+            const c = document.getElementById('achievementsGrid');
+            if (!c) return;
+            c.innerHTML = achievements.map(a => `
+                <div class="achievement-card ${unlockedAchievements.includes(a.id) ? 'unlocked' : ''}">
+                    <div class="achievement-icon">${a.icon}</div>
+                    <div class="achievement-name">${a.name}</div>
+                </div>
+            `).join('');
+        }
+
+        function addDemoData() {
+            workouts = [
+                { type: 'cardio', typeName: 'Кардио', photo: typePhotos.cardio, duration: 30, calories: 300, notes: 'Утренний бег', date: new Date().toLocaleDateString('ru-RU'), timestamp: Date.now() },
+                { type: 'strength', typeName: 'Силовая', photo: typePhotos.strength, duration: 45, calories: 400, notes: 'Спина', date: new Date(Date.now() - 86400000).toLocaleDateString('ru-RU'), timestamp: Date.now() - 86400000 }
+            ];
+            streak = 2; lastWorkoutDate = new Date().toDateString();
+            diaryData = { completed: {}, weights: {} };
+            saveData();
+        }
+
+        // --- Gemini API Integrations ✨ ---
+        const apiKey = ""; // API key is injected by the execution environment
+
+        async function callGeminiAPI(prompt, loaderId, resultId) {
+            const loader = document.getElementById(loaderId);
+            const resultDiv = document.getElementById(resultId);
+
+            if (!apiKey) {
+                resultDiv.innerHTML = "<strong>Ошибка:</strong> API ключ не найден. Убедитесь, что приложение запущено в поддерживаемом окружении.";
+                resultDiv.style.display = 'block';
+                return;
+            }
+
+            loader.style.display = 'block';
+            resultDiv.style.display = 'none';
+            resultDiv.innerHTML = "";
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: {
+                    parts: [{ text: "Ты профессиональный фитнес-тренер и мотиватор. Отвечай на русском языке. Твой ответ будет вставлен напрямую в HTML, поэтому форматируй его с помощью базовых HTML тегов (<h3>, <p>, <strong>, <ul>, <li>). НЕ используй markdown-блоки с обратными кавычками (```html)." }]
+                }
+            };
+
+            try {
+                let response = null;
+                let data = null;
+                // Retry logic с экспоненциальной задержкой (Exponential backoff)
+                const delays = [1000, 2000, 4000, 8000, 16000];
+                for (let i = 0; i <= delays.length; i++) {
+                    try {
+                        response = await fetch(url, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(payload)
+                        });
+                        if (response.ok) {
+                            data = await response.json();
+                            break;
+                        }
+                    } catch (e) {
+                        if (i === delays.length) throw e;
+                    }
+                    if (!response?.ok && i < delays.length) {
+                        await new Promise(r => setTimeout(r, delays[i]));
+                    }
+                }
+
+                if (!response || !response.ok) {
+                    throw new Error("Не удалось получить ответ от сервера после нескольких попыток.");
+                }
+
+                let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Извините, не удалось сгенерировать ответ.";
+                text = text.replace(/```html/g, "").replace(/```/g, "").trim();
+
+                resultDiv.innerHTML = text;
+                resultDiv.style.display = 'block';
+            } catch (error) {
+                resultDiv.innerHTML = `<strong>Ошибка сети:</strong> ${error.message}`;
+                resultDiv.style.display = 'block';
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        function generateWorkoutPlan() {
+            const userInput = document.getElementById('aiPrompt').value.trim();
+            if (!userInput) {
+                alert("Пожалуйста, опишите какую тренировку вы хотите.");
+                return;
+            }
+            const prompt = `Пользователь просит составить план тренировки: "${userInput}". Составь подробный, но понятный план. Укажи разминку, основную часть (упражнения, подходы, повторения) и заминку. Оформи ответ красиво с использованием HTML тегов.`;
+            callGeminiAPI(prompt, 'aiWorkoutLoader', 'aiWorkoutResult');
+        }
+
+        function analyzeMyProgress() {
+            const recentWorkouts = workouts.slice(0, 5).map(w => `${w.date}: ${w.typeName} (${w.duration} мин, ${w.calories} ккал)`).join("; ");
+            const prompt = `Проанализируй текущий фитнес-прогресс пользователя и дай персонализированный совет:
+            - Всего тренировок: ${workouts.length}
+            - Выпито воды сегодня: ${waterIntake} из ${waterGoal} стаканов
+            - Текущий стрик (дней подряд): ${streak}
+            - Последние тренировки: ${recentWorkouts || 'Нет данных'}
+            Оцени его прогресс, похвали за успехи, мягко укажи на то, что можно улучшить, и дай мотивационный импульс. Ответь кратко (3-4 абзаца) в формате HTML.`;
+            callGeminiAPI(prompt, 'aiProgressLoader', 'aiProgressResult');
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+
+</html>
