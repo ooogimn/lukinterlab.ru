@@ -4,6 +4,7 @@ from .views import (
     notebook_attachment_delete,
     notebook_attachment_download,
     notebook_attachment_upload,
+    notebook_editor_upload,
     notebook_home,
     notebook_view,
     notebook_view_by_slug,
@@ -18,6 +19,8 @@ app_name = "Notebook"
 urlpatterns = [
     path("", notebook_home, name="home"),
     path("create/", notebook_page_create_root, name="page_create_root"),
+    # Адрес зашит в CKEDITOR_CONFIGS['notebook'] (settings.py) — менять вместе.
+    path("editor-upload/", notebook_editor_upload, name="editor_upload"),
     path("n/<int:notebook_id>/", notebook_view, name="notebook"),
     path("n/<int:notebook_id>/page/<int:page_id>/", notebook_view, name="notebook_page"),
     path("s/<slug:notebook_slug>/", notebook_view_by_slug, name="notebook_by_slug"),

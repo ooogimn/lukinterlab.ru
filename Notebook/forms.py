@@ -32,7 +32,7 @@ class WikiPageForm(forms.Form):
     content = forms.CharField(
         label="Содержимое",
         required=False,
-        widget=CKEditorUploadingWidget(config_name="default"),
+        widget=CKEditorUploadingWidget(config_name="notebook"),
     )
     avatar = forms.ImageField(
         label="Аватар блокнота",

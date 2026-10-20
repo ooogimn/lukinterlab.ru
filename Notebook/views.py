@@ -1,9 +1,19 @@
+import posixpath
+
+from ckeditor_uploader import utils as ckeditor_utils
+from ckeditor_uploader.backends import get_backend
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import FileResponse
 from django.http import Http404
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
+from django.utils.html import escape
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 
 from .forms import WikiAttachmentForm, WikiPageForm
 from .models import WikiAttachment
@@ -309,3 +319,38 @@ def notebook_attachment_download(request, page_id, attachment_id):
         return redirect(attachment.external_url)
     messages.error(request, "У этого вложения нет файла для скачивания.")
     return _redirect_to_notebook(page)
+
+
+@csrf_exempt  # как у штатной загрузки django-ckeditor: CKEditor не шлёт CSRF-токен Django
+@staff_member_required
+@require_POST
+def notebook_editor_upload(request):
+    """
+    Загрузка картинок/файлов из редактора CKEditor в Блокноте (конфиг "notebook").
+
+    Общая загрузка CKEditor кладёт файлы в публичную uploads/ (блог, портфолио),
+    а файлы Блокнота — в wiki/editor/: папку wiki/ nginx отдаёт только сотрудникам
+    (home/private_media.py).
+    """
+    uploaded_file = request.FILES.get("upload")
+    if not uploaded_file:
+        return HttpResponseBadRequest("Файл не передан.")
+
+    storage = ckeditor_utils.storage
+    upload_dir = posixpath.join(settings.NOTEBOOK_EDITOR_UPLOAD_PATH, timezone.localdate().strftime("%Y/%m/%d"))
+    filepath = storage.get_available_name(
+        posixpath.join(upload_dir, ckeditor_utils.slugify_filename(uploaded_file.name))
+    )
+    saved_path = get_backend()(storage, uploaded_file).save_as(filepath)
+    url = ckeditor_utils.get_media_url(saved_path)
+
+    ck_func_num = request.GET.get("CKEditorFuncNum")
+    if ck_func_num:
+        # Кнопка «Загрузить» в окне картинки: CKEditor ждёт скрипт с адресом файла.
+        return HttpResponse(
+            "<script type='text/javascript'>"
+            "window.parent.CKEDITOR.tools.callFunction({}, '{}');"
+            "</script>".format(escape(ck_func_num), escape(url))
+        )
+    # Вставка или перетаскивание картинки (плагин uploadimage) ждёт JSON.
+    return JsonResponse({"uploaded": 1, "fileName": posixpath.basename(saved_path), "url": url})

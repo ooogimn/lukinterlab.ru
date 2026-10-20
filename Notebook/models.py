@@ -13,7 +13,8 @@ def wiki_attachment_upload_to(instance, filename):
 class WikiPage(MP_Node):
     title = models.CharField("Заголовок", max_length=255)
     slug = models.SlugField("Slug", max_length=255)
-    content = RichTextUploadingField("Содержимое", blank=True)
+    # config_name="notebook": картинки из редактора — в закрытую wiki/editor/ (см. settings).
+    content = RichTextUploadingField("Содержимое", blank=True, config_name="notebook")
     avatar = models.ImageField("Аватар блокнота", upload_to="wiki/notebook_avatars/", blank=True, null=True)
     created_at = models.DateTimeField("Создано", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлено", auto_now=True)

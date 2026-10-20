@@ -17,6 +17,7 @@ from home.sitemaps import (
 )
 from Blog.feeds import LatestPostsFeed, LatestPostsRSSFeed
 from Blog.vk_callback import vk_group_callback
+from home.private_media import media_file
 
 # Sitemap configuration
 sitemaps = {
@@ -55,15 +56,20 @@ urlpatterns = [
     path('blog/rss/', LatestPostsRSSFeed(), name='blog_rss'),
 ]
 
-# Раздача медиа-файлов (работает и в продакшене, если веб-сервер не настроен)
+# Медиа: приватные папки (Блокнот, файлы заказов, вложения писем, аватары) — с проверкой прав,
+# остальное — обычная раздача. На проде публичные /media/ отдаёт nginx, а приватные он
+# передаёт сюда (см. home/private_media.py и deploy/nginx-lukinterlab.conf).
+urlpatterns += [
+    re_path(r'^media/(?P<path>.*)$', media_file),
+]
+
+# Статика (работает и в продакшене, если веб-сервер не настроен)
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 else:
-    # Продакшен: медиа и статика через Django, если веб-сервер не отдаёт /media/ и /static/
+    # Продакшен: статика через Django, если веб-сервер не отдаёт /static/
     # (иначе админка/Jazzmin без CSS при DEBUG=False). Идеально — alias в Apache/Nginx.
     urlpatterns += [
-        re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
         re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
     ]
 

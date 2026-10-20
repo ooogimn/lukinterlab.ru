@@ -282,9 +282,11 @@ MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Храним медиа-объекты редактора в выделенном wiki-префиксе
-# (глобальная настройка django-ckeditor, без привязки к конкретной модели).
-CKEDITOR_UPLOAD_PATH = "wiki/editor/"
+# Картинки, вставленные в редакторе (блог, портфолио, админка), — публичная папка uploads/.
+# Блокнот грузит свои картинки отдельно в wiki/editor/ (конфиг "notebook" ниже,
+# Notebook.views.notebook_editor_upload): папку wiki/ видят только сотрудники.
+CKEDITOR_UPLOAD_PATH = "uploads/"
+NOTEBOOK_EDITOR_UPLOAD_PATH = "wiki/editor/"
 CKEDITOR_IMAGE_BACKEND = "pillow"
 CKEDITOR_JQUERY_URL = '//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js'
 CKEDITOR_CONFIGS = {
@@ -358,6 +360,13 @@ CKEDITOR_CONFIGS = {
             'elementspath'
         ]),
     },
+}
+# Редактор Блокнота: как default, но загрузка (кнопка и вставка/перетаскивание картинки)
+# идёт в закрытую папку wiki/editor/. URL — из Notebook/urls.py (префикс /notebook/).
+CKEDITOR_CONFIGS['notebook'] = {
+    **CKEDITOR_CONFIGS['default'],
+    'filebrowserUploadUrl': '/notebook/editor-upload/',
+    'uploadUrl': '/notebook/editor-upload/',
 }
 
 JAZZMIN_SETTINGS = {
