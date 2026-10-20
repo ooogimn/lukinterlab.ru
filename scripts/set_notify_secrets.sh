@@ -5,8 +5,8 @@
 # На сервере:  bash /srv/lukinterlab.ru/scripts/set_notify_secrets.sh
 #
 # Спрашивает (Enter без ввода — пропустить пункт / взять значение в скобках):
-#   1) адрес почты-отправителя (Gmail или Яндекс) и её «пароль приложения»;
-#   2) куда присылать уведомления;
+#   1) адрес почты-отправителя (Яндекс; Gmail с VPS не работает — smtp.gmail.com закрыт) и её «пароль приложения»;
+#   2) куда присылать уведомления (по умолчанию Lukinterlab@gmail.com);
 #   3) адрес моста Cloudflare для Telegram (с VPS api.telegram.org закрыт, deploy/telegram-bridge/worker.js);
 #   4) токен Telegram-бота (@BotFather → /mybots → бот → API Token).
 # Каждое значение сначала проверяется (вход на почтовый сервер / getMe через мост); неверное не записывается.
@@ -24,11 +24,13 @@ if [[ ! -f "$FILE" ]]; then
 fi
 
 echo "Пароль и токен при вводе не показываются. Enter без ввода — пропустить пункт."
-read -rp  "1) Почта-отправитель [Lukinterlab@gmail.com]: " MAIL_USER
-MAIL_USER="${MAIL_USER:-Lukinterlab@gmail.com}"
+# Отправитель — Яндекс: с VPS почтовые серверы Google (smtp.gmail.com) закрыты (проверено 2026-10-20),
+# а письма от Яндекса в Gmail приходят как обычно.
+read -rp  "1) Почта-отправитель (Яндекс) [Ya@LukyanovSY.ru]: " MAIL_USER
+MAIL_USER="${MAIL_USER:-Ya@LukyanovSY.ru}"
 read -rsp "   Пароль приложения для $MAIL_USER: " MAIL_PASS; echo
-read -rp  "2) Куда присылать уведомления [$MAIL_USER]: " MAIL_TO
-MAIL_TO="${MAIL_TO:-$MAIL_USER}"
+read -rp  "2) Куда присылать уведомления [Lukinterlab@gmail.com]: " MAIL_TO
+MAIL_TO="${MAIL_TO:-Lukinterlab@gmail.com}"
 read -rp  "3) Адрес моста Cloudflare для Telegram (https://....workers.dev): " TG_BASE
 read -rsp "4) Токен Telegram-бота из @BotFather: " TG_TOKEN; echo
 
@@ -98,6 +100,9 @@ if mail_pass:
             print("  Почта: пароль НЕ принят. Нужен именно «пароль приложения»:")
             print("  Gmail — myaccount.google.com/apppasswords (нужна двухэтапная аутентификация),")
             print("  Яндекс — id.yandex.ru → Безопасность → Пароли приложений. Не записано.")
+        except smtplib.SMTPServerDisconnected:
+            hint = " С этого сервера почта Google закрыта — укажите отправителем ящик Яндекса." if "gmail" in host else ""
+            print(f"  Почта: {host} оборвал соединение.{hint} Не записано.")
         except Exception as exc:
             print(f"  Почта: не удалось проверить ({type(exc).__name__}). Не записано.")
 
