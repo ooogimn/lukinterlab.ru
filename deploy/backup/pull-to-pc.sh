@@ -111,7 +111,7 @@ need_list() {  # печатает пути, которых на ПК нет ил
   (cd "$DEST/media" && eval "$manifest") > "$TMP/local.tsv"
   awk -F'\t' '
     function sec(t) { sub(/\..*/, "", t); return t + 0 }
-    NR == FNR { size[$3] = $1; mt[$3] = sec($2); next }
+    FILENAME == ARGV[1] { size[$3] = $1; mt[$3] = sec($2); next }   # не NR==FNR: локальный список бывает пустым
     {
       if (!($3 in size) || size[$3] != $1) { print $3; next }
       d = mt[$3] - sec($2); if (d > 2 || d < -2) print $3
