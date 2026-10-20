@@ -76,7 +76,7 @@
                     ></iframe>
                 {% elif display_media.type == 'local_video' %}
                     {# Видео качается и играет только когда карточка на экране (см. js-lazy-video ниже) #}
-                    <video data-src="{{ display_media.url }}"{% if display_media.poster_url %} poster="{{ display_media.poster_url }}"{% endif %} muted loop playsinline preload="none" class="js-lazy-video absolute inset-0 w-full h-full object-cover bg-gray-900 transition-transform duration-700 group-hover:scale-110 pointer-events-none"></video>
+                    <video data-src="{{ display_media.preview_url|default:display_media.url }}"{% if display_media.poster_url %} poster="{{ display_media.poster_url }}"{% endif %} muted loop playsinline preload="none" class="js-lazy-video absolute inset-0 w-full h-full object-cover bg-gray-900 transition-transform duration-700 group-hover:scale-110 pointer-events-none"></video>
                 {% elif display_media.type == 'image' or display_media.type == 'external_image' %}
                     <img src="{{ display_media.thumbnail_url|default:display_media.url }}" alt="{{ rabota.name }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none">
                 {% else %}

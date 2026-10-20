@@ -26,9 +26,11 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
+# ffmpeg — пережатие загружаемых видео для сайта (home/video_processing.py, задачи qcluster).
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libpq5 \
+        ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

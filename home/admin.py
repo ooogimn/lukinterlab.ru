@@ -809,3 +809,28 @@ class SiteMarketingSettingsAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+from .models import VideoTranscodeJob  # noqa: E402
+
+
+@admin.register(VideoTranscodeJob)
+class VideoTranscodeJobAdmin(admin.ModelAdmin):
+    """Журнал автоматического пережатия видео (home/video_processing.py). Только просмотр."""
+
+    list_display = ('source_name', 'status', 'sizes', 'duration_sec', 'updated')
+    list_filter = ('status',)
+    search_fields = ('source_name', 'result_name')
+    readonly_fields = [f.name for f in VideoTranscodeJob._meta.fields]
+
+    @admin.display(description='Размер: оригинал → сайт')
+    def sizes(self, obj):
+        if not obj.source_size:
+            return '—'
+        src = obj.source_size / 1048576
+        if not obj.result_size:
+            return f'{src:.1f} МБ'
+        return f'{src:.1f} → {obj.result_size / 1048576:.1f} МБ'
+
+    def has_add_permission(self, request):
+        return False

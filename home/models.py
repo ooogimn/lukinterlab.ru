@@ -326,14 +326,20 @@ class Rabota(models.Model):
                 }
 
         if self.preview_video:
+            from .video_processing import derived_urls
+
             version = int(self.updated.timestamp()) if self.updated else ''
+            # После пережатия (video_processing): кадр-обложка и 8-секундное лёгкое превью.
+            video_poster_url, preview_url = derived_urls(self.preview_video)
             return {
                 "type": "local_video",
                 "url": f"{self.preview_video.url}?v={version}",
                 "embed_url": None,
                 "thumbnail_url": None,
+                # Карточка играет лёгкое превью, модалка/детальная — полное сжатое видео.
+                "preview_url": preview_url,
                 # Обложка карточки, пока видео не начало играть (preload="none").
-                "poster_url": self.get_thumbnail_webp_url_with_version() if self.image else None,
+                "poster_url": video_poster_url or (self.get_thumbnail_webp_url_with_version() if self.image else None),
                 "provider": "local",
             }
 
@@ -412,11 +418,15 @@ class RabotaMedia(models.Model):
                     "is_external": True,
                 }
         if self.file:
+            from .video_processing import derived_urls
+
+            poster_url, _preview_url = derived_urls(self.file)
             return {
                 "type": "video" if self.is_video else "image",
                 "url": self.file.url,
                 "embed_url": None,
-                "thumbnail_url": self.file.url,
+                "thumbnail_url": poster_url or self.file.url,
+                "poster_url": poster_url,
                 "provider": "local",
                 "is_external": False,
             }
@@ -1277,3 +1287,38 @@ class CustomerSupportMessage(models.Model):
     def __str__(self):
         return f'#{self.pk} в треде {self.thread_id}'
 
+
+
+class VideoTranscodeJob(models.Model):
+    """Журнал пережатия загруженных видео (home/video_processing.py). Оригиналы не удаляются."""
+
+    STATUS_QUEUED = 'queued'
+    STATUS_PROCESSING = 'processing'
+    STATUS_DONE = 'done'
+    STATUS_FAILED = 'failed'
+    STATUS_SKIPPED = 'skipped'
+    STATUS_CHOICES = [
+        (STATUS_QUEUED, 'В очереди'),
+        (STATUS_PROCESSING, 'Обрабатывается'),
+        (STATUS_DONE, 'Готово'),
+        (STATUS_FAILED, 'Ошибка'),
+        (STATUS_SKIPPED, 'Пропущено'),
+    ]
+
+    source_name = models.CharField('Исходный файл (оригинал)', max_length=500, unique=True)
+    result_name = models.CharField('Сжатый файл для сайта', max_length=500, blank=True)
+    status = models.CharField('Статус', max_length=20, choices=STATUS_CHOICES, default=STATUS_QUEUED, db_index=True)
+    source_size = models.BigIntegerField('Размер оригинала, байт', null=True, blank=True)
+    result_size = models.BigIntegerField('Размер сжатого, байт', null=True, blank=True)
+    duration_sec = models.FloatField('Длительность, с', null=True, blank=True)
+    error = models.TextField('Ошибка', blank=True)
+    created = models.DateTimeField('Создано', auto_now_add=True)
+    updated = models.DateTimeField('Обновлено', auto_now=True)
+
+    class Meta:
+        verbose_name = 'Пережатие видео'
+        verbose_name_plural = 'Пережатие видео'
+        ordering = ['-updated']
+
+    def __str__(self):
+        return f'{self.source_name} — {self.get_status_display()}'

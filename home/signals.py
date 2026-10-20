@@ -113,3 +113,39 @@ def invalidate_customer_avatar_cache(sender, instance, **kwargs):
         return
     if instance.user_id:
         invalidate_header_avatar_cache(instance.user_id)
+
+
+# --- Пережатие загруженных видео (home/video_processing.py) ---
+# После сохранения записи с новым видео ставим задачу в django-q (после коммита транзакции).
+# Поле переключается на <имя>_web.mp4 через .update(), поэтому сигнал повторно не срабатывает.
+from django.db import transaction  # noqa: E402
+
+from . import video_processing  # noqa: E402
+
+_VIDEO_SENDERS = {
+    Rabota: ('preview_video', False),
+    RabotaMedia: ('file', False),
+    SectionBackground: ('background_video', True),
+    Post: ('video_file', False),
+}
+
+
+def enqueue_uploaded_video(sender, instance, **kwargs):
+    if kwargs.get('raw'):
+        return
+    field, mute = _VIDEO_SENDERS[sender]
+    file_field = getattr(instance, field, None)
+    name = getattr(file_field, 'name', '') or ''
+    if not video_processing.is_video_name(name) or video_processing.is_processed_name(name):
+        return
+    if not video_processing.ffmpeg_available():
+        return  # локально на Windows без ffmpeg — ничего не делаем
+    transaction.on_commit(lambda: video_processing.enqueue_video(name, mute))
+
+
+for _video_model in _VIDEO_SENDERS:
+    post_save.connect(
+        enqueue_uploaded_video,
+        sender=_video_model,
+        dispatch_uid=f'enqueue_uploaded_video_{_video_model.__name__}',
+    )

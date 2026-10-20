@@ -634,6 +634,12 @@ class RabotaForm(forms.ModelForm):
     """Форма для создания и редактирования работ в портфолио (Дашборд)"""
     class Meta:
         model = Rabota
+        help_texts = {
+            'preview_video': (
+                'MP4/MOV/WebM до 2 ГБ. После загрузки видео автоматически сжимается для сайта '
+                '(1–5 минут в фоне): карточка получит лёгкое превью и обложку, оригинал сохраняется.'
+            ),
+        }
         fields = [
             'name', 'category', 'status', 'image', 'preview_image_url', 'preview_video', 'preview_video_url', 'adres', 'body',
             'technologies', 'game_html', 'tariff_short_description', 'tariff_price_value',
@@ -647,7 +653,7 @@ class RabotaForm(forms.ModelForm):
             'status': forms.Select(attrs={'class': 'form-control'}),
             'image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*,.gif'}),
             'preview_image_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://... (внешнее изображение)'}),
-            'preview_video': forms.FileInput(attrs={'class': 'form-control', 'accept': 'video/mp4,video/webm,video/ogg,.mp4,.webm,.ogg'}),
+            'preview_video': forms.FileInput(attrs={'class': 'form-control', 'accept': 'video/mp4,video/webm,video/ogg,video/quicktime,.mp4,.webm,.ogg,.mov,.m4v'}),
             'preview_video_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://youtube.com/... / rutube / vk video'}),
             'adres': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://example.com'}),
             'body': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Краткое описание'}),
@@ -667,14 +673,16 @@ class RabotaForm(forms.ModelForm):
         if not video:
             return video
 
-        allowed_ext = {'.mp4', '.webm', '.ogg'}
+        # После загрузки видео пережимается для сайта (home/video_processing.py): H.264 до 1080p
+        # + лёгкое превью для карточки. Поэтому принимаем и «тяжёлые» исходники с телефона/камеры.
+        allowed_ext = {'.mp4', '.webm', '.ogg', '.mov', '.m4v'}
         ext = '.' + video.name.split('.')[-1].lower()
         if ext not in allowed_ext:
-            raise forms.ValidationError('Главное видео: разрешены только MP4, WebM или OGG.')
+            raise forms.ValidationError('Главное видео: разрешены MP4, MOV, M4V, WebM или OGG.')
 
-        # Ограничиваем размер, чтобы карточки загружались быстро
-        if video.size > 50 * 1024 * 1024:
-            raise forms.ValidationError('Главное видео: размер не должен превышать 50 МБ.')
+        # Лимит согласован с nginx (client_max_body_size, deploy/nginx-upload-limit.conf).
+        if video.size > 2 * 1024 * 1024 * 1024:
+            raise forms.ValidationError('Главное видео: размер не должен превышать 2 ГБ.')
 
         return video
 
