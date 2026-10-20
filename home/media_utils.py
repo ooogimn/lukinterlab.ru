@@ -67,14 +67,14 @@ def _resolve_rutube(parsed) -> ResolvedMedia | None:
     if path.startswith("video/"):
         rest = path.split("/", 1)[1]
         video_id = rest.split("/")[0]
+    elif path.startswith("play/embed/"):
+        rest = path[len("play/embed/") :].strip("/")
+        video_id = rest.split("/")[0] if rest else ""
     if not video_id:
         return None
     embed_url = f"https://rutube.ru/play/embed/{video_id}/"
-    # Статичное превью (pic.rutubelist) — для карточек и т.п. без сетевого запроса к API; помогает
-    # в браузерах, где встраивание iframe Rutube/реферер грузят пусто (например Comet).
-    p = (video_id + "0000")[:4]
-    part1, part2 = p[0:2], p[2:4]
-    thumbnail_url = f"https://pic.rutubelist.ru/video/{part1}/{part2}/{video_id}.jpg?width=640"
+    # Обложка через официальный API (редирект на актуальный CDN), а не угадывание pic.* по id.
+    thumbnail_url = f"https://rutube.ru/api/video/{video_id}/thumbnail/?redirect=1"
     return ResolvedMedia(
         kind="video",
         source_url=parsed.geturl(),

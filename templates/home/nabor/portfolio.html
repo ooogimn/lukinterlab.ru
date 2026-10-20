@@ -59,7 +59,7 @@
             >
                 {% with display_media=rabota.get_display_media %}
                 {% if display_media.type == 'external_video' and display_media.thumbnail_url %}
-                    <img src="{{ display_media.thumbnail_url }}" alt="{{ rabota.name }}" loading="lazy" decoding="async" referrerpolicy="no-referrer" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 pointer-events-none" width="640" height="360">
+                    <img src="{{ display_media.thumbnail_url }}" alt="{{ rabota.name }}" loading="lazy" decoding="async" referrerpolicy="no-referrer" width="640" height="360" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 pointer-events-none" onerror="this.onerror=null;this.src='{% static 'img/favicon.svg' %}';this.className='absolute inset-0 w-full h-full object-contain p-8 bg-gray-50 opacity-50 transition-transform duration-700 pointer-events-none';">
                     <div class="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden="true">
                         <span class="rounded-full bg-black/45 p-3 shadow-lg backdrop-blur-[2px]">
                             <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>

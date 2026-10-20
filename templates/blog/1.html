@@ -609,7 +609,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (dm.type === 'external_video') {
                             const thumb = (dm.thumbnail_url || '').trim();
                             const bg = thumb
-                                ? `<img src="${thumb}" alt="" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">`
+                                ? `<img src="${thumb}" alt="" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" onerror="this.onerror=null;this.src='/static/img/favicon.svg';this.className='absolute inset-0 w-full h-full object-contain p-6 bg-gray-900/40 opacity-60 transition-transform duration-500 pointer-events-none';">`
                                 : `<div class="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900"></div>`;
                             imageHTML = `<div class="relative w-full ${h} overflow-hidden bg-gray-900">${bg}<div class="absolute inset-0 flex items-center justify-center bg-black/35 pointer-events-none" aria-hidden="true"><i class="fa fa-play-circle text-5xl sm:text-6xl text-white drop-shadow-lg"></i></div></div>`;
                         } else if (dm.type === 'local_video') {

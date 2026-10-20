@@ -7,7 +7,7 @@
 {% if dm.type == 'external_video' %}
 <div class="relative w-full {{ h }} overflow-hidden bg-gray-900">
   {% if dm.thumbnail_url %}
-  <img src="{{ dm.thumbnail_url }}" alt="{{ post.title }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" width="400" height="300">
+  <img src="{{ dm.thumbnail_url }}" alt="{{ post.title }}" loading="lazy" decoding="async" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" width="400" height="300" onerror="this.onerror=null;this.src='{% static 'img/favicon.svg' %}';this.className='absolute inset-0 w-full h-full object-contain p-6 bg-gray-900/40 opacity-60 transition-transform duration-500 pointer-events-none';">
   {% else %}
   <div class="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900"></div>
   {% endif %}
